@@ -1,0 +1,232 @@
+/* Import Cormorant Garamond font */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
+
+
+body {
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Cormorant Garamond', serif;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === FLOATING MENU === */
+.floating-menu {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+  z-index: 1000;
+  padding-right: 10px;
+}
+
+.menu-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: #000;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.3s ease;
+  overflow: visible;
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item:nth-child(1) { animation-delay: 0.2s; }
+.menu-item:nth-child(2) { animation-delay: 0.4s; }
+.menu-item:nth-child(3) { animation-delay: 0.6s; }
+.menu-item:nth-child(4) { animation-delay: 0.8s; }
+.menu-item:nth-child(5) { animation-delay: 1s; }
+
+.menu-item i {
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background:#007bff;
+}
+
+/* === Label pops out to the left === */
+.menu-item .label {
+  position: absolute;
+  right: 58px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.menu-item:hover .label,
+.menu-item.active .label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.site-header {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+h1{
+  color:  #A259FF;
+}
+.motto {
+  margin-top: 0.3rem;
+  font-size: 1.1rem;
+  font-weight: 300;
+}
+
+.search-section {
+  text-align: center;
+  margin: 2rem auto;
+}
+
+#searchInput {
+  padding: 0.6rem 1rem;
+  width: 60%;
+  max-width: 400px;
+  border-radius: 20px;
+  border: none;
+  font-size: 1rem;
+}
+
+#searchBtn {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 0.6rem 1rem;
+  margin-left: 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.catalog {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding: 2rem;
+  flex: 1;
+  justify-items: center;
+}
+
+.book-item {
+  width: 140px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  animation: fadeSlideUp 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.book-item img {
+  width: 100%;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.book-label {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  margin-top: 0.5rem;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: transform 0.3s, opacity 0.3s;
+  opacity: 0.8;
+}
+
+.book-item:hover img {
+  transform: scale(1.05);
+}
+
+.book-item:hover .book-label {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  margin-top: auto;
+}
+
+
+@media (max-width: 600px) {
+  .catalog {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .book-item {
+    width: 100%;
+  }
+
+  .book-label {
+    font-size: 0.85rem;
+  }
+
+  #searchInput {
+    width: 70%;
+    font-size: 1rem;
+  }
+
+  #searchBtn {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .site-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .site-header .motto {
+    font-size: 0.95rem;
+  }
+}

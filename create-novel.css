@@ -51,6 +51,32 @@ label {
   font-weight: bold;
 }
 
+/* 🔹 Checkbox group for genres */
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.4rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.checkbox-group label {
+  font-weight: normal;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+input[type="checkbox"] {
+  transform: scale(1.2);
+  accent-color: #00aced;
+}
+
+/* 🔹 Remove old multi-select styles */
+select[multiple] {
+  display: none;
+}
+
 input[type="text"],
 input[type="file"],
 select,

@@ -39,11 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Enable the submit button only when form is valid
+  // Enable submit button only when form is valid
   form.addEventListener('input', () => {
-    const requiredFields = ['title', 'genre', 'synopsis'];
-    const isValid = requiredFields.every(id => document.getElementById(id).value.trim()) &&
-      coverInput.files.length > 0;
+    const title = document.getElementById('title').value.trim();
+    const synopsis = document.getElementById('synopsis').value.trim();
+    const genreCheckboxes = document.querySelectorAll('input[name="genre"]:checked');
+    const genresSelected = genreCheckboxes.length > 0;
+    const isValid = title && synopsis && genresSelected && coverInput.files.length > 0;
     submitBtn.disabled = !isValid;
   });
 
@@ -69,7 +71,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const title = document.getElementById('title').value.trim();
-    const genre = document.getElementById('genre').value;
+
+    // ✅ Get checked genres
+    const genreCheckboxes = document.querySelectorAll('input[name="genre"]:checked');
+    const genres = Array.from(genreCheckboxes).map(cb => cb.value);
+
     const tags = document.getElementById('tags').value
       .split(',')
       .map(tag => tag.trim())
@@ -80,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const novelData = {
       title,
-      genre,
+      genres,
       tags,
       synopsis,
       coverUrl,
@@ -92,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const novelId = `novel_${Date.now()}`;
 
     try {
-      // <-- UPDATED collection name here:
       await setDoc(doc(db, 'pending_novels', novelId), novelData);
 
       form.reset();

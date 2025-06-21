@@ -2,122 +2,203 @@ import { app, db } from './firebase-config.js';
 import {
   getAuth,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc,
-  setDoc,
-  getDocs,
+  getDoc,
   collection,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  query,
+  orderBy
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const auth = getAuth(app);
+const auth = getAuth(app);
+const urlParams = new URLSearchParams(window.location.search);
+const novelId = urlParams.get('id');
 
-  // Load floating menu
-  fetch('author-floating-menu.html')
-    .then(res => res.text())
-    .then(html => {
-      const container = document.getElementById('floating-menu-container');
-      if (container) {
-        container.innerHTML = html;
+if (!novelId) {
+  alert("No novel ID found in URL.");
+  window.location.href = 'author-novels.html';
+}
 
-        const items = container.querySelectorAll('.menu-item');
-        items.forEach((item, index) => {
-          setTimeout(() => item.classList.add('show'), index * 300);
-        });
+const form = document.getElementById('chapterForm');
+const list = document.getElementById('chapterList');
+const numberInput = document.getElementById('chapterNumber');
+const titleInput = document.getElementById('chapterTitle');
+const bodyInput = document.getElementById('chapterBody');
+const notesInput = document.getElementById('chapterNotes');
+const saveBtn = document.getElementById('saveBtn');
+const previewBtn = document.getElementById('previewBtn');
+const publishBtn = document.getElementById('publishBtn');
 
-        const currentPath = window.location.pathname.split('/').pop().toLowerCase();
-        container.querySelectorAll('a').forEach(link => {
-          if (link.getAttribute('href').toLowerCase() === currentPath) {
-            link.classList.add('active');
-          }
-        });
-      }
-    });
+let chapters = [];
+let editingChapterId = null;
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) {
-      alert('You must be logged in.');
-      window.location.href = 'login.html';
+// AUTH & INITIALIZATION
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    alert("Please log in to upload chapters.");
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const novelRef = doc(db, 'novels', novelId);
+  const novelSnap = await getDoc(novelRef);
+  if (!novelSnap.exists()) {
+    alert("Novel not found.");
+    return;
+  }
+
+  const novel = novelSnap.data();
+  if (novel.submittedBy !== user.uid) {
+    alert("Unauthorized.");
+    window.location.href = 'author-novels.html';
+    return;
+  }
+
+  if (novel.status !== 'published') {
+    alert("This novel is not yet approved.");
+    window.location.href = 'author-novels.html';
+    return;
+  }
+
+  loadChapters();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const number = numberInput.value;
+    const title = titleInput.value.trim();
+    const body = bodyInput.value.trim();
+    const notes = notesInput.value.trim();
+
+    if (!number || !title || !body) {
+      alert("Number, title, and body are required.");
       return;
     }
 
-    const uid = user.uid;
-    const form = document.getElementById('chapter-form');
-    const previewSection = document.getElementById('chapter-preview');
-    const chapterList = document.getElementById('chapter-list');
-
-    // Load user's chapters into the sidebar
-    async function loadChapters() {
-      chapterList.innerHTML = ''; // Clear previous list
-      const snapshot = await getDocs(collection(db, `users/${uid}/chapters`));
-      snapshot.forEach(docSnap => {
-        const chapter = docSnap.data();
-        const item = document.createElement('li');
-        item.className = 'chapter-entry';
-        item.innerHTML = `<strong>Chapter ${chapter.number}</strong>: ${chapter.title} (${chapter.status})`;
-        chapterList.appendChild(item);
-      });
-    }
-
-    loadChapters();
-
-    // Save or publish chapter
-    async function handleSubmit(status = 'draft') {
-      const number = document.getElementById('chapter-number').value.trim();
-      const title = document.getElementById('chapter-title').value.trim();
-      const body = document.getElementById('chapter-body').value.trim();
-      const notes = document.getElementById('chapter-notes').value.trim();
-
-      if (!number || !title || !body) {
-        alert('Please fill in the chapter number, title, and body.');
-        return;
+    try {
+      if (editingChapterId) {
+        await updateDoc(doc(db, `novels/${novelId}/chapters/${editingChapterId}`), {
+          number: parseInt(number),
+          title,
+          body,
+          notes
+        });
+        alert("Chapter updated.");
+        editingChapterId = null;
+      } else {
+        const newOrder = chapters.length + 1;
+        await addDoc(collection(db, `novels/${novelId}/chapters`), {
+          number: parseInt(number),
+          title,
+          body,
+          notes,
+          createdAt: serverTimestamp(),
+          order: newOrder
+        });
+        alert("Chapter saved.");
       }
 
-      const chapterData = {
-        number,
-        title,
-        body,
-        notes,
-        status,
-        createdBy: uid,
-        createdAt: serverTimestamp()
-      };
-
-      const chapterId = `chapter_${number}_${Date.now()}`;
-      const ref = doc(db, `users/${uid}/chapters/${chapterId}`);
-      await setDoc(ref, chapterData);
-
-      alert(status === 'published' ? 'Chapter published!' : 'Chapter saved as draft!');
       form.reset();
-      previewSection.style.display = 'none';
       loadChapters();
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save chapter.");
     }
+  });
 
-    // Button event listeners
-    form.querySelector('button[type="submit"]').addEventListener('click', (e) => {
-      e.preventDefault();
-      handleSubmit('draft');
-    });
+  previewBtn.addEventListener('click', () => {
+    const number = numberInput.value;
+    const title = titleInput.value;
+    const body = bodyInput.value;
+    alert(`Chapter ${number}: ${title}\n\n${body}`);
+  });
 
-    document.getElementById('publish-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-      handleSubmit('published');
-    });
-
-    document.getElementById('preview-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-
-      document.getElementById('preview-title').textContent = document.getElementById('chapter-title').value;
-      document.getElementById('preview-number').textContent = `Chapter ${document.getElementById('chapter-number').value}`;
-      document.getElementById('preview-body').innerHTML = document.getElementById('chapter-body').value
-        .split('\n')
-        .map(line => `<p>${line}</p>`)
-        .join('');
-      document.getElementById('preview-notes').textContent = document.getElementById('chapter-notes').value;
-
-      previewSection.style.display = 'block';
-    });
+  publishBtn.addEventListener('click', () => {
+    alert("Publishing is not yet implemented.");
   });
 });
+
+// LOAD CHAPTERS
+async function loadChapters() {
+  const q = query(collection(db, `novels/${novelId}/chapters`), orderBy('order'));
+  const snapshot = await getDocs(q);
+
+  list.innerHTML = '';
+  chapters = [];
+
+  if (snapshot.empty) {
+    list.innerHTML = '<li>No chapters yet.</li>';
+    return;
+  }
+
+  snapshot.forEach(docSnap => {
+    const c = docSnap.data();
+    chapters.push({ ...c, id: docSnap.id });
+  });
+
+  chapters.forEach((c, index) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <strong>Chapter ${c.number}:</strong> ${c.title}
+      <div class="chapter-actions">
+        <button onclick="editChapter('${c.id}')">✏️</button>
+        <button onclick="deleteChapter('${c.id}')">🗑️</button>
+        <button onclick="moveChapter(${index}, -1)">🔼</button>
+        <button onclick="moveChapter(${index}, 1)">🔽</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// CHAPTER FUNCTIONS
+window.editChapter = function (chapterId) {
+  const chapter = chapters.find(c => c.id === chapterId);
+  if (!chapter) return;
+
+  numberInput.value = chapter.number;
+  titleInput.value = chapter.title;
+  bodyInput.value = chapter.body;
+  notesInput.value = chapter.notes;
+  editingChapterId = chapterId;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteChapter = async function (chapterId) {
+  const confirmed = confirm("Are you sure you want to delete this chapter?");
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(doc(db, `novels/${novelId}/chapters/${chapterId}`));
+    alert("Chapter deleted.");
+    loadChapters();
+  } catch (error) {
+    console.error("Delete failed:", error);
+    alert("Failed to delete chapter.");
+  }
+};
+
+window.moveChapter = async function (index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= chapters.length) return;
+
+  const chapterA = chapters[index];
+  const chapterB = chapters[targetIndex];
+
+  try {
+    await Promise.all([
+      updateDoc(doc(db, `novels/${novelId}/chapters/${chapterA.id}`), { order: chapterB.order }),
+      updateDoc(doc(db, `novels/${novelId}/chapters/${chapterB.id}`), { order: chapterA.order })
+    ]);
+    loadChapters();
+  } catch (error) {
+    console.error("Reorder failed:", error);
+    alert("Failed to reorder chapters.");
+  }
+};

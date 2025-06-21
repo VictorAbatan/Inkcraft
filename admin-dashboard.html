@@ -4,32 +4,53 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard | Inkcraft</title>
+  
+  <!-- Styles -->
   <link rel="stylesheet" href="admin-dashboard.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="dashboard-container">
+    
+    <!-- 🔐 Admin Header -->
     <header>
       <h1><i class="fas fa-user-shield"></i> Inkcraft Admin Dashboard</h1>
       <p>Review and manage novel submissions</p>
 
       <div class="header-right">
-        <button id="dark-toggle" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
-        <div id="notification-bell" title="Notifications">
+        <button id="dark-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+        </button>
+
+        <div id="notification-bell" title="Notifications" aria-label="Notifications">
           <i class="fas fa-bell"></i>
           <span class="notif-count" id="notif-count">0</span>
         </div>
-        <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+
+        <button id="logout-btn" aria-label="Logout">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
       </div>
     </header>
 
+    <!-- 📊 Quick Stats -->
     <section id="dashboard-stats">
-      <div class="stat-card"><h2 id="stat-approved">0</h2><p>Approved</p></div>
-      <div class="stat-card"><h2 id="stat-rejected">0</h2><p>Rejected</p></div>
-      <div class="stat-card"><h2 id="stat-pending">0</h2><p>Pending</p></div>
+      <div class="stat-card">
+        <h2 id="stat-approved">0</h2>
+        <p>Approved</p>
+      </div>
+      <div class="stat-card">
+        <h2 id="stat-rejected">0</h2>
+        <p>Rejected</p>
+      </div>
+      <div class="stat-card">
+        <h2 id="stat-pending">0</h2>
+        <p>Pending</p>
+      </div>
     </section>
 
+    <!-- 🕵️ Novel Submissions Area -->
     <main id="submission-list">
       <p>Loading submissions...</p>
     </main>
@@ -45,6 +66,7 @@
     </footer>
   </div>
 
+  <!-- 🔧 Scripts -->
   <script type="module" src="admin-dashboard.js"></script>
   <script type="module" src="firebase-config.js"></script>
 </body>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
+
 body {
   margin: 0;
   font-family: 'Cormorant Garamond', serif;
@@ -12,6 +14,7 @@ body.light-mode {
   color: #111;
 }
 
+/* === Dashboard Container === */
 .dashboard-container {
   backdrop-filter: blur(5px);
   background: rgba(0, 0, 0, 0.75);
@@ -24,6 +27,7 @@ body.light-mode .dashboard-container {
   background: rgba(255, 255, 255, 0.95);
 }
 
+/* === Header === */
 header {
   display: flex;
   flex-direction: column;
@@ -43,7 +47,8 @@ header {
   align-items: center;
 }
 
-#logout-btn, #dark-toggle {
+#logout-btn,
+#dark-toggle {
   background: crimson;
   color: white;
   padding: 0.4rem 1rem;
@@ -66,6 +71,7 @@ header {
   background: #222;
 }
 
+/* === Notifications === */
 #notification-bell {
   position: relative;
   font-size: 1.2rem;
@@ -84,6 +90,7 @@ header {
   font-weight: bold;
 }
 
+/* === Dashboard Stats === */
 #dashboard-stats {
   display: flex;
   justify-content: center;
@@ -112,7 +119,7 @@ header {
   color: #ccc;
 }
 
-/* Light mode overrides */
+/* === Light Mode Overrides === */
 body.light-mode .stat-card {
   background: #fff;
   border-color: #444;
@@ -128,6 +135,7 @@ body.light-mode #dark-toggle {
   color: #fff;
 }
 
+/* === Submissions List === */
 main#submission-list {
   padding: 2rem;
   max-width: 1000px;
@@ -192,6 +200,7 @@ main#submission-list {
   background: #8b0000;
 }
 
+/* === Footer === */
 footer {
   text-align: center;
   padding: 1rem;
@@ -200,7 +209,7 @@ footer {
   border-top: 1px solid gold;
 }
 
-
+/* === Approved Novels === */
 #approved-novels-section {
   padding: 2rem;
   margin-top: 2rem;

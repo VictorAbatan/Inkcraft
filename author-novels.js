@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const novelsContainer = document.getElementById('novels-container');
 
-  // 👤 Auth state change
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       alert("Please log in to view your novels.");
@@ -23,34 +22,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-    const q = query(
-  collection(db, 'novels'),
-  where("submittedBy", "==", user.uid)
-);
-
-
+      const q = query(collection(db, 'novels'), where("submittedBy", "==", user.uid));
       const snapshot = await getDocs(q);
-
       novelsContainer.innerHTML = '';
 
       if (snapshot.empty) {
-        novelsContainer.innerHTML = "<p>You don't have any approved novels yet.</p>";
+        novelsContainer.innerHTML = "<p>You haven't submitted any novels yet.</p>";
         return;
       }
 
       snapshot.forEach(doc => {
         const novel = doc.data();
+        const id = doc.id;
+
         const card = document.createElement('div');
         card.className = 'novel-card';
+
+        // Status badge
+        let statusBadge = '';
+        if (novel.status === 'pending') {
+          statusBadge = `<span class="badge pending">Pending</span>`;
+        } else if (novel.status === 'published') {
+          statusBadge = `<span class="badge approved">Approved</span>`;
+        }
+
+        // Action buttons (only when approved)
+        let actionButtons = '';
+        if (novel.status === 'published') {
+          actionButtons = `
+            <div class="novel-actions">
+              <button class="edit-btn" data-id="${id}">Edit Book</button>
+              <button class="chapter-btn" data-id="${id}">Add Chapter</button>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
-          <img src="${novel.coverUrl}" alt="Cover of ${novel.title}" />
+          <img src="${novel.coverUrl || 'default-cover.jpg'}" alt="Cover of ${novel.title}" />
           <div class="novel-details">
             <h3>${novel.title}</h3>
+            ${statusBadge}
             <p><strong>Genre:</strong> ${novel.genre}</p>
             <p><strong>Tags:</strong> ${Array.isArray(novel.tags) ? novel.tags.join(', ') : '—'}</p>
-            <p><strong>Status:</strong> ${novel.status || 'N/A'}</p>
+            ${actionButtons}
           </div>
         `;
+
+        // Add chapter button behavior
+        card.querySelectorAll('.chapter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            window.location.href = `chapter-upload.html?novelId=${id}`;
+          });
+        });
+
+        // Edit book button behavior
+        card.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            // 🔧 Future: open edit-novel.html
+            window.location.href = `edit-novel.html?novelId=${id}`;
+          });
+        });
+
         novelsContainer.appendChild(card);
       });
 
@@ -60,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 📌 Floating Menu Loader
+  // 📌 Load Floating Menu
   fetch('author-floating-menu.html')
     .then(res => res.text())
     .then(html => {

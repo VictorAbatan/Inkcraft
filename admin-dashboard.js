@@ -63,17 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (novel.status === 'approved') approved++;
           if (novel.status === 'rejected') rejected++;
+
           if (novel.status === 'pending') {
             pending++;
             const card = document.createElement('div');
             card.className = 'submission-card';
             card.innerHTML = `
-              <img src="${novel.coverUrl}" alt="Cover" />
+              <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover" />
               <div class="submission-details">
-                <h3>${novel.title}</h3>
-                <p><strong>Genre:</strong> ${novel.genre}</p>
-                <p><strong>Tags:</strong> ${novel.tags?.join(', ')}</p>
-                <p><strong>Synopsis:</strong> ${novel.synopsis}</p>
+                <h3>${novel.title || 'Untitled'}</h3>
+                <p><strong>Genre:</strong> ${novel.genre || '—'}</p>
+                <p><strong>Tags:</strong> ${Array.isArray(novel.tags) ? novel.tags.join(', ') : '—'}</p>
+                <p><strong>Synopsis:</strong> ${novel.synopsis || 'No synopsis available.'}</p>
                 <div class="action-buttons">
                   <button class="approve-btn">Approve</button>
                   <button class="reject-btn">Reject</button>
@@ -83,17 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.approve-btn').addEventListener('click', async () => {
               try {
-                // Admin updating status — make sure Firestore rules allow admins to update
                 await updateDoc(doc(db, 'pending_novels', id), { status: 'approved' });
 
-                // Add to published novels collection
                 await setDoc(doc(db, `novels/${id}`), {
                   ...novel,
                   status: 'published',
                   approvedAt: serverTimestamp()
                 });
 
-                // Notify author of approval (admins allowed to create notifications)
                 await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
                   type: 'approval',
                   message: `Your novel "${novel.title}" has been approved.`,
@@ -103,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.remove();
                 approved++;
                 pending--;
-                updateStats();
                 notifications++;
+                updateStats();
                 updateNotif();
               } catch (error) {
                 console.error("Error approving novel:", error);
@@ -125,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.remove();
                 rejected++;
                 pending--;
-                updateStats();
                 notifications++;
+                updateStats();
                 updateNotif();
               } catch (error) {
                 console.error("Error rejecting novel:", error);
@@ -165,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const card = document.createElement('div');
           card.className = 'approved-novel-card';
           card.innerHTML = `
-            <img src="${novel.coverUrl}" alt="Cover of ${novel.title}" />
-            <h4>${novel.title}</h4>
+            <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover of ${novel.title}" />
+            <h4>${novel.title || 'Untitled'}</h4>
             <p>Chapters: ${chapterCount}</p>
             <div class="approved-actions">
               <button class="view-btn">View</button>

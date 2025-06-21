@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkcraft | Author Centre</title>
+
+  <!-- Fonts and Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="author-centre.css" />
+  <link rel="stylesheet" href="floating-menu.css" />
+</head>
+<body>
+  <!-- Floating Menu Placeholder -->
+  <div id="floating-menu-container"></div>
+
+  <!-- Page Header -->
+  <header class="author-header">
+    <div class="author-profile" onclick="location.href='edit-author-profiles.html'" style="cursor:pointer;">
+      <!-- ID changed to match JS code for profile pic -->
+      <img src="default-avatar.png" alt="Author Avatar" id="author-profile-pic" />
+      <span id="author-pen-name">Your Pen Name</span>
+    </div>
+    <h1>Author Centre</h1>
+    <p class="sub">Create. Organize. Publish.</p>
+  </header>
+
+  <!-- Dashboard Main -->
+  <main class="dashboard">
+    <div class="card" onclick="location.href='create-novel.html'" style="cursor:pointer;">
+      <i class="fas fa-book-open"></i>
+      <h3>New Novel</h3>
+      <p>Start a new novel with cover, synopsis, genre, and tags.</p>
+    </div>
+
+    <div class="card" onclick="location.href='create-series.html'" style="cursor:pointer;">
+      <i class="fas fa-layer-group"></i>
+      <h3>Create Series</h3>
+      <p>Group related novels into a connected storyline.</p>
+    </div>
+
+    <div class="card" onclick="location.href='create-verse.html'" style="cursor:pointer;">
+      <i class="fas fa-globe"></i>
+      <h3>Create Verse</h3>
+      <p>Organize your universe with verses made of novels & series.</p>
+    </div>
+
+    <div class="card" onclick="location.href='inbox.html'" style="cursor:pointer;">
+      <i class="fas fa-inbox"></i>
+      <h3>Inbox</h3>
+      <p>View comments, likes, and reader interactions.</p>
+    </div>
+
+    <div class="card" onclick="location.href='author-novels.html'" style="cursor:pointer;">
+      <i class="fas fa-book"></i>
+      <h3>Novels</h3>
+      <p>View your submitted novels and their statuses.</p>
+    </div>
+
+    <div class="card" onclick="location.href='author-settings.html'" style="cursor:pointer;">
+      <i class="fas fa-cog"></i>
+      <h3>Settings</h3>
+      <p>Set your author name, email, and profile picture.</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="author-centre.js"></script>
+</body>
+</html>

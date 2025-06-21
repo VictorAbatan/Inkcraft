@@ -1,3 +1,6 @@
+import { app } from './firebase-config.js';
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu dynamically
   fetch('floating-menu.html')
@@ -5,13 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(html => {
       document.getElementById('floating-menu-container').innerHTML = html;
 
-      // ✅ Add animation class after injecting the menu
       const menu = document.querySelector('.floating-menu');
       if (menu) {
         menu.classList.add('animated');
       }
 
-      // ✅ Normalize and highlight the current page's menu link
       const currentPage = decodeURIComponent(window.location.pathname.split('/').pop().toLowerCase());
       document.querySelectorAll('.floating-menu a').forEach(link => {
         const href = link.getAttribute('href').toLowerCase();
@@ -19,6 +20,24 @@ document.addEventListener('DOMContentLoaded', () => {
           link.classList.add('active');
         }
       });
+
+      // ✅ Logout logic
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const auth = getAuth(app);
+          signOut(auth)
+            .then(() => {
+              alert("You've been signed out.");
+              window.location.href = 'login.html';
+            })
+            .catch(err => {
+              console.error('Logout error:', err);
+              alert('Failed to sign out. Try again.');
+            });
+        });
+      }
     });
 
   // === ICON CAROUSEL LOGIC ===

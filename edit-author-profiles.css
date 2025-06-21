@@ -1,0 +1,97 @@
+body {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+header {
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  text-align: center;
+  position: relative;
+}
+
+header .back-link {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.5rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+header h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-container {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  width: 300px;
+}
+
+.profile-pic-label {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-pic-label img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.edit-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #007bff;
+  border-radius: 50%;
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+#pen-name {
+  display: block;
+  margin: 1.5rem auto 1rem;
+  width: 100%;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#save-btn {
+  padding: 0.7rem 1.2rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+#save-btn:hover {
+  background: #0056b3;
+}

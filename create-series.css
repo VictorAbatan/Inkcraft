@@ -1,7 +1,7 @@
-/* Font Import (for standalone use) */
+/* Font Import */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
 
-/* === Global Reset === */
+/* === Reset & Global Styles === */
 * {
   box-sizing: border-box;
 }
@@ -18,47 +18,75 @@ body {
 }
 
 /* === Header === */
-.site-header {
+header {
   text-align: center;
   padding: 2rem 1rem 1rem;
   background: rgba(0, 0, 0, 0.6);
 }
 
-.motto {
+header h1 {
+  margin-bottom: 0.3rem;
+  font-size: 2.5rem;
+}
+
+header p {
   font-size: 1.2rem;
-  font-weight: 300;
   color: #ccc;
-  margin-top: 0.5rem;
 }
 
-/* === About Section === */
-.about-section {
-  max-width: 900px;
-  margin: 100px auto 40px;
-  padding: 20px;
+/* === Form === */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+form {
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
-  font-size: 1.3rem;
-  line-height: 1.7;
-  animation: fadeIn 1s ease forwards;
-}
-
-.about-card {
-  background: rgba(0, 0, 0, 0.65);
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
-.about-card h2 {
-  color: #00aced;
-  margin-bottom: 1rem;
+form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
-.about-card p {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  margin-bottom: 1.2rem;
+form input[type="text"],
+form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
 }
 
 /* === Footer === */
@@ -83,9 +111,7 @@ footer {
   padding-right: 12px;
 }
 
-.menu-item,
-.menu-item:hover,
-.menu-item.active {
+.menu-item {
   width: 60px;
   height: 60px;
   background: rgba(0, 0, 0, 0.8);
@@ -96,11 +122,15 @@ footer {
   justify-content: center;
   text-decoration: none;
   overflow: visible;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
   position: relative;
   opacity: 0;
   transform: translateX(100%);
-  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item.show {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .menu-item:hover,
@@ -115,7 +145,7 @@ footer {
 
 .menu-item .label {
   position: absolute;
-  right: 65px; /* adjusted to avoid overlap */
+  right: 65px;
   top: 50%;
   transform: translateY(-50%) translateX(10px);
   background: rgba(0, 0, 0, 0.85);
@@ -135,41 +165,13 @@ footer {
   transform: translateY(-50%) translateX(0);
 }
 
-/* === Animations === */
-@keyframes slideInRight {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* === Responsive Styles === */
+/* === Responsive === */
 @media (max-width: 768px) {
-  .about-section {
-    font-size: 1.1rem;
-    padding: 25px 15px;
-    margin: 80px 10px;
+  form {
+    padding: 1.5rem;
   }
 
-  .floating-menu {
-    right: 5px;
-    gap: 0.8rem;
-  }
-
-  .menu-item,
-  .menu-item:hover,
-  .menu-item.active {
+  .menu-item {
     width: 44px;
     height: 44px;
   }

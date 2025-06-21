@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Chapter | Inkcraft</title>
+  <link rel="stylesheet" href="chapter-upload.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Upload Chapter</h1>
+    <p>Add your next chapter to the novel</p>
+  </header>
+
+  <main class="chapter-layout">
+    <!-- Sidebar: Chapter List -->
+    <aside class="chapter-sidebar">
+      <h3>Your Chapters</h3>
+      <ul id="chapter-list">
+        <!-- Chapters will be dynamically inserted here -->
+        <li>No chapters yet.</li>
+      </ul>
+    </aside>
+
+    <!-- Main Form and Preview -->
+    <section class="chapter-content">
+      <form id="chapter-form">
+        <label for="chapter-number">Chapter Number</label>
+        <input type="number" id="chapter-number" min="1" required />
+
+        <label for="chapter-title">Chapter Title</label>
+        <input type="text" id="chapter-title" required />
+
+        <label for="chapter-body">Chapter Body</label>
+        <textarea id="chapter-body" rows="10" placeholder="Write your story here..." required></textarea>
+
+        <label for="chapter-notes">Notes (optional)</label>
+        <textarea id="chapter-notes" rows="4" placeholder="Author notes..."></textarea>
+
+        <div class="chapter-buttons">
+          <button type="submit">Save</button>
+          <button type="button" id="preview-btn">Preview</button>
+          <button type="button" id="publish-btn">Publish</button>
+        </div>
+      </form>
+
+      <section id="chapter-preview" style="display: none;">
+        <h2 id="preview-title"></h2>
+        <h3 id="preview-number"></h3>
+        <div id="preview-body"></div>
+        <p id="preview-notes" class="notes"></p>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="chapter-upload.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

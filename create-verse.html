@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Verse | Inkcraft</title>
+  <link rel="stylesheet" href="create-verse.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Create a Verse</h1>
+    <p>Group your series and standalone novels into a universe</p>
+  </header>
+
+  <main>
+    <form id="verse-form">
+      <label for="cover">Verse Cover Image</label>
+      <input type="file" id="cover" accept="image/*" required />
+      <img id="cover-preview" src="#" alt="Cover Preview" style="display:none; width: 100px; height: auto; margin: 10px 0;" />
+
+      <label for="title">Verse Title</label>
+      <input type="text" id="title" required />
+
+      <label for="description">Description</label>
+      <textarea id="description" rows="5" required></textarea>
+
+      <button type="submit">Submit Verse</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="create-verse.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

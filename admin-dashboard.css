@@ -1,0 +1,284 @@
+body {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  transition: background 0.3s ease;
+}
+
+body.light-mode {
+  background: #f9f9f9;
+  color: #111;
+}
+
+.dashboard-container {
+  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.75);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.light-mode .dashboard-container {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid gold;
+  position: relative;
+  text-align: center;
+}
+
+.header-right {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+#logout-btn, #dark-toggle {
+  background: crimson;
+  color: white;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#dark-toggle {
+  background: #333;
+}
+
+#logout-btn:hover {
+  background: #a40000;
+}
+
+#dark-toggle:hover {
+  background: #222;
+}
+
+#notification-bell {
+  position: relative;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.notif-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: gold;
+  color: black;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+#dashboard-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #888;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: #222;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid gold;
+}
+
+.stat-card h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: gold;
+}
+
+.stat-card p {
+  margin: 0;
+  color: #ccc;
+}
+
+/* Light mode overrides */
+body.light-mode .stat-card {
+  background: #fff;
+  border-color: #444;
+}
+
+body.light-mode .stat-card h2 {
+  color: #444;
+}
+
+body.light-mode #logout-btn,
+body.light-mode #dark-toggle {
+  background: #333;
+  color: #fff;
+}
+
+main#submission-list {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: auto;
+  flex: 1;
+}
+
+.submission-card {
+  background: #222;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  border-left: 5px solid gold;
+  display: flex;
+  gap: 1rem;
+}
+
+.submission-card img {
+  width: 120px;
+  height: auto;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.submission-details {
+  flex: 1;
+}
+
+.submission-details p {
+  margin: 0.3rem 0;
+}
+
+.action-buttons {
+  margin-top: 1rem;
+}
+
+.action-buttons button {
+  padding: 0.5rem 1.2rem;
+  margin-right: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.approve-btn {
+  background: green;
+  color: #fff;
+}
+
+.approve-btn:hover {
+  background: #006400;
+}
+
+.reject-btn {
+  background: red;
+  color: #fff;
+}
+
+.reject-btn:hover {
+  background: #8b0000;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #aaa;
+  border-top: 1px solid gold;
+}
+
+
+#approved-novels-section {
+  padding: 2rem;
+  margin-top: 2rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-top: 2px solid gold;
+  border-radius: 10px;
+}
+
+#approved-novels-section h2 {
+  color: #00aced;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+#approved-novels-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.approved-novel-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.approved-novel-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.approved-novel-card h4 {
+  margin: 0.5rem 0 0.3rem;
+  font-size: 1rem;
+  color: #ffd700;
+}
+
+.approved-novel-card p {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin: 0.2rem 0;
+}
+
+.approved-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.approved-actions button {
+  background: #007bff;
+  border: none;
+  padding: 5px 10px;
+  color: #fff;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.approved-actions button:hover {
+  background: #0056b3;
+}
+
+.approved-actions .rollback-btn {
+  background: #d9534f;
+}
+
+.approved-actions .rollback-btn:hover {
+  background: #a94442;
+}

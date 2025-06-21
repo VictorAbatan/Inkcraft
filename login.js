@@ -1,3 +1,6 @@
+import { app } from './firebase-config.js';
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   // === Floating Menu Loader ===
   const loadFloatingMenu = () => {
@@ -39,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadFloatingMenu();
 
-  // === Login Form Validation ===
+  // === Login Form Validation + Firebase Sign-in ===
   const form = document.querySelector('form');
   if (form) {
     const emailInput = form.querySelector('input[type="email"]');
@@ -48,13 +51,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (passInput && !passInput.id) passInput.id = 'password';
     form.id = 'login-form';
 
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
       const email = document.getElementById('email');
       const password = document.getElementById('password');
 
       if (!email.value.trim() || !password.value.trim()) {
         alert('Please fill in all fields.');
-        e.preventDefault();
+        return;
+      }
+
+      try {
+        const auth = getAuth(app);
+        const userCredential = await signInWithEmailAndPassword(auth, email.value.trim(), password.value.trim());
+        const user = userCredential.user;
+
+        alert('Login successful!');
+        console.log('User logged in:', user);
+        window.location.href = 'Inkcraftmain.html'; // ✅ Redirect after login
+      } catch (error) {
+        console.error('Login error:', error.message);
+        alert('Login failed: ' + error.message);
       }
     });
   }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Series | Inkcraft</title>
+  <link rel="stylesheet" href="create-series.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Create a New Series</h1>
+    <p>Organize related novels under one series</p>
+  </header>
+
+  <main>
+    <form id="series-form">
+      <label for="title">Series Title</label>
+      <input type="text" id="title" required />
+
+      <label for="description">Series Description</label>
+      <textarea id="description" rows="4" required></textarea>
+
+      <button type="submit">Create Series</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="create-series.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

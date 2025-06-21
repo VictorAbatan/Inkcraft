@@ -1,7 +1,6 @@
-/* Font Import (for standalone use) */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
 
-/* === Global Reset === */
+/* === Base Styles === */
 * {
   box-sizing: border-box;
 }
@@ -18,47 +17,83 @@ body {
 }
 
 /* === Header === */
-.site-header {
+header {
   text-align: center;
   padding: 2rem 1rem 1rem;
   background: rgba(0, 0, 0, 0.6);
 }
 
-.motto {
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.3rem;
+}
+
+header p {
   font-size: 1.2rem;
-  font-weight: 300;
   color: #ccc;
-  margin-top: 0.5rem;
 }
 
-/* === About Section === */
-.about-section {
-  max-width: 900px;
-  margin: 100px auto 40px;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
-  font-size: 1.3rem;
-  line-height: 1.7;
-  animation: fadeIn 1s ease forwards;
-}
-
-.about-card {
-  background: rgba(0, 0, 0, 0.65);
+/* === Form === */
+main {
+  max-width: 600px;
+  margin: 2rem auto;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.8s ease forwards;
 }
 
-.about-card h2 {
-  color: #00aced;
+form label {
+  display: block;
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 5px;
   margin-bottom: 1rem;
 }
 
-.about-card p {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  margin-bottom: 1.2rem;
+form input[type="file"] {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 8px;
+}
+
+form button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.3s ease;
+}
+
+form button:hover {
+  background: #0056b3;
+}
+
+/* === Cover Image Preview === */
+#cover-preview {
+  max-width: 120px;
+  height: auto;
+  display: block;
+  margin-top: 10px;
+  border: 2px solid #fff;
+  border-radius: 8px;
 }
 
 /* === Footer === */
@@ -69,7 +104,19 @@ footer {
   margin-top: auto;
 }
 
-/* === Floating Menu === */
+/* === Animations === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Floating Menu Styles === */
 .floating-menu {
   position: fixed;
   top: 50%;
@@ -83,9 +130,7 @@ footer {
   padding-right: 12px;
 }
 
-.menu-item,
-.menu-item:hover,
-.menu-item.active {
+.menu-item {
   width: 60px;
   height: 60px;
   background: rgba(0, 0, 0, 0.8);
@@ -100,7 +145,22 @@ footer {
   position: relative;
   opacity: 0;
   transform: translateX(100%);
-  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.menu-item {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.menu-item.show {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .menu-item:hover,
@@ -115,7 +175,7 @@ footer {
 
 .menu-item .label {
   position: absolute;
-  right: 65px; /* adjusted to avoid overlap */
+  right: 65px;
   top: 50%;
   transform: translateY(-50%) translateX(10px);
   background: rgba(0, 0, 0, 0.85);
@@ -135,31 +195,19 @@ footer {
   transform: translateY(-50%) translateX(0);
 }
 
-/* === Animations === */
-@keyframes slideInRight {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* === Responsive Styles === */
+/* === Responsive === */
 @media (max-width: 768px) {
-  .about-section {
-    font-size: 1.1rem;
-    padding: 25px 15px;
-    margin: 80px 10px;
+  main {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  form label {
+    font-size: 1rem;
+  }
+
+  form button {
+    font-size: 1rem;
   }
 
   .floating-menu {
@@ -167,9 +215,7 @@ footer {
     gap: 0.8rem;
   }
 
-  .menu-item,
-  .menu-item:hover,
-  .menu-item.active {
+  .menu-item {
     width: 44px;
     height: 44px;
   }

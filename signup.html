@@ -1,42 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Inkcraft | Sign Up</title>
 
-   <!-- Google Fonts: Cormorant Garamond -->
+  <!-- Google Fonts: Cormorant Garamond -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-  
+
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="signup.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <!-- Dynamically Loaded Floating Menu -->
+  <!-- Floating Menu Container -->
   <div id="floating-menu-container"></div>
 
   <header>
-    
     <h1>Inkcraft</h1>
     <p class="motto">Write. Draw. Express.</p>
   </header>
 
-  <section class="form-section">
-    <h2>Create a New Account</h2>
-    <form action="#" method="post">
-      <input type="text" placeholder="Username" required><br>
-      <input type="email" placeholder="Email" required><br>
-      <input type="password" placeholder="Password" required><br>
-      <button type="submit" class="btn">Sign Up</button>
-    </form>
-    <p>Already have an account? <a href="login.html">Login here</a></p>
-  </section>
+  <main>
+    <section class="form-section">
+      <h2>Create a New Account</h2>
+      <form action="#" method="post">
+        <input type="text" placeholder="Username" required><br>
+        <input type="email" placeholder="Email" required><br>
+        <input type="password" placeholder="Password" required><br>
+        <button type="submit" class="btn">Sign Up</button>
+      </form>
+      <p>Already have an account? <a href="login.html">Login here</a></p>
+    </section>
+  </main>
 
   <footer>
     <p>&copy; 2025 Inkcraft. All rights reserved.</p>
   </footer>
 
-  <script src="Inkcraft main.js"></script>
+  <!-- Correct JS File for This Page -->
+ <script type="module" src="signup.js"></script>
+
 </body>
 </html>

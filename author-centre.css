@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Cormorant Garamond', serif;
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.author-header {
+  text-align: center;
+  padding: 3rem 1rem 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+}
+
+.author-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.author-header .sub {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: #ccc;
+}
+
+/* Dashboard Cards */
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 3rem 1rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.card {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 260px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.card:hover {
+  background: rgba(0, 123, 255, 0.7);
+  transform: translateY(-5px);
+}
+
+.card i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #00aced;
+}
+
+.card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 1rem;
+  color: #ccc;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  margin-top: auto;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 2rem 1rem;
+    gap: 1.2rem;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+/* === Floating menu styles (override included from author-centre.css if needed) === */
+.floating-menu {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+  z-index: 1000;
+  padding-right: 12px;
+}
+
+.menu-item {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s ease;
+  position: relative;
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.menu-item.show {
+  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: #007bff;
+}
+
+.menu-item .label {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.menu-item:hover .label,
+.menu-item.active .label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-10px);
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+.author-profile {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.author-profile img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+.author-profile span {
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.menu-author {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-right: 10px;
+}
+
+.menu-author img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  border: 2px solid #007bff;
+}
+
+.menu-author span {
+  font-size: 0.9rem;
+  color: #fff;
+  white-space: nowrap;
+}
+
+

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inbox | Inkcraft</title>
+  <link rel="stylesheet" href="inbox.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Inbox</h1>
+    <p>Your latest notifications</p>
+  </header>
+
+  <main class="inbox-container">
+    <ul id="notification-list">
+      <li>Loading notifications...</li>
+    </ul>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="inbox.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+/* === Author Identity Box === */
+#author-info-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 80px;
+  z-index: 2000;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+#author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 14px;
+  border-radius: 30px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+#author-info:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+#author-info img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #00aced;
+  object-fit: cover;
+}
+
+#author-info span {
+  font-size: 1.1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === Dropdown Menu === */
+#author-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 6px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  display: none;
+  flex-direction: column;
+  min-width: 140px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+#author-dropdown a {
+  padding: 8px 16px;
+  text-decoration: none;
+  color: white;
+  font-size: 0.95rem;
+  transition: background 0.3s;
+}
+
+#author-dropdown a:hover {
+  background: #007bff;
+  color: white;
+}
+
+/* Show dropdown on hover */
+#author-info-wrapper:hover #author-dropdown {
+  display: flex;
+}

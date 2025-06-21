@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Author Profile | Inkcraft</title>
+  <link rel="stylesheet" href="edit-author-profiles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <header>
+    <a href="author-centre.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    <h1>Edit Profile</h1>
+  </header>
+
+  <main>
+    <div class="profile-container">
+      <label for="profile-pic" class="profile-pic-label">
+        <img id="preview-pic" src="default-avatar.png" alt="Profile Picture" />
+        <input type="file" id="profile-pic" accept="image/*" hidden />
+        <span class="edit-overlay"><i class="fas fa-camera"></i></span>
+      </label>
+
+      <input type="text" id="pen-name" placeholder="Enter your pen name" />
+      <button id="save-btn">Save Profile</button>
+    </div>
+  </main>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="edit-author-profiles.js"></script>
+</body>
+</html>

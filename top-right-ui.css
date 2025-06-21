@@ -1,0 +1,136 @@
+#shared-top-right-container {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 1100;
+  pointer-events: auto;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* Floating menu styles */
+.floating-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+  padding-right: 6px;
+}
+
+/* The menu items */
+.menu-item {
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  position: relative;
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideInRight 0.5s forwards;
+  cursor: pointer;
+}
+
+.menu-item.show {
+  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: #007bff;
+}
+
+.menu-item i {
+  font-size: 1.2rem;
+  z-index: 1;
+}
+
+/* Label that appears on hover */
+.menu-item .label {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.85);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: white;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.menu-item:hover .label,
+.menu-item.active .label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-10px);
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Author identity */
+#author-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.6);
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+  white-space: nowrap;
+}
+
+#author-info img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #00aced;
+  object-fit: cover;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #shared-top-right-container {
+    top: 10px;
+    right: 10px;
+    gap: 10px;
+  }
+
+  .menu-item {
+    width: 44px;
+    height: 44px;
+  }
+
+  .menu-item .label {
+    font-size: 0.75rem;
+    right: 50px;
+  }
+
+  #author-info img {
+    width: 32px;
+    height: 32px;
+  }
+
+  #author-info {
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

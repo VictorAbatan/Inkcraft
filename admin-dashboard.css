@@ -6,25 +6,40 @@ body {
   background: url('Star map.jpg') no-repeat center center fixed;
   background-size: cover;
   color: #fff;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 body.light-mode {
-  background: #f9f9f9;
+  background: #f5f5f5;
   color: #111;
+}
+
+/* === Glass Effect Utility === */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 /* === Dashboard Container === */
 .dashboard-container {
-  backdrop-filter: blur(5px);
-  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.65);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  border-left: 5px solid gold;
+  border-right: 5px solid gold;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
 }
 
 body.light-mode .dashboard-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
+  border-left-color: #333;
+  border-right-color: #333;
 }
 
 /* === Header === */
@@ -32,10 +47,24 @@ header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   border-bottom: 1px solid gold;
   position: relative;
   text-align: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: gold;
+}
+
+header p {
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
+  color: #ccc;
 }
 
 .header-right {
@@ -49,33 +78,42 @@ header {
 
 #logout-btn,
 #dark-toggle {
-  background: crimson;
+  background: rgba(220, 20, 60, 0.8);
   color: white;
   padding: 0.4rem 1rem;
   border: none;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
+  backdrop-filter: blur(5px);
 }
 
 #dark-toggle {
-  background: #333;
+  background: rgba(51, 51, 51, 0.8);
 }
 
 #logout-btn:hover {
   background: #a40000;
+  transform: scale(1.05);
 }
 
 #dark-toggle:hover {
-  background: #222;
+  background: #111;
+  transform: scale(1.05);
 }
 
 /* === Notifications === */
 #notification-bell {
   position: relative;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   cursor: pointer;
+  color: gold;
+  transition: transform 0.2s ease;
+}
+
+#notification-bell:hover {
+  transform: rotate(10deg);
 }
 
 .notif-count {
@@ -88,6 +126,7 @@ header {
   padding: 2px 6px;
   font-size: 0.8rem;
   font-weight: bold;
+  box-shadow: 0 0 5px gold;
 }
 
 /* === Dashboard Stats === */
@@ -95,22 +134,29 @@ header {
   display: flex;
   justify-content: center;
   gap: 2rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid #888;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #999;
   flex-wrap: wrap;
 }
 
 .stat-card {
-  background: #222;
-  padding: 1rem 2rem;
-  border-radius: 10px;
+  background: rgba(17, 17, 17, 0.65);
+  padding: 1.2rem 2rem;
+  border-radius: 12px;
   text-align: center;
   border: 1px solid gold;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
 }
 
 .stat-card h2 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 2.2rem;
   color: gold;
 }
 
@@ -119,45 +165,42 @@ header {
   color: #ccc;
 }
 
-/* === Light Mode Overrides === */
 body.light-mode .stat-card {
   background: #fff;
-  border-color: #444;
+  border-color: #333;
 }
 
 body.light-mode .stat-card h2 {
-  color: #444;
-}
-
-body.light-mode #logout-btn,
-body.light-mode #dark-toggle {
-  background: #333;
-  color: #fff;
+  color: #333;
 }
 
 /* === Submissions List === */
 main#submission-list {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: auto;
   flex: 1;
 }
 
 .submission-card {
-  background: #222;
+  background: rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border-radius: 10px;
+  margin-bottom: 2rem;
+  border-radius: 12px;
   border-left: 5px solid gold;
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: background 0.3s ease;
 }
 
 .submission-card img {
-  width: 120px;
+  width: 130px;
   height: auto;
-  border-radius: 6px;
+  border-radius: 8px;
   object-fit: cover;
+  border: 1px solid #444;
 }
 
 .submission-details {
@@ -165,7 +208,8 @@ main#submission-list {
 }
 
 .submission-details p {
-  margin: 0.3rem 0;
+  margin: 0.4rem 0;
+  font-size: 0.95rem;
 }
 
 .action-buttons {
@@ -173,7 +217,7 @@ main#submission-list {
 }
 
 .action-buttons button {
-  padding: 0.5rem 1.2rem;
+  padding: 0.5rem 1.3rem;
   margin-right: 1rem;
   border: none;
   border-radius: 6px;
@@ -183,51 +227,47 @@ main#submission-list {
 }
 
 .approve-btn {
-  background: green;
+  background: rgba(40, 167, 69, 0.85);
   color: #fff;
 }
 
 .approve-btn:hover {
-  background: #006400;
+  background: #218838;
 }
 
 .reject-btn {
-  background: red;
+  background: rgba(220, 53, 69, 0.85);
   color: #fff;
 }
 
 .reject-btn:hover {
-  background: #8b0000;
-}
-
-/* === Footer === */
-footer {
-  text-align: center;
-  padding: 1rem;
-  font-size: 0.9rem;
-  color: #aaa;
-  border-top: 1px solid gold;
+  background: #c82333;
 }
 
 /* === Approved Novels === */
 #approved-novels-section {
   padding: 2rem;
   margin-top: 2rem;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.35);
   border-top: 2px solid gold;
   border-radius: 10px;
+  max-width: 1100px;
+  margin-inline: auto;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+  backdrop-filter: blur(8px);
 }
 
 #approved-novels-section h2 {
   color: #00aced;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.7rem;
+  margin-bottom: 1.5rem;
   text-align: center;
+  text-shadow: 1px 1px 2px #000;
 }
 
 #approved-novels-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
   max-height: 400px;
   overflow-y: auto;
@@ -236,22 +276,29 @@ footer {
 
 .approved-novel-card {
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 0.5rem;
+  border-radius: 10px;
+  padding: 0.8rem;
   text-align: center;
   color: #fff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  transition: transform 0.2s ease;
+}
+
+.approved-novel-card:hover {
+  transform: translateY(-5px);
 }
 
 .approved-novel-card img {
   width: 100%;
   height: 200px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid #333;
 }
 
 .approved-novel-card h4 {
-  margin: 0.5rem 0 0.3rem;
+  margin: 0.6rem 0 0.3rem;
   font-size: 1rem;
   color: #ffd700;
 }
@@ -265,14 +312,14 @@ footer {
 .approved-actions {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   margin-top: 0.6rem;
 }
 
 .approved-actions button {
   background: #007bff;
   border: none;
-  padding: 5px 10px;
+  padding: 6px 12px;
   color: #fff;
   font-size: 0.8rem;
   border-radius: 4px;
@@ -290,4 +337,16 @@ footer {
 
 .approved-actions .rollback-btn:hover {
   background: #a94442;
+}
+
+/* === Footer === */
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #aaa;
+  border-top: 1px solid gold;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  margin-top: auto;
 }

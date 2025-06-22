@@ -115,11 +115,12 @@ footer {
   font-size: 0.85rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .novel-actions button:hover {
   background-color: #0056b3;
+  transform: scale(1.05);
 }
 
 /* === Floating Menu (copied from author-centre.css, overridden if needed) === */

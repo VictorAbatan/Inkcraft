@@ -10,7 +10,9 @@ import {
   setDoc,
   doc,
   serverTimestamp,
-  addDoc
+  addDoc,
+  deleteDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,6 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const novel = docSnap.data();
           const id = docSnap.id;
 
+          // Only show published novels
+          if (novel.status !== 'published') return;
+
           let chapterCount = 0;
           try {
             const chaptersSnapshot = await getDocs(collection(db, `novels/${id}/chapters`));
@@ -179,13 +184,28 @@ document.addEventListener('DOMContentLoaded', () => {
           card.querySelector('.rollback-btn').addEventListener('click', async () => {
             if (confirm(`Are you sure you want to unpublish "${novel.title}"?`)) {
               try {
-                await updateDoc(doc(db, 'novels', id), {
-                  status: 'rolledback',
+                // 1. Move it to pending_novels
+                await setDoc(doc(db, 'pending_novels', id), {
+                  ...novel,
+                  status: 'pending',
                   rolledBackAt: serverTimestamp()
                 });
 
+                // 2. Delete from novels
+                await deleteDoc(doc(db, 'novels', id));
+
+                // 3. Notify author
+                await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
+                  type: 'rollback',
+                  message: `Your novel "${novel.title}" was unpublished and sent back for revision.`,
+                  timestamp: serverTimestamp()
+                });
+
                 card.remove();
-                alert(`"${novel.title}" has been rolled back.`);
+                approved--;
+                pending++;
+                updateStats();
+                alert(`"${novel.title}" has been rolled back to pending novels.`);
               } catch (err) {
                 console.error("Rollback failed:", err);
                 alert("Failed to rollback this novel.");

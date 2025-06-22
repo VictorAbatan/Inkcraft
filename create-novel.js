@@ -6,7 +6,11 @@ import {
 import {
   doc,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  getDocs,
+  query,
+  collection,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -71,6 +75,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const title = document.getElementById('title').value.trim();
+
+    // ✅ Check if novel with same title already exists by same user
+    const lowerTitle = title.toLowerCase();
+    const checkDuplicate = async () => {
+      const collectionsToCheck = ['pending_novels', 'novels'];
+      for (let collectionName of collectionsToCheck) {
+        const q = query(
+          collection(db, collectionName),
+          where("submittedBy", "==", currentUser.uid),
+          where("title", "==", title)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) return true;
+      }
+      return false;
+    };
+
+    const alreadyExists = await checkDuplicate();
+    if (alreadyExists) {
+      alert("You've already submitted a novel with this title.");
+      return;
+    }
 
     // ✅ Get checked genres
     const genreCheckboxes = document.querySelectorAll('input[name="genre"]:checked');

@@ -32,11 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       novelsContainer.innerHTML = '';
 
-      // Combine all docs from both snapshots into one array
-      const allDocs = [
-        ...approvedSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() })),
-        ...pendingSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }))
-      ];
+      // Merge and deduplicate based on ID (last one wins)
+      const novelMap = new Map();
+
+      pendingSnapshot.forEach(doc => {
+        novelMap.set(doc.id, { id: doc.id, data: doc.data() });
+      });
+
+      approvedSnapshot.forEach(doc => {
+        novelMap.set(doc.id, { id: doc.id, data: doc.data() }); // Overwrites if duplicate
+      });
+
+      const allDocs = Array.from(novelMap.values());
 
       if (allDocs.length === 0) {
         novelsContainer.innerHTML = "<p>You haven't submitted any novels yet.</p>";
@@ -52,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (novel.status === 'pending') {
           statusBadge = `<span class="badge pending">Pending</span>`;
         } else if (novel.status === 'published' || novel.status === 'approved') {
-          // Sometimes status might be "approved"
           statusBadge = `<span class="badge approved">Approved</span>`;
         }
 

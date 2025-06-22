@@ -18,7 +18,7 @@ import {
 
 const auth = getAuth(app);
 const urlParams = new URLSearchParams(window.location.search);
-const novelId = urlParams.get('id');
+const novelId = urlParams.get('novelId'); // ✅ FIXED
 
 if (!novelId) {
   alert("No novel ID found in URL.");

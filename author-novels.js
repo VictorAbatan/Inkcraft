@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (novel.status === 'published' || novel.status === 'approved') {
           actionButtons = `
             <div class="novel-actions">
-              <button class="edit-btn" data-id="${id}">Edit Book</button>
-              <button class="chapter-btn" data-id="${id}">Add Chapter</button>
+              <a href="edit-novel.html?novelId=${id}" class="edit-btn">Edit Book</a>
+              <a href="chapter-upload.html?novelId=${id}" class="chapter-btn">Add Chapter</a>
             </div>
           `;
         }
@@ -86,20 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ${actionButtons}
           </div>
         `;
-
-        // Add chapter button behavior
-        card.querySelectorAll('.chapter-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            window.location.href = `chapter-upload.html?novelId=${id}`;
-          });
-        });
-
-        // Edit book button behavior
-        card.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            window.location.href = `edit-novel.html?novelId=${id}`;
-          });
-        });
 
         novelsContainer.appendChild(card);
       });

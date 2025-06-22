@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('edit-form');
 
   const urlParams = new URLSearchParams(window.location.search);
-  const novelId = urlParams.get('id');
+  const novelId = urlParams.get('novelId'); // ✅ FIXED
 
   if (!novelId) {
     alert("No novel ID provided.");

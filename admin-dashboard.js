@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('light-mode');
   });
 
-  // ✅ Logout button sends to login.html after sign out
   logoutBtn.addEventListener('click', () => {
     auth.signOut().then(() => {
       window.location.href = 'login.html';
@@ -92,7 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
               try {
                 await updateDoc(doc(db, 'pending_novels', id), { status: 'approved' });
 
-                await setDoc(doc(db, `novels/${id}`), {
+                // ✅ Set to novels collection with exact same ID for edit & chapter upload consistency
+                await setDoc(doc(db, 'novels', id), {
                   ...novel,
                   status: 'published',
                   approvedAt: serverTimestamp()

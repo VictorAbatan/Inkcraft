@@ -30,9 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('light-mode');
   });
 
+  // ✅ Logout button sends to login.html after sign out
   logoutBtn.addEventListener('click', () => {
     auth.signOut().then(() => {
       window.location.href = 'login.html';
+    }).catch(error => {
+      console.error('Logout failed:', error);
+      alert('Logout failed.');
     });
   });
 
@@ -142,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStats();
       updateNotif();
 
-      // === Load Approved Novels ===
       const publishedSnapshot = await getDocs(collection(db, 'novels'));
 
       if (publishedSnapshot.empty) {
@@ -154,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const novel = docSnap.data();
           const id = docSnap.id;
 
-          // Only show published novels
           if (novel.status !== 'published') return;
 
           let chapterCount = 0;
@@ -184,17 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
           card.querySelector('.rollback-btn').addEventListener('click', async () => {
             if (confirm(`Are you sure you want to unpublish "${novel.title}"?`)) {
               try {
-                // 1. Move it to pending_novels
                 await setDoc(doc(db, 'pending_novels', id), {
                   ...novel,
                   status: 'pending',
                   rolledBackAt: serverTimestamp()
                 });
 
-                // 2. Delete from novels
                 await deleteDoc(doc(db, 'novels', id));
 
-                // 3. Notify author
                 await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
                   type: 'rollback',
                   message: `Your novel "${novel.title}" was unpublished and sent back for revision.`,

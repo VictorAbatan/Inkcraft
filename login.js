@@ -1,5 +1,9 @@
 import { app } from './firebase-config.js';
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  getIdTokenResult
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // === Floating Menu Loader ===
@@ -11,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
         temp.innerHTML = html;
         const menu = temp.firstElementChild;
         if (menu) {
-          // Append into the placeholder container
           const container = document.getElementById('floating-menu-container');
           if (container) {
             container.appendChild(menu);
@@ -19,12 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(menu); // fallback
           }
 
-          // Animate after next frame
           requestAnimationFrame(() => {
             menu.classList.add('animated');
           });
 
-          // === Highlight Current Page Menu Item ===
           const currentPath = window.location.pathname.split('/').pop();
           const items = menu.querySelectorAll('.menu-item');
           items.forEach(item => {
@@ -67,9 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const userCredential = await signInWithEmailAndPassword(auth, email.value.trim(), password.value.trim());
         const user = userCredential.user;
 
+        // ✅ Check if user is admin
+        const tokenResult = await getIdTokenResult(user);
+        const isAdmin = tokenResult.claims.admin === true;
+
         alert('Login successful!');
         console.log('User logged in:', user);
-        window.location.href = 'Inkcraftmain.html'; // ✅ Redirect after login
+
+        // Redirect based on role
+        if (isAdmin) {
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          window.location.href = 'Inkcraftmain.html';
+        }
       } catch (error) {
         console.error('Login error:', error.message);
         alert('Login failed: ' + error.message);

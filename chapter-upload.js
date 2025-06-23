@@ -34,6 +34,7 @@ const notesInput = document.getElementById('chapterNotes');
 const saveBtn = document.getElementById('saveBtn');
 const previewBtn = document.getElementById('previewBtn');
 const publishBtn = document.getElementById('publishBtn');
+const previewArea = document.getElementById('previewArea'); // ✅ NEW
 
 let chapters = [];
 let editingChapterId = null;
@@ -76,8 +77,8 @@ onAuthStateChanged(auth, async user => {
     const body = bodyInput.value.trim();
     const notes = notesInput.value.trim();
 
-    if (!number || !title || !body) {
-      alert("Number, title, and body are required.");
+    if (!number || !body) { // ✅ UPDATED
+      alert("Chapter number and body are required.");
       return;
     }
 
@@ -116,7 +117,13 @@ onAuthStateChanged(auth, async user => {
     const number = numberInput.value;
     const title = titleInput.value;
     const body = bodyInput.value;
-    alert(`Chapter ${number}: ${title}\n\n${body}`);
+
+    // ✅ REPLACED ALERT WITH INLINE PREVIEW
+    previewArea.innerHTML = `
+      <hr>
+      <h3>Preview - Chapter ${number}${title ? `: ${title}` : ''}</h3>
+      <p style="white-space:pre-line;">${body}</p>
+    `;
   });
 
   publishBtn.addEventListener('click', () => {

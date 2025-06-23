@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Read Novel | Inkcraft</title>
+
+  <link rel="stylesheet" href="read-novel.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="floating-menu-container"></div>
+
+  <!-- ✅ Dark Mode Toggle -->
+  <button id="themeToggleBtn" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+    Toggle Dark Mode
+  </button>
+
+  <header>
+    <h1><i class="fas fa-book"></i> Read Novel</h1>
+    <p id="novelTitle"></p> <!-- Novel title will go here -->
+  </header>
+
+  <main class="reading-main">
+    <!-- Chapter Navigation -->
+    <aside class="chapter-nav">
+      <h2>Chapters</h2>
+      <ul id="chapterList">
+        <li>Loading chapters...</li>
+      </ul>
+      <!-- ✅ Replaced toggle button ID -->
+      <button id="scrollToggleBtn">Switch to Page Mode</button>
+    </aside>
+
+    <!-- Reading Area -->
+    <section class="reading-area">
+      <div id="chapterContent">
+        <p>Loading chapter...</p>
+      </div>
+      <button id="nextChapterBtn">Next Chapter</button>
+    </section>
+
+    <!-- Comments Section -->
+    <section class="comments-section">
+      <h3>Comments</h3>
+      <ul id="commentList"></ul>
+      <form id="commentForm">
+        <textarea id="commentText" placeholder="Leave a comment..." required></textarea>
+        <button type="submit">Post Comment</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="read-novel.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

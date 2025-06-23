@@ -13,12 +13,13 @@ import {
   updateDoc,
   serverTimestamp,
   query,
-  orderBy
+  orderBy,
+  setDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
 const urlParams = new URLSearchParams(window.location.search);
-const novelId = urlParams.get('novelId'); // ✅ FIXED
+const novelId = urlParams.get('novelId');
 
 if (!novelId) {
   alert("No novel ID found in URL.");
@@ -34,7 +35,7 @@ const notesInput = document.getElementById('chapterNotes');
 const saveBtn = document.getElementById('saveBtn');
 const previewBtn = document.getElementById('previewBtn');
 const publishBtn = document.getElementById('publishBtn');
-const previewArea = document.getElementById('previewArea'); // ✅ NEW
+const previewArea = document.getElementById('previewArea');
 
 let chapters = [];
 let editingChapterId = null;
@@ -77,7 +78,7 @@ onAuthStateChanged(auth, async user => {
     const body = bodyInput.value.trim();
     const notes = notesInput.value.trim();
 
-    if (!number || !body) { // ✅ UPDATED
+    if (!number || !body) {
       alert("Chapter number and body are required.");
       return;
     }
@@ -118,7 +119,6 @@ onAuthStateChanged(auth, async user => {
     const title = titleInput.value;
     const body = bodyInput.value;
 
-    // ✅ REPLACED ALERT WITH INLINE PREVIEW
     previewArea.innerHTML = `
       <hr>
       <h3>Preview - Chapter ${number}${title ? `: ${title}` : ''}</h3>
@@ -126,8 +126,33 @@ onAuthStateChanged(auth, async user => {
     `;
   });
 
-  publishBtn.addEventListener('click', () => {
-    alert("Publishing is not yet implemented.");
+  publishBtn.addEventListener('click', async () => {
+    if (!editingChapterId) {
+      alert("Please edit and save the chapter before publishing.");
+      return;
+    }
+
+    try {
+      const chapterRef = doc(db, `novels/${novelId}/chapters/${editingChapterId}`);
+      const chapterSnap = await getDoc(chapterRef);
+
+      if (!chapterSnap.exists()) {
+        alert("Chapter not found.");
+        return;
+      }
+
+      const chapterData = chapterSnap.data();
+      const publishedRef = doc(db, `novels/${novelId}/published_chapters/${editingChapterId}`);
+      await setDoc(publishedRef, {
+        ...chapterData,
+        publishedAt: serverTimestamp()
+      });
+
+      alert("Chapter published successfully.");
+    } catch (err) {
+      console.error("Publish failed:", err);
+      alert("Failed to publish chapter.");
+    }
   });
 });
 
@@ -154,10 +179,10 @@ async function loadChapters() {
     li.innerHTML = `
       <strong>Chapter ${c.number}:</strong> ${c.title}
       <div class="chapter-actions">
-        <button onclick="editChapter('${c.id}')">✏️</button>
-        <button onclick="deleteChapter('${c.id}')">🗑️</button>
-        <button onclick="moveChapter(${index}, -1)">🔼</button>
-        <button onclick="moveChapter(${index}, 1)">🔽</button>
+        <button class="btn edit-btn" onclick="editChapter('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn delete-btn" onclick="deleteChapter('${c.id}')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn move-up" onclick="moveChapter(${index}, -1)"><i class="fas fa-arrow-up"></i></button>
+        <button class="btn move-down" onclick="moveChapter(${index}, 1)"><i class="fas fa-arrow-down"></i></button>
       </div>
     `;
     list.appendChild(li);

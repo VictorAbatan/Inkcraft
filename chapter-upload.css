@@ -221,3 +221,44 @@ footer {
     transform: translateX(0);
   }
 }
+
+
+.chapter-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chapter-actions .btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: white;
+  background-color: #007bff;
+  transition: background-color 0.3s ease;
+}
+
+.chapter-actions .btn:hover {
+  background-color: #0056b3;
+}
+
+.chapter-actions .delete-btn {
+  background-color: #dc3545;
+}
+
+.chapter-actions .delete-btn:hover {
+  background-color: #a71d2a;
+}
+
+.chapter-actions .move-up,
+.chapter-actions .move-down {
+  background-color: #6c757d;
+}
+
+.chapter-actions .move-up:hover,
+.chapter-actions .move-down:hover {
+  background-color: #495057;
+}

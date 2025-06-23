@@ -1,7 +1,6 @@
 /* Import Cormorant Garamond font */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
 
-
 body {
   background: url('Star map.jpg') no-repeat center center fixed;
   background-size: cover;
@@ -99,9 +98,10 @@ body {
   background: rgba(0, 0, 0, 0.5);
 }
 
-h1{
+h1 {
   color:  #A259FF;
 }
+
 .motto {
   margin-top: 0.3rem;
   font-size: 1.1rem;
@@ -166,6 +166,14 @@ h1{
   border-radius: 5px;
   transition: transform 0.3s, opacity 0.3s;
   opacity: 0.8;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.book-label small {
+  display: block;
+  font-size: 0.8rem;
+  color: #ccc;
 }
 
 .book-item:hover img {
@@ -188,14 +196,12 @@ h1{
   }
 }
 
-
 footer {
   text-align: center;
   padding: 1rem;
   background-color: rgba(0, 0, 0, 0.5);
   margin-top: auto;
 }
-
 
 @media (max-width: 600px) {
   .catalog {

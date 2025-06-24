@@ -13,20 +13,38 @@ import {
 const auth = getAuth(app);
 const urlParams = new URLSearchParams(window.location.search);
 const novelId = urlParams.get('novelId'); // Get novel ID from URL
+const chapterFromUrl = parseInt(urlParams.get('chapter'), 10); // ✅ Support ?chapter=2
 
 const novelTitle = document.getElementById('novelTitle');
 const chapterList = document.getElementById('chapterList');
 const chapterContent = document.getElementById('chapterContent');
 const nextChapterBtn = document.getElementById('nextChapterBtn');
-const scrollToggleBtn = document.getElementById('scrollToggleBtn'); // ✅ Renamed
+const scrollToggleBtn = document.getElementById('scrollToggleBtn');
 const commentList = document.getElementById('commentList');
 const commentForm = document.getElementById('commentForm');
 const commentText = document.getElementById('commentText');
-const themeToggleBtn = document.getElementById('themeToggleBtn'); // ✅ New
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 let chapters = [];
 let currentChapterIndex = 0;
 let scrollMode = true;
+
+// ✅ Font size slider
+const fontSlider = document.getElementById('fontSizeRange');
+fontSlider.addEventListener('input', () => {
+  chapterContent.style.fontSize = `${fontSlider.value}px`;
+});
+
+// ✅ Previous chapter button
+const prevBtn = document.getElementById('prevChapterBtn');
+prevBtn.addEventListener('click', () => {
+  const prevIndex = currentChapterIndex - 1;
+  if (prevIndex >= 0) {
+    loadChapterContent(prevIndex);
+  } else {
+    alert("You're at the first chapter.");
+  }
+});
 
 // ✅ Scroll/Page Mode Toggle
 scrollToggleBtn.addEventListener('click', () => {
@@ -40,7 +58,38 @@ themeToggleBtn.addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
 });
 
-// Fetch and display novel details
+// ✅ Font selector dropdown
+const fontDropdown = document.createElement('select');
+fontDropdown.innerHTML = `
+  <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+  <option value="'Georgia', serif">Georgia</option>
+  <option value="'Times New Roman', serif">Times New Roman</option>
+  <option value="'Arial', sans-serif">Arial</option>
+  <option value="'Courier New', monospace">Courier New</option>
+`;
+fontDropdown.style.marginLeft = '1rem';
+fontDropdown.title = 'Change Font';
+
+const fontControls = document.querySelector('.font-controls');
+if (fontControls) fontControls.appendChild(fontDropdown);
+
+fontDropdown.addEventListener('change', () => {
+  chapterContent.style.fontFamily = fontDropdown.value;
+});
+
+// ✅ Chapter toggle (mobile)
+const mobileToggle = document.createElement('button');
+mobileToggle.className = 'mobile-toggle';
+mobileToggle.innerText = '📖 Show Chapters';
+document.body.appendChild(mobileToggle);
+
+const chapterNav = document.querySelector('.chapter-nav');
+mobileToggle.addEventListener('click', () => {
+  chapterNav.classList.toggle('show');
+  mobileToggle.innerText = chapterNav.classList.contains('show') ? '📕 Hide Chapters' : '📖 Show Chapters';
+});
+
+// === Load novel and chapters ===
 async function loadNovel() {
   try {
     const novelRef = doc(db, 'novels', novelId);
@@ -50,8 +99,7 @@ async function loadNovel() {
       const novel = novelSnap.data();
       novelTitle.innerText = novel.title;
 
-      // Load chapters
-      loadChapters();
+      await loadChapters();
     } else {
       alert("Novel not found.");
     }
@@ -61,7 +109,6 @@ async function loadNovel() {
   }
 }
 
-// Fetch and display chapters
 async function loadChapters() {
   const q = query(collection(db, `novels/${novelId}/published_chapters`), orderBy('order'));
   const snapshot = await getDocs(q);
@@ -73,22 +120,32 @@ async function loadChapters() {
 
   chapters = snapshot.docs.map(docSnap => ({
     ...docSnap.data(),
-    id: docSnap.id // ✅ Needed for comment logic
+    id: docSnap.id
   }));
+
+  chapterList.innerHTML = '';
 
   chapters.forEach((chapter, index) => {
     const li = document.createElement('li');
-    li.innerHTML = `<a href="#" data-index="${index}">Chapter ${chapter.number}: ${chapter.title || 'Untitled'}</a>`;
+    li.innerHTML = `<a href="?novelId=${novelId}&chapter=${chapter.number}" data-index="${index}">Chapter ${chapter.number}: ${chapter.title || 'Untitled'}</a>`;
     chapterList.appendChild(li);
   });
 
-  // Load the first chapter
-  loadChapterContent(0);
+  // ✅ Load chapter from URL if available, else load first
+  const chapterIndex = isNaN(chapterFromUrl)
+    ? 0
+    : chapters.findIndex(c => Number(c.number) === chapterFromUrl);
+
+  loadChapterContent(chapterIndex >= 0 ? chapterIndex : 0);
 }
 
-// Load selected chapter content
 function loadChapterContent(index) {
   const chapter = chapters[index];
+  if (!chapter) {
+    chapterContent.innerHTML = '<p>Chapter not found.</p>';
+    return;
+  }
+
   chapterContent.innerHTML = `
     <h2>Chapter ${chapter.number}: ${chapter.title || 'Untitled'}</h2>
     <p style="white-space:pre-line;">${chapter.body}</p>
@@ -97,15 +154,17 @@ function loadChapterContent(index) {
   loadComments();
 }
 
-// Event listener for chapter selection
 chapterList.addEventListener('click', (e) => {
-  const index = e.target.getAttribute('data-index');
-  if (index) {
-    loadChapterContent(index);
+  const target = e.target;
+  if (target.tagName === 'A') {
+    e.preventDefault();
+    const index = target.getAttribute('data-index');
+    if (index !== null) {
+      loadChapterContent(Number(index));
+    }
   }
 });
 
-// Event listener for "Next Chapter" button
 nextChapterBtn.addEventListener('click', () => {
   const nextIndex = currentChapterIndex + 1;
   if (nextIndex < chapters.length) {
@@ -115,7 +174,6 @@ nextChapterBtn.addEventListener('click', () => {
   }
 });
 
-// Event listener for comment submission
 commentForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const comment = commentText.value.trim();
@@ -125,11 +183,11 @@ commentForm.addEventListener('submit', async (e) => {
       await addDoc(commentRef, {
         text: comment,
         createdAt: new Date(),
-        userId: auth.currentUser.uid
+        userId: auth.currentUser?.uid || 'anonymous'
       });
 
       commentText.value = '';
-      loadComments(); // Reload comments
+      loadComments();
     } catch (error) {
       console.error("Error posting comment:", error);
       alert("Failed to post comment.");
@@ -137,7 +195,6 @@ commentForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Fetch and display comments
 async function loadComments() {
   const commentRef = collection(db, `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`);
   const snapshot = await getDocs(commentRef);
@@ -151,5 +208,4 @@ async function loadComments() {
   });
 }
 
-// Load the novel on page load
 window.onload = loadNovel;

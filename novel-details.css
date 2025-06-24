@@ -1,0 +1,218 @@
+/* Background + font */
+body {
+  font-family: 'Cormorant Garamond', serif;
+  margin: 0;
+  padding: 0;
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Floating menu compatibility */
+#floating-menu-container {
+  z-index: 1000;
+}
+
+/* Book Info Layout */
+.novel-container {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid #333;
+}
+
+.cover-section img {
+  max-width: 280px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.info-section {
+  flex: 1;
+  padding: 1rem 2rem;
+}
+
+.info-section h1 {
+  color: #A259FF;
+  margin-bottom: 0.5rem;
+}
+
+.meta p {
+  margin: 0.4rem 0;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.read-btn,
+.library-btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.read-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+.library-btn {
+  background: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  transition: background 0.3s;
+}
+
+.library-btn:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* Tabs and details */
+.details-extra {
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.7);
+  flex: 1;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid #fff;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.tab.active {
+  background: #A259FF;
+  border-color: #A259FF;
+}
+
+.tab-content {
+  color: #ccc;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #999;
+  margin-top: auto;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .novel-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  .info-section {
+    padding: 1rem 0;
+    text-align: center;
+  }
+
+  .buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+/* === FLOATING MENU === */
+.floating-menu {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+  z-index: 1000;
+  padding-right: 10px;
+}
+
+.menu-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: #000;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.3s ease;
+  overflow: visible;
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideInRight 0.5s forwards;
+}
+
+.menu-item:nth-child(1) { animation-delay: 0.2s; }
+.menu-item:nth-child(2) { animation-delay: 0.4s; }
+.menu-item:nth-child(3) { animation-delay: 0.6s; }
+.menu-item:nth-child(4) { animation-delay: 0.8s; }
+.menu-item:nth-child(5) { animation-delay: 1s; }
+
+.menu-item i {
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background:#007bff;
+}
+
+/* === Label pops out to the left === */
+.menu-item .label {
+  position: absolute;
+  right: 58px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.menu-item:hover .label,
+.menu-item.active .label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

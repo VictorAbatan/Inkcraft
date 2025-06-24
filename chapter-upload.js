@@ -95,7 +95,7 @@ onAuthStateChanged(auth, async user => {
         editingChapterId = null;
       } else {
         const newOrder = chapters.length + 1;
-        await addDoc(collection(db, `novels/${novelId}/chapters`), {
+        const docRef = await addDoc(collection(db, `novels/${novelId}/chapters`), {
           number: parseInt(number),
           title,
           body,
@@ -103,6 +103,7 @@ onAuthStateChanged(auth, async user => {
           createdAt: serverTimestamp(),
           order: newOrder
         });
+        editingChapterId = docRef.id; // ✅ Allow publishing immediately after save
         alert("Chapter saved.");
       }
 
@@ -145,7 +146,8 @@ onAuthStateChanged(auth, async user => {
       const publishedRef = doc(db, `novels/${novelId}/published_chapters/${editingChapterId}`);
       await setDoc(publishedRef, {
         ...chapterData,
-        publishedAt: serverTimestamp()
+        publishedAt: serverTimestamp(),
+        order: chapterData.order || 0
       });
 
       alert("Chapter published successfully.");

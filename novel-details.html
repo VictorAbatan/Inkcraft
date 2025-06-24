@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Novel Details | Inkcraft</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="novel-details.css" />
+</head>
+<body>
+
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <!-- Book Details Section -->
+  <section class="novel-container">
+    <div class="cover-section">
+      <img id="coverImage" src="" alt="Novel Cover">
+    </div>
+
+    <div class="info-section">
+      <h1 id="novelTitle">Loading...</h1>
+
+      <div class="meta">
+        <p><strong>Author:</strong> <span id="authorName">-</span></p>
+        <p><strong>Genre:</strong> <span id="genreList">-</span></p>
+        <p><strong>Chapters:</strong> <span id="chapterCount">-</span></p>
+        <p><strong>Views:</strong> <span id="viewCount">-</span></p>
+      </div>
+
+      <div class="buttons">
+        <a id="readButton" href="#" class="read-btn">READ</a>
+        <button class="library-btn"><i class="fas fa-plus"></i> ADD TO LIBRARY</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Synopsis and Table -->
+  <section class="details-extra">
+    <div class="tabs">
+      <button class="tab active" data-tab="about">About</button>
+      <button class="tab" data-tab="contents">Table of Contents</button>
+    </div>
+
+    <div class="tab-content" id="aboutTab">
+      <h2>Synopsis</h2>
+      <p id="novelSynopsis">Loading synopsis...</p>
+    </div>
+
+    <div class="tab-content" id="contentsTab" style="display: none;">
+      <h2>Chapters</h2>
+      <ul id="chapterList">
+        <!-- Chapter links will be injected here by novel-details.js -->
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="novel-details.js"></script>
+  <script src="Inkcraft main.js"></script>
+
+  <!-- ✅ Set read button href using novelId -->
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const novelId = params.get('novelId');
+    if (novelId) {
+      document.getElementById('readButton').href = `read-novel.html?novelId=${novelId}`;
+    }
+  </script>
+</body>
+</html>

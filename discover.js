@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
 
       bookDiv.addEventListener('click', () => {
-        window.location.href = `read-novel.html?novelId=${book.id}`;
+        window.location.href = `novel-details.html?novelId=${book.id}`;
       });
 
       catalog.appendChild(bookDiv);

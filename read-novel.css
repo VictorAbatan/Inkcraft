@@ -98,6 +98,7 @@ button:hover {
   float: left;
   padding: 1rem;
   background-color: #f4f4f4;
+  transition: all 0.3s ease;
 }
 
 .chapter-nav h2 {
@@ -133,6 +134,39 @@ button:hover {
   padding: 1rem;
   border-radius: 5px;
   margin-bottom: 1rem;
+}
+
+/* === Chapter Navigation Controls === */
+.nav-controls {
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem 0;
+}
+
+.nav-controls button {
+  flex: 1;
+  margin: 0 0.5rem;
+}
+
+/* === Font Size + Font Family Controls === */
+.font-controls {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.font-controls input[type="range"] {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.font-controls select {
+  padding: 6px 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 /* === Comments Section === */
@@ -172,4 +206,62 @@ body.dark-mode .comments-section form textarea {
 
 .comments-section form button {
   float: right;
+}
+
+/* === Mobile Toggle Button === */
+.mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 10px;
+  z-index: 1000;
+  padding: 8px 12px;
+  background-color: #444;
+  color: white;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+body.dark-mode .mobile-toggle {
+  background-color: #666;
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 768px) {
+  .chapter-nav {
+    display: none;
+    position: absolute;
+    top: 100px;
+    left: 0;
+    width: 100%;
+    background-color: #f4f4f4;
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  }
+
+  .chapter-nav.show {
+    display: block;
+  }
+
+  .reading-area {
+    width: 100%;
+    float: none;
+    padding: 1rem;
+  }
+
+  .nav-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .font-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mobile-toggle {
+    display: block;
+  }
 }

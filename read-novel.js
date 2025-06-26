@@ -12,6 +12,7 @@ const chapterFromUrl = parseInt(urlParams.get('chapter'), 10);
 let chapters = [];
 let currentChapterIndex = 0;
 let scrollMode = true;
+let pageChunks = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   const novelTitle = document.getElementById('novelTitle');
@@ -31,7 +32,71 @@ document.addEventListener('DOMContentLoaded', () => {
   const commentText = document.getElementById('commentText');
   const commentList = document.getElementById('commentList');
 
-  // ✅ Added: TOC Button Setup
+  const pageIndicator = document.createElement('div');
+  pageIndicator.id = 'pageIndicator';
+  pageIndicator.style.textAlign = 'center';
+  pageIndicator.style.margin = '1rem 0';
+  pageIndicator.style.fontWeight = 'bold';
+  chapterContent.parentElement.insertBefore(pageIndicator, chapterContent);
+
+  const pageNav = document.createElement('div');
+  pageNav.id = 'pageNav';
+  pageNav.style.display = 'flex';
+  pageNav.style.justifyContent = 'center';
+  pageNav.style.gap = '1rem';
+  pageNav.style.margin = '1rem 0';
+
+  const prevPageBtn = document.createElement('button');
+  prevPageBtn.textContent = '← Prev Page / Chapter';
+  const nextPageBtn = document.createElement('button');
+  nextPageBtn.textContent = 'Next Page / Chapter →';
+
+  pageNav.appendChild(prevPageBtn);
+  pageNav.appendChild(nextPageBtn);
+  chapterContent.parentElement.insertBefore(pageNav, pageIndicator.nextSibling);
+
+  let currentPageIndex = 0;
+
+  prevPageBtn.addEventListener('click', () => {
+    if (!scrollMode) {
+      if (currentPageIndex > 0) {
+        showPage(currentPageIndex - 1);
+      } else if (currentChapterIndex > 0) {
+        scrollToChapter(currentChapterIndex - 1, true);
+      }
+    } else {
+      if (currentChapterIndex > 0) scrollToChapter(currentChapterIndex - 1);
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    if (!scrollMode) {
+      if (currentPageIndex < pageChunks.length - 1) {
+        showPage(currentPageIndex + 1);
+      } else if (currentChapterIndex < chapters.length - 1) {
+        scrollToChapter(currentChapterIndex + 1);
+      }
+    } else {
+      if (currentChapterIndex < chapters.length - 1) scrollToChapter(currentChapterIndex + 1);
+    }
+  });
+
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  chapterContent.addEventListener('touchstart', (e) => {
+    if (!scrollMode) touchStartX = e.changedTouches[0].screenX;
+  });
+
+  chapterContent.addEventListener('touchend', (e) => {
+    if (!scrollMode) {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchEndX - touchStartX;
+      if (diff < -50) nextPageBtn.click();
+      else if (diff > 50) prevPageBtn.click();
+    }
+  });
+
   const chapterListBtn = document.createElement('button');
   chapterListBtn.id = 'tocBtn';
   chapterListBtn.innerHTML = '<i class="fas fa-list"></i>';
@@ -43,93 +108,78 @@ document.addEventListener('DOMContentLoaded', () => {
   chapterListPopup.classList.add('popup-panel');
   document.body.appendChild(chapterListPopup);
 
-  chapterListBtn.addEventListener('click', () => {
+  chapterListBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     chapterListPopup.classList.toggle('active');
     fontPopup.classList.remove('active');
     sizePopup.classList.remove('active');
   });
 
-  // Hide chapter popup if clicking outside
   document.addEventListener('click', (e) => {
-    if (!chapterListPopup.contains(e.target) && e.target !== chapterListBtn) {
-      chapterListPopup.classList.remove('active');
-    }
+    if (!fontPopup.contains(e.target) && e.target !== toggleFontBtn) fontPopup.classList.remove('active');
+    if (!sizePopup.contains(e.target) && e.target !== toggleSizeBtn) sizePopup.classList.remove('active');
+    if (!chapterListPopup.contains(e.target) && e.target !== chapterListBtn) chapterListPopup.classList.remove('active');
   });
 
-  // ✅ Scroll Progress
   const progressBar = document.createElement('div');
   progressBar.id = 'scrollProgress';
   document.body.appendChild(progressBar);
 
   document.addEventListener('scroll', () => {
+    if (!scrollMode) return;
     const height = document.body.scrollHeight - window.innerHeight;
     const scrolled = window.scrollY;
     const percent = Math.min((scrolled / height) * 100, 100);
     progressBar.textContent = `Progress: ${Math.round(percent)}%`;
   });
 
-  // ✅ Font Change
-  fontSelect.addEventListener('change', () => {
+  function applyFontSettings() {
     chapterContent.style.fontFamily = fontSelect.value;
-  });
-
-  // ✅ Font Size
-  fontSlider.addEventListener('input', () => {
     chapterContent.style.fontSize = `${fontSlider.value}px`;
-  });
+  }
 
-  // ✅ Scroll/Page Mode
+  fontSelect.addEventListener('change', applyFontSettings);
+  fontSlider.addEventListener('input', applyFontSettings);
+
   scrollToggleDock.addEventListener('click', () => {
     scrollMode = !scrollMode;
     document.body.classList.toggle('page-mode', !scrollMode);
+    scrollToChapter(currentChapterIndex);
   });
 
-  // ✅ Theme Toggle
   themeToggleDock.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
   });
 
-  // ✅ Popup Toggles
-  toggleFontBtn.addEventListener('click', () => {
+  toggleFontBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     fontPopup.classList.toggle('active');
     sizePopup.classList.remove('active');
     chapterListPopup.classList.remove('active');
   });
 
-  toggleSizeBtn.addEventListener('click', () => {
+  toggleSizeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     sizePopup.classList.toggle('active');
     fontPopup.classList.remove('active');
     chapterListPopup.classList.remove('active');
   });
 
-  document.addEventListener('click', (e) => {
-    if (!fontPopup.contains(e.target) && e.target !== toggleFontBtn) {
-      fontPopup.classList.remove('active');
-    }
-    if (!sizePopup.contains(e.target) && e.target !== toggleSizeBtn) {
-      sizePopup.classList.remove('active');
-    }
-  });
-
-  // ✅ Chapter Selector Dropdown
   chapterSelect.addEventListener('change', () => {
     const index = parseInt(chapterSelect.value, 10);
     if (!isNaN(index)) scrollToChapter(index);
   });
 
   prevChapterBtn.addEventListener('click', () => {
-    const prev = currentChapterIndex - 1;
-    if (prev >= 0) scrollToChapter(prev);
+    if (currentChapterIndex > 0) scrollToChapter(currentChapterIndex - 1);
     else alert('You are at the first chapter.');
   });
 
   nextChapterBtn.addEventListener('click', () => {
-    const next = currentChapterIndex + 1;
-    if (next < chapters.length) scrollToChapter(next);
+    if (currentChapterIndex < chapters.length - 1) scrollToChapter(currentChapterIndex + 1);
     else alert('No more chapters.');
   });
 
-  // ✅ Load Novel + Chapters
   loadNovel();
 
   async function loadNovel() {
@@ -137,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const novelRef = doc(db, 'novels', novelId);
       const snap = await getDoc(novelRef);
       if (!snap.exists()) return alert('Novel not found.');
-
       novelTitle.textContent = snap.data().title || 'Untitled Novel';
       await loadChapters();
     } catch (err) {
@@ -150,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const q = query(
         collection(db, `novels/${novelId}/published_chapters`),
-        orderBy('number') // 🔁 Enforce correct order
+        orderBy('number')
       );
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
@@ -159,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       chapters = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-
       chapterContent.innerHTML = '';
       chapterSelect.innerHTML = '';
       chapterListPopup.innerHTML = '';
@@ -169,15 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         opt.value = i;
         opt.textContent = `Chapter ${chapter.number}: ${chapter.title || 'Untitled'}`;
         chapterSelect.appendChild(opt);
-
-        const section = document.createElement('section');
-        section.id = `chapter-${i}`;
-        section.classList.add('flip-page');
-        section.innerHTML = `
-          <h2>Chapter ${chapter.number}: ${chapter.title || 'Untitled'}</h2>
-          <p>${chapter.body}</p>
-        `;
-        chapterContent.appendChild(section);
 
         const link = document.createElement('div');
         link.textContent = `Chapter ${chapter.number}: ${chapter.title || 'Untitled'}`;
@@ -202,23 +241,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function scrollToChapter(index) {
-    const target = document.getElementById(`chapter-${index}`);
-    if (!target) return;
+  function splitIntoChunks(text, maxWordsPerPage = 400) {
+    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim() !== '');
+    const chunks = [];
+    let currentChunk = '';
+    let wordCount = 0;
 
-    if (document.body.classList.contains('page-mode')) {
-      target.classList.remove('flip-page');
-      void target.offsetWidth;
-      target.classList.add('flip-page');
+    for (let paragraph of paragraphs) {
+      const words = paragraph.split(/\s+/);
+      if (wordCount + words.length > maxWordsPerPage && currentChunk.trim() !== '') {
+        chunks.push(currentChunk.trim());
+        currentChunk = paragraph;
+        wordCount = words.length;
+      } else {
+        currentChunk += '\n\n' + paragraph;
+        wordCount += words.length;
+      }
     }
 
-    target.scrollIntoView({ behavior: 'smooth' });
+    if (currentChunk.trim() !== '') {
+      chunks.push(currentChunk.trim());
+    }
+
+    return chunks;
+  }
+
+  function scrollToChapter(index, goToLastPage = false) {
     currentChapterIndex = index;
     chapterSelect.value = index;
+    chapterContent.innerHTML = '';
+    pageChunks = [];
+
+    const chapter = chapters[index];
+    const chunks = scrollMode ? [chapter.body] : splitIntoChunks(chapter.body);
+
+    chunks.forEach((chunk, i) => {
+      const section = document.createElement('section');
+      section.classList.add('flip-page');
+      section.innerHTML = `
+        <h2>Chapter ${chapter.number}: ${chapter.title || 'Untitled'} ${!scrollMode && chunks.length > 1 ? `(Page ${i + 1})` : ''}</h2>
+        <p>${chunk.replace(/\n/g, '<br>')}</p>
+      `;
+      section.style.display = scrollMode || i === 0 ? 'block' : 'none';
+      chapterContent.appendChild(section);
+      pageChunks.push(section);
+    });
+
+    currentPageIndex = goToLastPage ? pageChunks.length - 1 : 0;
+    if (!scrollMode) showPage(currentPageIndex);
+
+    updatePageUI();
+    applyFontSettings();
     loadComments();
   }
 
-  // ✅ Submit Comment
+  function showPage(index) {
+    pageChunks.forEach((sec, i) => {
+      sec.style.display = i === index ? 'block' : 'none';
+    });
+    currentPageIndex = index;
+    updatePageUI();
+  }
+
+  function updatePageUI() {
+    if (!scrollMode) {
+      pageIndicator.textContent = `Page ${currentPageIndex + 1} / ${pageChunks.length}`;
+    } else {
+      pageIndicator.textContent = `Chapter ${currentChapterIndex + 1} / ${chapters.length}`;
+    }
+  }
+
   commentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = commentText.value.trim();
@@ -249,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ✅ Load Comments
   async function loadComments() {
     try {
       const ref = collection(

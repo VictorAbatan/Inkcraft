@@ -64,6 +64,9 @@ header {
 #chapterContent p {
   white-space: pre-line;
   line-height: 1.6;
+  margin: 1rem 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* === Chapter Nav Buttons === */
@@ -142,7 +145,7 @@ header {
   border-radius: 50%;
   font-size: 1.2rem;
   cursor: pointer;
-  z-index: 999;
+  z-index: 1000;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
@@ -162,7 +165,7 @@ header {
   flex-direction: column;
   gap: 10px;
   padding: 10px;
-  z-index: 999;
+  z-index: 1001;
 }
 
 .menu-popup.show {
@@ -193,8 +196,10 @@ header {
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 1rem;
-  z-index: 998;
+  z-index: 1002;
   display: none;
+  width: 220px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .popup-panel.active {
@@ -208,12 +213,67 @@ header {
   padding: 0.4rem;
 }
 
-/* === Page Mode Columns === */
+/* === Page Mode Layout === */
 body.page-mode #chapterContent {
-  column-width: 600px;
-  column-gap: 2rem;
-  padding: 2rem;
+  display: flex;
+  overflow-x: hidden;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  scroll-behavior: smooth;
+  justify-content: center;
+}
+
+body.page-mode #chapterContent > section {
+  display: none;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: #fefefe;
+  padding: 1.5rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
   white-space: normal;
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+body.page-mode #chapterContent > section.active,
+body.page-mode #chapterContent > section.active-pair {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  body.page-mode #chapterContent {
+    justify-content: space-between;
+    gap: 4%;
+  }
+
+  body.page-mode #chapterContent > section.active,
+  body.page-mode #chapterContent > section.active-pair {
+    display: inline-block;
+    width: 48%;
+    vertical-align: top;
+  }
+}
+
+@media (max-width: 767px) {
+  body.page-mode #chapterContent > section.active {
+    width: 95vw;
+    padding: 1rem;
+  }
+}
+
+body.page-mode.dark-mode #chapterContent > section {
+  background: #1a1a1a;
+}
+
+/* === Page Indicator === */
+#pageIndicator {
+  font-size: 0.95rem;
+  margin-top: 1rem;
 }
 
 /* === Dark Mode === */
@@ -259,4 +319,23 @@ body.dark-mode #chapterSelect {
 #chapterListPopup {
   max-height: 200px;
   overflow-y: auto;
+}
+
+/* ✅ Always show pageNav in both scroll and page modes */
+#pageNav {
+  margin-bottom: 2rem;
+}
+
+#pageNav button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#pageNav button:hover {
+  background-color: #0056b3;
 }

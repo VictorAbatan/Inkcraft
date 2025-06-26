@@ -29,9 +29,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const data = docSnap.data();
-  document.getElementById('coverImage').src = data.cover || 'default-cover.jpg';
+  document.getElementById('coverImage').src = data.cover || data.coverUrl || 'default-cover.jpg';
   document.getElementById('novelTitle').textContent = data.title || 'Untitled';
-  document.getElementById('authorName').textContent = data.author || 'Unknown';
+
+  let authorName = 'Unknown';
+  if (data.submittedBy) {
+    try {
+      const authorRef = doc(db, 'authors', data.submittedBy);
+      const authorSnap = await getDoc(authorRef);
+      if (authorSnap.exists()) {
+        const authorData = authorSnap.data();
+        authorName = authorData.name || authorData.penName || authorName;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch author name:', err);
+    }
+  }
+  document.getElementById('authorName').textContent = authorName;
+
   document.getElementById('genreList').textContent = (data.genres || []).join(', ') || 'Unspecified';
   document.getElementById('viewCount').textContent = data.views || 'N/A';
   document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
@@ -54,7 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const chapter = docSnap.data();
         const chapterNumber = chapter.number || 1;
         const chapterTitle = chapter.title || `Chapter ${chapterNumber}`;
-        // ✅ Use real chapter number in URL
         const li = document.createElement('li');
         li.innerHTML = `<a href="read-novel.html?novelId=${novelId}&chapter=${chapterNumber}">📖 ${chapterTitle}</a>`;
         ul.appendChild(li);

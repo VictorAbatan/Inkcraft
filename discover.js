@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const authorSnap = await getDoc(authorRef);
           if (authorSnap.exists()) {
             const authorData = authorSnap.data();
-            authorName = authorData.name || authorName;
+            authorName = authorData.name || authorData.penName || authorName;
           }
         } catch (err) {
           console.warn(`Failed to fetch author for ${data.title}:`, err);
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       allBooks.push({
         id: docSnap.id,
         title: data.title || 'Untitled',
-        cover: data.cover || 'default-cover.jpg',
+        cover: data.cover || data.coverUrl || 'default-cover.jpg',
         author: authorName
       });
     }

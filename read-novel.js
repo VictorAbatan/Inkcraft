@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function splitIntoChunks(text, maxWordsPerPage = 400) {
+  function splitIntoChunks(text, maxWordsPerPage = window.innerWidth <= 768 ? 200 : 400) {
     const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim() !== '');
     const chunks = [];
     let currentChunk = '';

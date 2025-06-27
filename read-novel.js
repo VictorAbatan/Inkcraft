@@ -1,7 +1,7 @@
 import { app, db } from './firebase-config.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
-  doc, getDoc, collection, getDocs, query, orderBy, addDoc
+  doc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
@@ -323,14 +323,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      const commentData = {
+        text,
+        userId: user.uid,
+        userDisplayName: user.displayName || 'Anonymous',
+        userPhotoURL: user.photoURL || '',
+        createdAt: serverTimestamp()
+      };
+
       const ref = collection(
         db,
         `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`
       );
-      await addDoc(ref, {
-        text,
-        userId: user.uid,
-        createdAt: new Date()
+      await addDoc(ref, commentData);
+
+      // Also send to author's inbox for future reply system
+      await addDoc(collection(db, `inbox`), {
+        ...commentData,
+        novelId,
+        chapterId: chapters[currentChapterIndex].id,
+        type: 'comment'
       });
 
       commentText.value = '';
@@ -353,7 +365,9 @@ document.addEventListener('DOMContentLoaded', () => {
       snap.forEach(doc => {
         const comment = doc.data();
         const li = document.createElement('li');
-        li.textContent = comment.text;
+        li.innerHTML = `
+          <strong>${comment.userDisplayName || 'Reader'}</strong>: ${comment.text}
+        `;
         commentList.appendChild(li);
       });
     } catch (err) {

@@ -5,8 +5,10 @@ import {
   collection,
   getDocs,
   query,
-  orderBy
+  orderBy,
+  setDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load floating menu
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('floating-menu-container').innerHTML = html;
     });
 
+  const auth = getAuth(app);
   const urlParams = new URLSearchParams(window.location.search);
   const novelId = urlParams.get('novelId');
   if (!novelId) return;
@@ -94,4 +97,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById(id + 'Tab').style.display = 'block';
     });
   });
+
+  // ✅ Add to Library Feature
+  const addToLibraryBtn = document.getElementById('addToLibraryBtn');
+  if (addToLibraryBtn) {
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        addToLibraryBtn.disabled = true;
+        addToLibraryBtn.textContent = 'Login to Save';
+        return;
+      }
+
+      const libRef = doc(db, `users/${user.uid}/library/${novelId}`);
+      const libSnap = await getDoc(libRef);
+
+      if (libSnap.exists()) {
+        addToLibraryBtn.textContent = '✔ In Library';
+        addToLibraryBtn.disabled = true;
+      }
+
+      addToLibraryBtn.addEventListener('click', async () => {
+        try {
+          await setDoc(libRef, {
+            novelId: novelId,
+            title: data.title || 'Untitled',
+            cover: data.cover || data.coverUrl || '',
+            addedAt: new Date()
+          });
+          addToLibraryBtn.textContent = '✔ Added';
+          addToLibraryBtn.disabled = true;
+        } catch (err) {
+          console.error('Failed to add to library:', err);
+          alert('Error saving novel to library.');
+        }
+      });
+    });
+  }
 });

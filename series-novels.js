@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.classList.add('novel-card');
 
       card.innerHTML = `
-        <img src="${novel.coverurl || 'default-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover" />
+        <img src="${novel.coverUrl || 'default-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover" />
         <div class="novel-details">
           <h3 class="novel-title">${novel.title || 'Untitled'}</h3>
           <p class="novel-genre">${Array.isArray(novel.genres) ? novel.genres.join(', ') : novel.genre || ''}</p>
@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
 
-      // Clicking card navigates to the novel read page (adjust URL as needed)
+      // Clicking card navigates to the novel details page with correct param name
       card.addEventListener('click', () => {
-        window.location.href = `read-novel.html?id=${novelDoc.id}`;
+        window.location.href = `novel-details.html?novelId=${novelDoc.id}`;
       });
 
       novelsList.appendChild(card);

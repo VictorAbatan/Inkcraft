@@ -2,7 +2,6 @@ import { app, db } from './firebase-config.js';
 import {
   collection,
   getDocs,
-  getDoc,
   doc,
   query,
   where,
@@ -35,30 +34,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const snapshot = await getDocs(q);
     allBooks = [];
 
-    for (const docSnap of snapshot.docs) {
+    snapshot.docs.forEach(docSnap => {
       const data = docSnap.data();
-      let authorName = 'Unknown Author';
-
-      if (data.submittedBy) {
-        try {
-          const authorRef = doc(db, 'authors', data.submittedBy);
-          const authorSnap = await getDoc(authorRef);
-          if (authorSnap.exists()) {
-            const authorData = authorSnap.data();
-            authorName = authorData.name || authorData.penName || authorName;
-          }
-        } catch (err) {
-          console.warn(`Failed to fetch author for ${data.title}:`, err);
-        }
-      }
 
       allBooks.push({
         id: docSnap.id,
         title: data.title || 'Untitled',
         cover: data.cover || data.coverUrl || 'default-cover.jpg',
-        author: authorName
+        author: data.authorName || 'Unknown Author'  // ✅ Now using denormalized field
       });
-    }
+    });
 
     renderBooks(allBooks);
   }

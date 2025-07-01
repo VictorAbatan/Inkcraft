@@ -74,6 +74,16 @@ form textarea {
   min-height: 120px;
 }
 
+/* ✅ Image Preview */
+#cover-preview {
+  display: none;
+  margin-top: 1rem;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+/* === Submit Button === */
 button[type="submit"] {
   background-color: #007bff;
   color: white;

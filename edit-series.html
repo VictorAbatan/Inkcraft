@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Series | Inkcraft</title>
+  <link rel="stylesheet" href="create-series.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Edit Series</h1>
+    <p>Update the details of your existing series</p>
+  </header>
+
+  <main>
+    <form id="edit-series-form">
+      <label for="series-title">Series Title</label>
+      <input type="text" id="series-title" required />
+
+      <label for="series-description">Series Description</label>
+      <textarea id="series-description" rows="4" required></textarea>
+
+      <label for="series-cover">Change Series Cover (optional)</label>
+      <input type="file" id="series-cover" accept="image/*" />
+
+      <img id="cover-preview" src="" alt="Cover Preview" style="max-width: 200px; margin-top: 10px; display: none; border-radius: 8px;" />
+
+      <button type="submit">Save Changes</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="edit-series.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

@@ -19,11 +19,18 @@
 
   <main>
     <form id="series-form">
-      <label for="title">Series Title</label>
-      <input type="text" id="title" required />
+      <label for="series-title">Series Title</label>
+      <input type="text" id="series-title" required />
 
-      <label for="description">Series Description</label>
-      <textarea id="description" rows="4" required></textarea>
+      <label for="series-description">Series Description</label>
+      <textarea id="series-description" rows="4" required></textarea>
+
+      <!-- ✅ Cover Image Input -->
+      <label for="series-cover">Series Cover Image</label>
+      <input type="file" id="series-cover" accept="image/*" />
+
+      <!-- ✅ Cover Image Preview -->
+      <img id="cover-preview" style="margin-top: 1rem; max-width: 300px; display: none; border-radius: 8px;" />
 
       <button type="submit">Create Series</button>
     </form>
@@ -35,5 +42,26 @@
 
   <script type="module" src="create-series.js"></script>
   <script type="module" src="firebase-config.js"></script>
+
+  <!-- ✅ Preview Script -->
+  <script>
+    const fileInput = document.getElementById('series-cover');
+    const previewImg = document.getElementById('cover-preview');
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>

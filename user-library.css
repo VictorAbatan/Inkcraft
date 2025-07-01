@@ -110,13 +110,16 @@ body {
 /* Grid layout */
 #libraryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 2rem;
   padding: 1rem;
+  justify-items: center;
 }
 
 /* Novel card */
 .novel-card {
+  width: 100%;
+  max-width: 240px; /* ✅ Resize limit */
   background-color: rgba(0, 0, 0, 0.6);
   border-radius: 10px;
   overflow: hidden;
@@ -135,7 +138,7 @@ body {
 
 .novel-card img {
   width: 100%;
-  height: 240px;
+  height: 200px; /* ✅ Shrink image height */
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 0.5rem;
@@ -178,8 +181,12 @@ body {
     font-size: 2rem;
   }
 
+  .novel-card {
+    max-width: 90%;
+  }
+
   .novel-card img {
-    height: 200px;
+    height: 180px;
   }
 
   .floating-menu {

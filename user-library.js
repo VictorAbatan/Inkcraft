@@ -1,6 +1,6 @@
 import { app, db } from './firebase-config.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
 
@@ -40,27 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        document.getElementById('libraryGrid').innerHTML = '<p>No library data found.</p>';
-        return;
-      }
-
-      const data = userSnap.data();
-      const library = data.library || [];
-
-      // ✅ Debug: log library contents
-      console.log('Library contents:', library);
-
-      if (library.length === 0) {
-        document.getElementById('libraryGrid').innerHTML = '<p>Your library is empty.</p>';
-        return;
-      }
+      const libraryRef = collection(db, 'users', user.uid, 'library');
+      const librarySnap = await getDocs(libraryRef);
 
       const grid = document.getElementById('libraryGrid');
-      library.forEach(async (novelId, index) => {
+      const emptyMessage = document.getElementById('emptyMessage');
+
+      if (librarySnap.empty) {
+        emptyMessage.style.display = 'block';
+        return;
+      }
+
+      emptyMessage.style.display = 'none';
+
+      let index = 0;
+      for (const docSnap of librarySnap.docs) {
+        const novelId = docSnap.id;
         const novelRef = doc(db, 'novels', novelId);
         const novelSnap = await getDoc(novelRef);
 
@@ -75,11 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="novel-details.html?novelId=${novelId}">View Details</a>
           `;
           grid.appendChild(card);
+          index++;
         }
-      });
+      }
     } catch (err) {
       console.error('Error loading library:', err);
-      document.getElementById('libraryGrid').innerHTML = '<p>Failed to load your library.</p>';
+      document.getElementById('emptyMessage').textContent = 'Failed to load your library.';
+      document.getElementById('emptyMessage').style.display = 'block';
     }
   });
 });

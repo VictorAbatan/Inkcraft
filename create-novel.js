@@ -8,6 +8,7 @@ import {
   setDoc,
   serverTimestamp,
   getDocs,
+  getDoc,
   query,
   collection,
   where
@@ -110,6 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const coverFile = coverInput.files[0];
     const coverUrl = coverPreview.src;
 
+    // ✅ Fetch author's display name
+    let authorName = 'Unknown Author';
+    try {
+      const authorRef = doc(db, 'authors', currentUser.uid);
+      const authorSnap = await getDoc(authorRef);
+      if (authorSnap.exists()) {
+        const authorData = authorSnap.data();
+        authorName = authorData.name || authorData.penName || authorName;
+      }
+    } catch (error) {
+      console.warn("Could not fetch author name:", error);
+    }
+
     const novelData = {
       title,
       genres,
@@ -118,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
       coverUrl,
       status: 'pending',
       submittedBy: currentUser.uid,
-      submittedAt: serverTimestamp()
+      submittedAt: serverTimestamp(),
+      authorName // ✅ Added here
     };
 
     const novelId = `novel_${Date.now()}`;

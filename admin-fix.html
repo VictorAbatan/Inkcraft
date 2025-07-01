@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Fix Tool</title>
+  <style>
+    body {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      padding: 2rem;
+    }
+    pre {
+      background: #222;
+      padding: 1rem;
+      border-radius: 5px;
+      max-height: 400px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Admin Fix: Add Missing Author Names</h1>
+  <button id="runFix">Run Fix</button>
+  <pre id="logOutput">Console output will appear here...</pre>
+
+  <!-- Firebase & Fix Script -->
+  <script type="module">
+    import { app, db } from './firebase-config.js';
+    import {
+      collection, getDocs, doc, getDoc, updateDoc, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const output = document.getElementById('logOutput');
+    const log = (text) => {
+      output.textContent += `\n${text}`;
+      console.log(text);
+    };
+
+    document.getElementById('runFix').addEventListener('click', async () => {
+      log('🔍 Starting patch...');
+
+      const novelsRef = collection(db, 'novels');
+      const q = query(novelsRef, where('status', '==', 'published'));
+      const snapshot = await getDocs(q);
+
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+
+        if (data.authorName) {
+          log(`✅ Skipped "${data.title}" (already has authorName)`);
+          continue;
+        }
+
+        const novelId = docSnap.id;
+        const submittedBy = data.submittedBy;
+
+        if (!submittedBy) {
+          log(`⚠️ Skipped "${data.title}" (no submittedBy)`);
+          continue;
+        }
+
+        try {
+          const authorRef = doc(db, 'authors', submittedBy);
+          const authorSnap = await getDoc(authorRef);
+
+          if (authorSnap.exists()) {
+            const authorData = authorSnap.data();
+            const authorName = authorData.name || authorData.penName || 'Anonymous';
+
+            await updateDoc(doc(db, 'novels', novelId), {
+              authorName
+            });
+
+            log(`✅ Updated "${data.title}" with author: ${authorName}`);
+          } else {
+            log(`⚠️ No author profile for "${data.title}"`);
+          }
+        } catch (err) {
+          log(`❌ Error updating "${data.title}": ${err.message}`);
+        }
+      }
+
+      log('\n🎉 Finished patching all novels.');
+    });
+  </script>
+</body>
+</html>

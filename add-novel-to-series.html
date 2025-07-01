@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Novel to Series | Inkcraft</title>
+  <link rel="stylesheet" href="create-series.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <header>
+    <h1>Add Novel to Series</h1>
+    <p>Select from your approved novels to add to this series</p>
+  </header>
+
+  <main>
+    <form id="add-novel-form">
+      <label for="novel-select">Choose a Novel</label>
+      <select id="novel-select" required>
+        <option value="">-- Select a Novel --</option>
+        <!-- Options will be dynamically inserted here -->
+      </select>
+
+      <button type="submit">Add to Series</button>
+    </form>
+
+    <!-- Button to view novels in this series -->
+    <div style="margin-top: 20px;">
+      <button id="view-series-novels-btn" style="font-weight: bold; color: #0066cc; cursor: pointer;">
+        View Novels in this Series
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="add-novel-to-series.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const seriesId = params.get('id');
+      const btn = document.getElementById('view-series-novels-btn');
+
+      if (seriesId && btn) {
+        btn.addEventListener('click', () => {
+          window.location.href = `series-novels.html?id=${encodeURIComponent(seriesId)}`;
+        });
+      } else if (btn) {
+        btn.disabled = true;
+        btn.style.color = '#999';
+        btn.style.cursor = 'default';
+      }
+    });
+  </script>
+</body>
+</html>

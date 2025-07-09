@@ -93,47 +93,6 @@ header {
   background-color: #0056b3;
 }
 
-/* === Comments Section === */
-.comments-section {
-  background: #f4f4f4;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 2rem;
-}
-
-.comments-section h3 {
-  margin-bottom: 1rem;
-}
-
-.comments-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem;
-}
-
-.comments-section ul li {
-  background: #fff;
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-.comments-section textarea {
-  width: 100%;
-  height: 100px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  font-size: 1rem;
-  resize: vertical;
-}
-
-.comments-section button {
-  margin-top: 0.5rem;
-  float: right;
-}
-
 /* === Floating Menu Button === */
 .menu-button {
   position: fixed;
@@ -206,11 +165,107 @@ header {
   display: block;
 }
 
+/* === Added fallback for chapter popup visibility */
+#chapterListPopup.active {
+  display: block;
+}
+
 .popup-panel select,
 .popup-panel input[type="range"] {
   width: 100%;
   font-size: 1rem;
   padding: 0.4rem;
+}
+
+/* === Comments Popup Panel === */
+.comments-popup {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comments-popup h3 {
+  margin-top: 0;
+}
+
+.comments-popup ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.comments-popup ul li {
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.comments-popup textarea {
+  width: 100%;
+  height: 80px;
+  resize: vertical;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.comments-popup button {
+  float: right;
+  margin-top: 0.5rem;
+  padding: 6px 12px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.comments-popup button:hover {
+  background: #0056b3;
+}
+
+/* === 👤 Avatar and Reply Styles === */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.3rem;
+}
+
+.reply-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 0.4rem;
+}
+
+.reply-btn:hover {
+  text-decoration: underline;
+}
+
+.replies {
+  list-style: none;
+  padding-left: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.replies li {
+  background: #efefef;
+  padding: 0.4rem;
+  border-radius: 4px;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
 }
 
 /* === Page Mode Layout === */
@@ -294,25 +349,19 @@ body.dark-mode .popup-panel {
   color: #f1f1f1;
 }
 
-body.dark-mode .comments-section {
-  background: #2a2a2a;
-}
-
-body.dark-mode .comments-section ul li {
+body.dark-mode .comments-popup ul li {
   background: #1e1e1e;
   border-color: #444;
 }
 
-body.dark-mode textarea {
+body.dark-mode .comments-popup textarea {
   background: #333;
   color: #fff;
   border-color: #555;
 }
 
-body.dark-mode #chapterSelect {
-  background: #1e1e1e;
-  color: #fff;
-  border-color: #444;
+body.dark-mode .replies li {
+  background: #2a2a2a;
 }
 
 /* === Chapter List Popup Styling === */

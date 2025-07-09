@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const statRejected = document.getElementById('stat-rejected');
   const statPending = document.getElementById('stat-pending');
   const approvedContainer = document.getElementById('approved-novels-container');
+  const pendingVersesContainer = document.getElementById('pending-verses-list'); // ✅ New
+  const approvedVersesContainer = document.getElementById('approved-verses-container'); // ✅ New
 
   darkToggle.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
@@ -91,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
               try {
                 await updateDoc(doc(db, 'pending_novels', id), { status: 'approved' });
 
-                // ✅ Set to novels collection with exact same ID for edit & chapter upload consistency
                 await setDoc(doc(db, 'novels', id), {
                   ...novel,
                   status: 'published',
@@ -146,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStats();
       updateNotif();
 
+      // ✅ Load and display approved novels
       const publishedSnapshot = await getDocs(collection(db, 'novels'));
 
       if (publishedSnapshot.empty) {
@@ -213,6 +215,100 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           approvedContainer.appendChild(card);
+        });
+      }
+
+      // ✅ Load Pending Verses
+      const verseSnapshot = await getDocs(collection(db, 'pending_verses'));
+      if (verseSnapshot.empty) {
+        pendingVersesContainer.innerHTML = '<p>No pending verses found.</p>';
+      } else {
+        pendingVersesContainer.innerHTML = '';
+        verseSnapshot.forEach(docSnap => {
+          const verse = docSnap.data();
+          const id = docSnap.id;
+
+          const card = document.createElement('div');
+          card.className = 'verse-card';
+          card.innerHTML = `
+            <img src="${verse.coverURL || 'placeholder.jpg'}" alt="Verse Cover" />
+            <div class="verse-details">
+              <h3>${verse.title}</h3>
+              <p>${verse.description}</p>
+              <div class="action-buttons">
+                <button class="approve-btn">Approve</button>
+                <button class="reject-btn">Reject</button>
+              </div>
+            </div>
+          `;
+
+          card.querySelector('.approve-btn').addEventListener('click', async () => {
+            try {
+              await setDoc(doc(db, 'verses', id), {
+                ...verse,
+                approvedAt: serverTimestamp()
+              });
+
+              await deleteDoc(doc(db, 'pending_verses', id));
+
+              await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
+                type: 'verse_approval',
+                message: `Your verse "${verse.title}" has been approved.`,
+                timestamp: serverTimestamp()
+              });
+
+              card.remove();
+              notifications++;
+              updateNotif();
+            } catch (err) {
+              console.error("Error approving verse:", err);
+              alert("Failed to approve verse.");
+            }
+          });
+
+          card.querySelector('.reject-btn').addEventListener('click', async () => {
+            try {
+              await deleteDoc(doc(db, 'pending_verses', id));
+
+              await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
+                type: 'verse_rejection',
+                message: `Your verse "${verse.title}" was rejected.`,
+                timestamp: serverTimestamp()
+              });
+
+              card.remove();
+              notifications++;
+              updateNotif();
+            } catch (err) {
+              console.error("Error rejecting verse:", err);
+              alert("Failed to reject verse.");
+            }
+          });
+
+          pendingVersesContainer.appendChild(card);
+        });
+      }
+
+      // ✅ Load Approved Verses
+      const approvedVerseSnapshot = await getDocs(collection(db, 'verses'));
+      if (approvedVerseSnapshot.empty) {
+        approvedVersesContainer.innerHTML = '<p>No approved verses yet.</p>';
+      } else {
+        approvedVersesContainer.innerHTML = '';
+        approvedVerseSnapshot.forEach(docSnap => {
+          const verse = docSnap.data();
+
+          const card = document.createElement('div');
+          card.className = 'approved-verse-card';
+          card.innerHTML = `
+            <img src="${verse.coverURL || 'placeholder.jpg'}" alt="Approved Verse Cover" />
+            <div class="verse-details">
+              <h3>${verse.title}</h3>
+              <p>${verse.description}</p>
+            </div>
+          `;
+
+          approvedVersesContainer.appendChild(card);
         });
       }
 

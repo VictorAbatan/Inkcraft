@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+header h1 {
+  font-size: 2.2rem;
+  color: #00aced;
+  margin-bottom: 0.4rem;
+}
+
+header p {
+  font-style: italic;
+  color: #ccc;
+}
+
+footer {
+  text-align: center;
+  margin-top: auto;
+  padding: 1rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.verse-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+  max-width: 900px;
+  margin: auto;
+}
+
+.verse-card {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+  max-width: 220px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 360px;
+}
+
+.verse-card:hover {
+  transform: scale(1.02);
+}
+
+.verse-cover {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.card-content {
+  padding: 1rem;
+  flex: 1;
+}
+
+.card-content h2 {
+  margin: 0 0 0.5rem;
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.card-content p {
+  font-size: 0.95rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+.verse-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.verse-actions .btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-family: 'Cormorant Garamond', serif;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  display: inline-block;
+  border: none;
+  text-align: center;
+}
+
+.btn-add {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.btn-add:hover {
+  background-color: #218838;
+}
+
+.btn-edit {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.btn-edit:hover {
+  background-color: #0056b3;
+}

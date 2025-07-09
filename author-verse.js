@@ -12,7 +12,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
-  const container = document.getElementById('series-list');
+  const container = document.getElementById('verse-list');
 
   // Load floating menu
   fetch('author-floating-menu.html')
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const menuContainer = document.getElementById('floating-menu-container');
       if (menuContainer) {
         menuContainer.innerHTML = html;
-
         const items = menuContainer.querySelectorAll('.menu-item');
         items.forEach((item, index) => {
           setTimeout(() => item.classList.add('show'), index * 100);
@@ -39,18 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      alert('You must be logged in to view your series.');
+      alert('You must be logged in to view your verses.');
       window.location.href = 'login.html';
       return;
     }
 
-    const q = query(collection(db, 'series'), where('createdBy', '==', user.uid));
+    const q = query(collection(db, 'verses'), where('createdBy', '==', user.uid));
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      if (container) {
-        container.innerHTML = '<p style="text-align: center; font-style: italic;">No series found.</p>';
-      }
+      container.innerHTML = `<p style="text-align:center; font-style:italic;">No verses created yet.</p>`;
       return;
     }
 
@@ -58,10 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = docSnap.data();
       const id = docSnap.id;
       const card = document.createElement('div');
-      card.className = 'series-card';
+      card.className = 'verse-card';
 
       const coverImage = data.coverImageURL
-        ? `<img src="${data.coverImageURL}" alt="Series Cover" class="series-cover" />`
+        ? `<img src="${data.coverImageURL}" alt="Verse Cover" class="verse-cover" />`
         : '';
 
       card.innerHTML = `
@@ -70,10 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <h2>${data.title}</h2>
           <p>${data.description}</p>
         </div>
-        <div class="series-actions">
-          <a href="edit-series.html?id=${id}" class="btn btn-edit">Edit</a>
-          <a href="add-novel-to-series.html?id=${id}" class="btn btn-add-novel">Add Novel</a>
-          <a href="series-novels.html?id=${id}" class="btn btn-view">View Novels</a>
+        <div class="verse-actions">
+          <a href="add-to-verse.html?id=${id}" class="btn btn-add">Add Content</a>
+          <a href="edit-verse.html?id=${id}" class="btn btn-edit">Edit</a>
         </div>
       `;
       container.appendChild(card);

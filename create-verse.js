@@ -28,10 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = html;
 
         const items = container.querySelectorAll('.menu-item');
-    items.forEach((item, index) => {
-  setTimeout(() => item.classList.add('show'), index * 300); // 300ms between items
-});
-
+        items.forEach((item, index) => {
+          setTimeout(() => item.classList.add('show'), index * 300); // 300ms between items
+        });
 
         const currentPath = window.location.pathname.split('/').pop().toLowerCase();
         container.querySelectorAll('a').forEach(link => {
@@ -100,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const docId = `${uid}_${Date.now()}`;
-        const verseRef = doc(db, `pending_verses/${docId}`);
+        const verseRef = doc(db, `pending_verses/${docId}`); // ✅ UPDATED COLLECTION PATH
         await setDoc(verseRef, verseData);
 
         alert('Verse submitted for review. You’ll be notified once it is approved.');

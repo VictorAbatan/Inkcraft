@@ -11,6 +11,7 @@ const chapterFromUrl = parseInt(urlParams.get('chapter'), 10);
 
 let chapters = [];
 let currentChapterIndex = 0;
+let currentPageIndex = 0;
 let scrollMode = true;
 let pageChunks = [];
 
@@ -22,122 +23,216 @@ document.addEventListener('DOMContentLoaded', () => {
   const chapterSelect = document.getElementById('chapterSelect');
   const fontSelect = document.getElementById('fontSelect');
   const fontSlider = document.getElementById('fontSizeRange');
-  const toggleFontBtn = document.getElementById('toggleFontBtn');
-  const toggleSizeBtn = document.getElementById('toggleSizeBtn');
-  const fontPopup = document.getElementById('fontPopup');
-  const sizePopup = document.getElementById('sizePopup');
   const scrollToggleDock = document.getElementById('scrollToggleDock');
   const themeToggleDock = document.getElementById('themeToggleDock');
   const commentForm = document.getElementById('commentForm');
   const commentText = document.getElementById('commentText');
   const commentList = document.getElementById('commentList');
 
-  const pageIndicator = document.createElement('div');
-  pageIndicator.id = 'pageIndicator';
-  pageIndicator.style.textAlign = 'center';
-  pageIndicator.style.margin = '1rem 0';
-  pageIndicator.style.fontWeight = 'bold';
-  chapterContent.parentElement.insertBefore(pageIndicator, chapterContent);
+  const fontPopup = document.getElementById('fontPopup');
+  const sizePopup = document.getElementById('sizePopup');
+  const chapterListPopup = document.getElementById('chapterListPopup');
+  const commentsPopup = document.getElementById('commentsPopup');
 
-  const pageNav = document.createElement('div');
-  pageNav.id = 'pageNav';
-  pageNav.style.display = 'flex';
-  pageNav.style.justifyContent = 'center';
-  pageNav.style.gap = '1rem';
-  pageNav.style.margin = '1rem 0';
+  const toggleFontBtn = document.getElementById('toggleFontBtn');
+  const toggleSizeBtn = document.getElementById('toggleSizeBtn');
+  const toggleChapterListBtn = document.getElementById('toggleChapterList');
+  const toggleCommentsBtn = document.getElementById('toggleCommentsBtn');
+  const menuBtn = document.getElementById('menuButton');
+  const menuPopup = document.getElementById('menuPopup');
 
-  const prevPageBtn = document.createElement('button');
-  prevPageBtn.textContent = '← Prev Page / Chapter';
-  const nextPageBtn = document.createElement('button');
-  nextPageBtn.textContent = 'Next Page / Chapter →';
+  // ✅ Popup Toggle Setup
+  function setupPopupToggles() {
+    function closeAllPopups(except = null) {
+      if (except !== 'font') fontPopup.classList.remove('active');
+      if (except !== 'size') sizePopup.classList.remove('active');
+      if (except !== 'chapter') chapterListPopup.classList.remove('active');
+      if (except !== 'comments') commentsPopup.classList.remove('active');
+      if (except !== 'menu') menuPopup.classList.remove('show');
+    }
 
-  pageNav.appendChild(prevPageBtn);
-  pageNav.appendChild(nextPageBtn);
-  chapterContent.parentElement.insertBefore(pageNav, pageIndicator.nextSibling);
+    toggleFontBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = fontPopup.classList.contains('active');
+      closeAllPopups('font');
+      if (!isActive) fontPopup.classList.add('active');
+    });
 
-  let currentPageIndex = 0;
+    toggleSizeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = sizePopup.classList.contains('active');
+      closeAllPopups('size');
+      if (!isActive) sizePopup.classList.add('active');
+    });
 
-  prevPageBtn.addEventListener('click', () => {
-    if (!scrollMode) {
-      if (currentPageIndex > 0) {
-        showPage(currentPageIndex - 1);
-      } else if (currentChapterIndex > 0) {
-        scrollToChapter(currentChapterIndex - 1, true);
+    toggleChapterListBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = chapterListPopup.classList.contains('active');
+      closeAllPopups('chapter');
+      if (!isActive) chapterListPopup.classList.add('active');
+    });
+
+    toggleCommentsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = commentsPopup.classList.contains('active');
+      closeAllPopups('comments');
+      if (!isActive) {
+        commentsPopup.classList.add('active');
+        loadComments();
       }
-    } else {
-      if (currentChapterIndex > 0) scrollToChapter(currentChapterIndex - 1);
-    }
-  });
+    });
 
-  nextPageBtn.addEventListener('click', () => {
-    if (!scrollMode) {
-      if (currentPageIndex < pageChunks.length - 1) {
-        showPage(currentPageIndex + 1);
-      } else if (currentChapterIndex < chapters.length - 1) {
-        scrollToChapter(currentChapterIndex + 1);
+    menuBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShown = menuPopup.classList.contains('show');
+      closeAllPopups('menu');
+      if (!isShown) menuPopup.classList.add('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (
+        !fontPopup.contains(e.target) &&
+        !sizePopup.contains(e.target) &&
+        !chapterListPopup.contains(e.target) &&
+        !commentsPopup.contains(e.target) &&
+        !menuPopup.contains(e.target) &&
+        e.target !== toggleFontBtn &&
+        e.target !== toggleSizeBtn &&
+        e.target !== toggleChapterListBtn &&
+        e.target !== toggleCommentsBtn &&
+        e.target !== menuBtn
+      ) {
+        closeAllPopups();
       }
-    } else {
-      if (currentChapterIndex < chapters.length - 1) scrollToChapter(currentChapterIndex + 1);
+    });
+  }
+
+  setupPopupToggles(); // ✅ Run popup setup
+
+  // ✅ Comment submission logic...
+  commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = commentText.value.trim();
+    if (!text) return;
+
+    const user = auth.currentUser;
+    if (!user) return alert('Login to comment.');
+
+    try {
+      const commentData = {
+        text,
+        userId: user.uid,
+        userDisplayName: user.displayName || 'Anonymous',
+        userPhotoURL: user.photoURL || '',
+        createdAt: serverTimestamp()
+      };
+
+      const ref = collection(
+        db,
+        `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`
+      );
+      await addDoc(ref, commentData);
+
+      await addDoc(collection(db, 'inbox'), {
+        ...commentData,
+        novelId,
+        chapterId: chapters[currentChapterIndex].id,
+        type: 'comment'
+      });
+
+      commentText.value = '';
+      loadComments();
+    } catch (err) {
+      console.error('Error posting comment:', err);
     }
   });
 
-  let touchStartX = 0;
-  let touchEndX = 0;
+  async function loadComments() {
+    try {
+      const ref = collection(
+        db,
+        `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`
+      );
+      const snap = await getDocs(ref);
+      commentList.innerHTML = '';
 
-  chapterContent.addEventListener('touchstart', (e) => {
-    if (!scrollMode) touchStartX = e.changedTouches[0].screenX;
-  });
+      snap.forEach(docSnap => {
+        const comment = docSnap.data();
+        const commentId = docSnap.id;
 
-  chapterContent.addEventListener('touchend', (e) => {
-    if (!scrollMode) {
-      touchEndX = e.changedTouches[0].screenX;
-      const diff = touchEndX - touchStartX;
-      if (diff < -50) nextPageBtn.click();
-      else if (diff > 50) prevPageBtn.click();
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="comment-header">
+            <img src="${comment.userPhotoURL || 'default-avatar.png'}" alt="avatar" class="avatar" />
+            <strong>${comment.userDisplayName || 'Reader'}</strong>
+          </div>
+          <p>${comment.text}</p>
+          <button class="reply-btn" data-id="${commentId}">Reply</button>
+          <ul class="replies" id="replies-${commentId}"></ul>
+        `;
+        commentList.appendChild(li);
+
+        loadReplies(commentId);
+
+        const replyBtn = li.querySelector('.reply-btn');
+        replyBtn.addEventListener('click', () => {
+          const replyText = prompt('Your reply:');
+          if (!replyText) return;
+
+          const user = auth.currentUser;
+          if (!user) return alert('Login to reply.');
+
+          const replyRef = collection(
+            db,
+            `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments/${commentId}/replies`
+          );
+
+          addDoc(replyRef, {
+            text: replyText,
+            userId: user.uid,
+            userDisplayName: user.displayName || 'Anonymous',
+            userPhotoURL: user.photoURL || '',
+            createdAt: serverTimestamp()
+          }).then(() => loadReplies(commentId));
+        });
+      });
+    } catch (err) {
+      console.error('Error loading comments:', err);
     }
-  });
+  }
 
-  const chapterListBtn = document.createElement('button');
-  chapterListBtn.id = 'tocBtn';
-  chapterListBtn.innerHTML = '<i class="fas fa-list"></i>';
-  chapterListBtn.title = 'Chapters';
-  document.getElementById('menuPopup').prepend(chapterListBtn);
+  async function loadReplies(commentId) {
+    try {
+      const ref = collection(
+        db,
+        `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments/${commentId}/replies`
+      );
+      const snap = await getDocs(ref);
+      const container = document.getElementById(`replies-${commentId}`);
+      container.innerHTML = '';
 
-  const chapterListPopup = document.createElement('div');
-  chapterListPopup.id = 'chapterListPopup';
-  chapterListPopup.classList.add('popup-panel');
-  document.body.appendChild(chapterListPopup);
+      snap.forEach(docSnap => {
+        const reply = docSnap.data();
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="reply-header">
+            <img src="${reply.userPhotoURL || 'default-avatar.png'}" alt="avatar" class="avatar small" />
+            <em>${reply.userDisplayName || 'Reader'}</em>: ${reply.text}
+          </div>
+        `;
+        container.appendChild(li);
+      });
+    } catch (err) {
+      console.error('Error loading replies:', err);
+    }
+  }
 
-  chapterListBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    chapterListPopup.classList.toggle('active');
-    fontPopup.classList.remove('active');
-    sizePopup.classList.remove('active');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!fontPopup.contains(e.target) && e.target !== toggleFontBtn) fontPopup.classList.remove('active');
-    if (!sizePopup.contains(e.target) && e.target !== toggleSizeBtn) sizePopup.classList.remove('active');
-    if (!chapterListPopup.contains(e.target) && e.target !== chapterListBtn) chapterListPopup.classList.remove('active');
-  });
-
-  const progressBar = document.createElement('div');
-  progressBar.id = 'scrollProgress';
-  document.body.appendChild(progressBar);
-
-  document.addEventListener('scroll', () => {
-    if (!scrollMode) return;
-    const height = document.body.scrollHeight - window.innerHeight;
-    const scrolled = window.scrollY;
-    const percent = Math.min((scrolled / height) * 100, 100);
-    progressBar.textContent = `Progress: ${Math.round(percent)}%`;
-  });
+  // === Reader Functions (unchanged) ===
 
   function applyFontSettings() {
     chapterContent.style.fontFamily = fontSelect.value;
     chapterContent.style.fontSize = `${fontSlider.value}px`;
   }
-
   fontSelect.addEventListener('change', applyFontSettings);
   fontSlider.addEventListener('input', applyFontSettings);
 
@@ -151,37 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('dark-mode');
   });
 
-  toggleFontBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fontPopup.classList.toggle('active');
-    sizePopup.classList.remove('active');
-    chapterListPopup.classList.remove('active');
-  });
-
-  toggleSizeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    sizePopup.classList.toggle('active');
-    fontPopup.classList.remove('active');
-    chapterListPopup.classList.remove('active');
-  });
-
-  chapterSelect.addEventListener('change', () => {
-    const index = parseInt(chapterSelect.value, 10);
-    if (!isNaN(index)) scrollToChapter(index);
-  });
-
-  prevChapterBtn.addEventListener('click', () => {
-    if (currentChapterIndex > 0) scrollToChapter(currentChapterIndex - 1);
-    else alert('You are at the first chapter.');
-  });
-
-  nextChapterBtn.addEventListener('click', () => {
-    if (currentChapterIndex < chapters.length - 1) scrollToChapter(currentChapterIndex + 1);
-    else alert('No more chapters.');
-  });
-
-  loadNovel();
-
   async function loadNovel() {
     try {
       const novelRef = doc(db, 'novels', novelId);
@@ -191,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadChapters();
     } catch (err) {
       console.error('Error loading novel:', err);
-      alert('Failed to load novel.');
     }
   }
 
@@ -203,66 +266,48 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
-        chapterSelect.innerHTML = '<option>No chapters yet</option>';
+        chapterSelect.innerHTML = '<option>No chapters</option>';
         return;
       }
 
       chapters = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      chapterContent.innerHTML = '';
       chapterSelect.innerHTML = '';
-      chapterListPopup.innerHTML = '';
-
-      chapters.forEach((chapter, i) => {
+      chapters.forEach((ch, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = `Chapter ${chapter.number}: ${chapter.title || 'Untitled'}`;
+        opt.textContent = `Chapter ${ch.number}: ${ch.title || 'Untitled'}`;
         chapterSelect.appendChild(opt);
-
-        const link = document.createElement('div');
-        link.textContent = `Chapter ${chapter.number}: ${chapter.title || 'Untitled'}`;
-        link.style.cursor = 'pointer';
-        link.style.padding = '5px 0';
-        link.style.borderBottom = '1px solid #ccc';
-        link.addEventListener('click', () => {
-          scrollToChapter(i);
-          chapterListPopup.classList.remove('active');
-        });
-        chapterListPopup.appendChild(link);
       });
 
-      const startIndex = isNaN(chapterFromUrl)
+      const index = isNaN(chapterFromUrl)
         ? 0
         : chapters.findIndex(c => Number(c.number) === chapterFromUrl);
 
-      scrollToChapter(startIndex >= 0 ? startIndex : 0);
+      scrollToChapter(index >= 0 ? index : 0);
     } catch (err) {
       console.error('Error loading chapters:', err);
-      alert('Could not load chapters.');
     }
   }
 
-  function splitIntoChunks(text, maxWordsPerPage = window.innerWidth <= 768 ? 200 : 400) {
-    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim() !== '');
+  function splitIntoChunks(text, maxWords = window.innerWidth <= 768 ? 200 : 400) {
+    const paras = text.split(/\n\s*\n/).filter(p => p.trim() !== '');
     const chunks = [];
-    let currentChunk = '';
-    let wordCount = 0;
+    let chunk = '';
+    let words = 0;
 
-    for (let paragraph of paragraphs) {
-      const words = paragraph.split(/\s+/);
-      if (wordCount + words.length > maxWordsPerPage && currentChunk.trim() !== '') {
-        chunks.push(currentChunk.trim());
-        currentChunk = paragraph;
-        wordCount = words.length;
+    for (let p of paras) {
+      const w = p.split(/\s+/);
+      if (words + w.length > maxWords && chunk) {
+        chunks.push(chunk.trim());
+        chunk = p;
+        words = w.length;
       } else {
-        currentChunk += '\n\n' + paragraph;
-        wordCount += words.length;
+        chunk += '\n\n' + p;
+        words += w.length;
       }
     }
 
-    if (currentChunk.trim() !== '') {
-      chunks.push(currentChunk.trim());
-    }
-
+    if (chunk.trim()) chunks.push(chunk.trim());
     return chunks;
   }
 
@@ -289,89 +334,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentPageIndex = goToLastPage ? pageChunks.length - 1 : 0;
     if (!scrollMode) showPage(currentPageIndex);
-
-    updatePageUI();
     applyFontSettings();
-    loadComments();
+
+    if (commentsPopup.classList.contains('active')) {
+      loadComments();
+    }
   }
 
   function showPage(index) {
-    pageChunks.forEach((sec, i) => {
-      sec.style.display = i === index ? 'block' : 'none';
+    pageChunks.forEach((pg, i) => {
+      pg.style.display = i === index ? 'block' : 'none';
     });
     currentPageIndex = index;
-    updatePageUI();
   }
 
-  function updatePageUI() {
-    if (!scrollMode) {
-      pageIndicator.textContent = `Page ${currentPageIndex + 1} / ${pageChunks.length}`;
-    } else {
-      pageIndicator.textContent = `Chapter ${currentChapterIndex + 1} / ${chapters.length}`;
-    }
-  }
-
-  commentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const text = commentText.value.trim();
-    if (!text) return;
-
-    const user = auth.currentUser;
-    if (!user) {
-      alert('Please login to comment.');
-      return;
-    }
-
-    try {
-      const commentData = {
-        text,
-        userId: user.uid,
-        userDisplayName: user.displayName || 'Anonymous',
-        userPhotoURL: user.photoURL || '',
-        createdAt: serverTimestamp()
-      };
-
-      const ref = collection(
-        db,
-        `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`
-      );
-      await addDoc(ref, commentData);
-
-      // Also send to author's inbox for future reply system
-      await addDoc(collection(db, `inbox`), {
-        ...commentData,
-        novelId,
-        chapterId: chapters[currentChapterIndex].id,
-        type: 'comment'
-      });
-
-      commentText.value = '';
-      loadComments();
-    } catch (err) {
-      console.error('Error posting comment:', err);
-      alert('Failed to post comment.');
-    }
+  chapterSelect.addEventListener('change', () => {
+    const idx = parseInt(chapterSelect.value, 10);
+    if (!isNaN(idx)) scrollToChapter(idx);
   });
 
-  async function loadComments() {
-    try {
-      const ref = collection(
-        db,
-        `novels/${novelId}/published_chapters/${chapters[currentChapterIndex].id}/comments`
-      );
-      const snap = await getDocs(ref);
-      commentList.innerHTML = '';
+  prevChapterBtn.addEventListener('click', () => {
+    if (currentChapterIndex > 0) scrollToChapter(currentChapterIndex - 1);
+    else alert('First chapter.');
+  });
 
-      snap.forEach(doc => {
-        const comment = doc.data();
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${comment.userDisplayName || 'Reader'}</strong>: ${comment.text}
-        `;
-        commentList.appendChild(li);
-      });
-    } catch (err) {
-      console.error('Error loading comments:', err);
-    }
-  }
+  nextChapterBtn.addEventListener('click', () => {
+    if (currentChapterIndex < chapters.length - 1) scrollToChapter(currentChapterIndex + 1);
+    else alert('No more chapters.');
+  });
+
+  loadNovel();
 });

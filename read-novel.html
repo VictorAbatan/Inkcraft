@@ -32,16 +32,6 @@
         <button id="prevChapterBtn">Previous</button>
         <button id="nextChapterBtn">Next</button>
       </div>
-
-      <!-- ✅ Comments -->
-      <section class="comments-section">
-        <h3>Comments</h3>
-        <ul id="commentList"></ul>
-        <form id="commentForm">
-          <textarea id="commentText" placeholder="Leave a comment..." required></textarea>
-          <button type="submit">Post</button>
-        </form>
-      </section>
     </div>
   </main>
 
@@ -56,7 +46,8 @@
     <button id="toggleSizeBtn" title="Size"><i class="fas fa-text-height"></i></button>
     <button id="themeToggleDock" title="Theme"><i class="fas fa-moon"></i></button>
     <button id="scrollToggleDock" title="Scroll/Page"><i class="fas fa-file-alt"></i></button>
-
+    <button id="toggleCommentsBtn" title="Comments"><i class="fas fa-comment-dots"></i></button>
+    <button id="toggleChapterList" title="Chapters"><i class="fas fa-list-ul"></i></button>
     <a href="novel-details.html" title="Back"><i class="fas fa-arrow-left"></i></a>
   </div>
 
@@ -85,46 +76,18 @@
     </select>
   </div>
 
+  <!-- ✅ Comments Popup -->
+  <div id="commentsPopup" class="popup-panel comments-popup">
+    <h3>Comments</h3>
+    <ul id="commentList"></ul>
+    <form id="commentForm">
+      <textarea id="commentText" placeholder="Leave a comment..." required></textarea>
+      <button type="submit">Post</button>
+    </form>
+  </div>
+
   <!-- ✅ Scripts -->
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="read-novel.js"></script>
-
-  <!-- ✅ Inline UI Scripts -->
-  <script>
-    const menuBtn = document.getElementById('menuButton');
-    const menuPopup = document.getElementById('menuPopup');
-    const fontPopup = document.getElementById('fontPopup');
-    const sizePopup = document.getElementById('sizePopup');
-    const chapterListPopup = document.getElementById('chapterListPopup');
-    const toggleChapterListBtn = document.getElementById('toggleChapterList');
-
-    menuBtn.addEventListener('click', () => {
-      menuPopup.classList.toggle('show');
-      fontPopup.classList.remove('active');
-      sizePopup.classList.remove('active');
-      chapterListPopup.classList.remove('active');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!menuPopup.contains(e.target) && e.target !== menuBtn) {
-        menuPopup.classList.remove('show');
-      }
-      if (!fontPopup.contains(e.target) && e.target.id !== 'toggleFontBtn') {
-        fontPopup.classList.remove('active');
-      }
-      if (!sizePopup.contains(e.target) && e.target.id !== 'toggleSizeBtn') {
-        sizePopup.classList.remove('active');
-      }
-      if (!chapterListPopup.contains(e.target) && e.target !== toggleChapterListBtn) {
-        chapterListPopup.classList.remove('active');
-      }
-    });
-
-    toggleChapterListBtn.addEventListener('click', () => {
-      chapterListPopup.classList.toggle('active');
-      fontPopup.classList.remove('active');
-      sizePopup.classList.remove('active');
-    });
-  </script>
 </body>
 </html>

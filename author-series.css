@@ -39,11 +39,10 @@ footer {
 /* === Series Grid === */
 .series-container {
   display: grid;
-  /* Changed min width smaller to make cards smaller */
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   padding: 2rem;
-  max-width: 900px; /* Reduced max-width to keep grid tighter */
+  max-width: 900px;
   margin: auto;
 }
 
@@ -53,55 +52,66 @@ footer {
   overflow: hidden;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
-  max-width: 220px; /* Added max width for card */
+  max-width: 220px;
   margin: 0 auto;
+  height: auto;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .series-card:hover {
   transform: scale(1.02);
 }
 
-/* ✅ Series Cover Image smaller height */
 .series-cover {
   width: 100%;
-  height: 140px;  /* Reduced from 200px */
+  height: 140px;
   object-fit: cover;
   display: block;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
 
-/* === New styles for action buttons below the series info === */
+/* === Card Content === */
+.card-content {
+  padding: 1rem;
+  flex: 1;
+}
+
 .series-card h2 {
   margin: 0 0 0.5rem;
-  padding: 1rem;
   color: #ffd700;
+  font-size: 1.2rem;
 }
 
 .series-card p {
   font-size: 0.95rem;
   line-height: 1.4;
   color: #ccc;
-  padding: 0 1rem 1rem;
+  margin-bottom: 1rem;
 }
 
+/* === Actions === */
 .series-actions {
   display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-  padding: 0 1rem 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
 }
 
 .series-actions .btn {
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s ease;
   user-select: none;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   border: none;
   display: inline-block;
   text-align: center;
@@ -123,6 +133,15 @@ footer {
 
 .series-actions .btn-add-novel:hover {
   background-color: #1e7e34;
+}
+
+.series-actions .btn-view {
+  background-color: #ffc107;
+  color: black;
+}
+
+.series-actions .btn-view:hover {
+  background-color: #e0a800;
 }
 
 /* === Floating Menu (matching author-novels style) === */

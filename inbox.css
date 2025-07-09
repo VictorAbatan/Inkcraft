@@ -43,8 +43,38 @@ header {
   padding: 1rem;
   border-radius: 8px;
   backdrop-filter: blur(5px);
+  border-left: 4px solid transparent;
 }
 
+/* === Notification type highlights === */
+#notification-list li strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
+}
+
+#notification-list li small {
+  display: block;
+  font-size: 0.8rem;
+  color: #ccc;
+  margin-top: 0.5rem;
+}
+
+#notification-list li:has(strong:contains("Comment")) {
+  border-left-color: #0d6efd;
+}
+
+#notification-list li:has(strong:contains("Reply")) {
+  border-left-color: #20c997;
+}
+
+#notification-list li:has(strong:contains("Approved")) {
+  border-left-color: #198754;
+}
+
+#notification-list li:has(strong:contains("Rejected")) {
+  border-left-color: #dc3545;
+}
 
 /* === Floating menu styles (override included from author-centre.css if needed) === */
 .floating-menu {

@@ -1,41 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add to Verse | Inkcraft</title>
-  <link rel="stylesheet" href="add-to-verse.css" />
-  <link rel="stylesheet" href="floating-menu.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add to Verse</title>
+  <link rel="stylesheet" href="add-to-verse.css">
 </head>
 <body>
-  <div id="floating-menu-container"></div>
+  <div class="container">
+    <h1>Add Novels or Series to Verse</h1>
 
-  <header>
-    <h1>Add to Verse</h1>
-    <p class="sub">Choose novels and series to include in your Verse</p>
-  </header>
+    <!-- Verse title displayed dynamically -->
+    <h2 id="verseTitleDisplay"></h2>
 
-  <main>
-    <section class="form-section">
-      <div id="novels-section">
-        <h2>Available Novels</h2>
-        <div class="content-list" id="novel-list"></div>
-      </div>
+    <form id="addToVerseForm">
+      <!-- Novels Dropdown -->
+      <label for="novelSelect">Select Novel</label>
+      <select id="novelSelect">
+        <option value="">-- Select a Novel --</option>
+      </select>
 
-      <div id="series-section">
-        <h2>Available Series</h2>
-        <div class="content-list" id="series-list"></div>
-      </div>
+      <!-- Series Dropdown -->
+      <label for="seriesSelect">Select Series</label>
+      <select id="seriesSelect">
+        <option value="">-- Select a Series --</option>
+      </select>
 
-      <button id="save-button">Save to Verse</button>
-    </section>
-  </main>
-
-  <footer>
-    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
-  </footer>
+      <button type="submit">Add to Verse</button>
+    </form>
+  </div>
 
   <script type="module" src="add-to-verse.js"></script>
 </body>

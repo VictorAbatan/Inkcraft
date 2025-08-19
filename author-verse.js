@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+  // Load verses for logged-in author
   onAuthStateChanged(auth, async user => {
     if (!user) {
       alert('You must be logged in to view your verses.');
@@ -57,21 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'verse-card';
 
-      const coverImage = data.coverImageURL
-        ? `<img src="${data.coverImageURL}" alt="Verse Cover" class="verse-cover" />`
-        : '';
+      // ✅ Fixed: match create-verse.js field name
+      const coverImage = data.coverURL
+        ? `<img src="${data.coverURL}" alt="${data.title} cover" class="verse-cover" />`
+        : `<div class="verse-cover placeholder">No Image</div>`;
 
       card.innerHTML = `
-        ${coverImage}
         <div class="card-content">
           <h2>${data.title}</h2>
-          <p>${data.description}</p>
+          ${coverImage}
+          <p>${data.description || 'No description available.'}</p>
         </div>
         <div class="verse-actions">
-          <a href="add-to-verse.html?id=${id}" class="btn btn-add">Add Content</a>
+          <a href="add-to-verse.html?verseId=${id}" class="btn btn-add">Add Content</a>
           <a href="edit-verse.html?id=${id}" class="btn btn-edit">Edit</a>
         </div>
       `;
+
       container.appendChild(card);
     });
   });

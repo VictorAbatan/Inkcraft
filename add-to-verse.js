@@ -1,88 +1,128 @@
-import { app, db } from './firebase-config.js';
-import {
-  getAuth,
-  onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { app, db, auth } from './firebase-config.js';
 import {
   collection,
+  getDocs,
   query,
   where,
-  getDocs,
   doc,
   updateDoc,
   arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const auth = getAuth(app);
-  const urlParams = new URLSearchParams(window.location.search);
-  const verseId = urlParams.get('id');
-  const novelList = document.getElementById('novel-list');
-  const seriesList = document.getElementById('series-list');
-  const saveButton = document.getElementById('save-button');
+function debug(msg) {
+  console.log(msg); // keep console logging
+}
 
-  // Load floating menu
-  fetch('author-floating-menu.html')
-    .then(res => res.text())
-    .then(html => {
-      const menuContainer = document.getElementById('floating-menu-container');
-      menuContainer.innerHTML = html;
-    });
+const novelSelect = document.getElementById('novelSelect');
+const seriesSelect = document.getElementById('seriesSelect');
+const form = document.getElementById('addToVerseForm');
+const verseTitleDisplay = document.getElementById('verseTitleDisplay');
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) {
-      alert('You must be logged in.');
-      window.location.href = 'login.html';
+let currentVerseId = null;
+
+// 🔹 Load verse, novels & series for logged-in author
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    debug("User not logged in.");
+    return;
+  }
+
+  debug(`Logged in as: ${user.uid}`);
+
+  try {
+    // 🔹 Fetch this author's verse (only one)
+    const versesRef = collection(db, "verses");
+    const versesQ = query(versesRef, where("createdBy", "==", user.uid));
+    const versesSnap = await getDocs(versesQ);
+
+    if (!versesSnap.empty) {
+      const verseDoc = versesSnap.docs[0]; // only one per author
+      const verseData = verseDoc.data();
+      verseTitleDisplay.textContent = verseData.title || "Untitled Verse";
+      currentVerseId = verseDoc.id;
+    } else {
+      verseTitleDisplay.textContent = "No verse found for this author.";
+      debug("No verse found for this author.");
       return;
     }
 
-    // Load author's novels
-    const novelsQuery = query(collection(db, 'novels'), where('createdBy', '==', user.uid));
-    const novelsSnapshot = await getDocs(novelsQuery);
-    novelsSnapshot.forEach(docSnap => {
+    // 🔹 Novels (only approved/published by this user)
+    const novelsRef = collection(db, "novels");
+    const novelsQ = query(novelsRef, where("submittedBy", "==", user.uid));
+    const novelsSnap = await getDocs(novelsQ);
+
+    let foundNovels = 0;
+    novelSelect.innerHTML = `<option value="">-- Select a Novel --</option>`;
+    novelsSnap.forEach(docSnap => {
       const data = docSnap.data();
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = docSnap.id;
-      checkbox.classList.add('novel-checkbox');
-
-      const label = document.createElement('label');
-      label.textContent = data.title;
-      label.prepend(checkbox);
-
-      novelList.appendChild(label);
+      if (data.status && ["approved", "published"].includes(data.status.toLowerCase())) {
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = data.title;
+        novelSelect.appendChild(option);
+        foundNovels++;
+      }
     });
+    if (!foundNovels) {
+      novelSelect.innerHTML += `<option disabled>No approved novels available</option>`;
+    }
 
-    // Load author's series
-    const seriesQuery = query(collection(db, 'series'), where('createdBy', '==', user.uid));
-    const seriesSnapshot = await getDocs(seriesQuery);
-    seriesSnapshot.forEach(docSnap => {
+    // 🔹 Series (only approved/published by this user)
+    const seriesRef = collection(db, "series");
+    const seriesQ = query(seriesRef, where("createdBy", "==", user.uid));
+    const seriesSnap = await getDocs(seriesQ);
+
+    let foundSeries = 0;
+    seriesSelect.innerHTML = `<option value="">-- Select a Series --</option>`;
+    seriesSnap.forEach(docSnap => {
       const data = docSnap.data();
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = docSnap.id;
-      checkbox.classList.add('series-checkbox');
-
-      const label = document.createElement('label');
-      label.textContent = data.title;
-      label.prepend(checkbox);
-
-      seriesList.appendChild(label);
+      if (data.status && ["approved", "published"].includes((data.status || "").toLowerCase())) {
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = data.title;
+        seriesSelect.appendChild(option);
+        foundSeries++;
+      }
     });
+    if (!foundSeries) {
+      seriesSelect.innerHTML += `<option disabled>No approved series available</option>`;
+    }
 
-    // Save selected to verse
-    saveButton.addEventListener('click', async () => {
-      const selectedNovels = Array.from(document.querySelectorAll('.novel-checkbox:checked')).map(cb => cb.value);
-      const selectedSeries = Array.from(document.querySelectorAll('.series-checkbox:checked')).map(cb => cb.value);
+  } catch (error) {
+    debug("Error loading novels/series/verse: " + error.message);
+  }
+});
 
-      const verseRef = doc(db, 'verses', verseId);
+// 🔹 Handle form submission
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const novelId = novelSelect.value;
+  const seriesId = seriesSelect.value;
+
+  if (!currentVerseId) return alert("No verse found for this author.");
+  if (!novelId && !seriesId) return alert("Select a novel or series!");
+
+  try {
+    const verseRef = doc(db, "verses", currentVerseId);
+
+    if (novelId) {
       await updateDoc(verseRef, {
-        novels: arrayUnion(...selectedNovels),
-        series: arrayUnion(...selectedSeries)
+        novels: arrayUnion(novelId)
       });
+      debug(`Novel ${novelId} added to verse ${currentVerseId}`);
+    }
 
-      alert('Verse updated successfully!');
-      window.location.href = 'author-verse.html';
-    });
-  });
+    if (seriesId) {
+      await updateDoc(verseRef, {
+        series: arrayUnion(seriesId)
+      });
+      debug(`Series ${seriesId} added to verse ${currentVerseId}`);
+    }
+
+    alert("Verse updated successfully!");
+  } catch (error) {
+    debug("Error updating verse: " + error.message);
+  }
 });

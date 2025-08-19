@@ -244,10 +244,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           card.querySelector('.approve-btn').addEventListener('click', async () => {
             try {
-              await setDoc(doc(db, 'verses', id), {
-                ...verse,
-                approvedAt: serverTimestamp()
-              });
+      const { status, ...verseData } = verse; // strip old status
+await setDoc(doc(db, 'verses', id), {
+  ...verseData,
+  status: 'approved',
+  approvedAt: serverTimestamp()
+});
+
 
               await deleteDoc(doc(db, 'pending_verses', id));
 

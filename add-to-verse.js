@@ -19,6 +19,9 @@ const seriesSelect = document.getElementById('seriesSelect');
 const form = document.getElementById('addToVerseForm');
 const verseTitleDisplay = document.getElementById('verseTitleDisplay');
 
+const addNovelBtn = document.getElementById('add-novel-btn');
+const addSeriesBtn = document.getElementById('add-series-btn');
+
 let currentVerseId = null;
 
 // 🔹 Load verse, novels & series for logged-in author
@@ -41,9 +44,32 @@ onAuthStateChanged(auth, async (user) => {
       const verseData = verseDoc.data();
       verseTitleDisplay.textContent = verseData.title || "Untitled Verse";
       currentVerseId = verseDoc.id;
+
+      // 🔹 Enable navigation buttons using currentVerseId
+      if (addNovelBtn) {
+        addNovelBtn.addEventListener('click', () => {
+          window.location.href = `select-novel.html?verseId=${encodeURIComponent(currentVerseId)}`;
+        });
+      }
+      if (addSeriesBtn) {
+        addSeriesBtn.addEventListener('click', () => {
+          window.location.href = `select-series.html?verseId=${encodeURIComponent(currentVerseId)}`;
+        });
+      }
+
     } else {
       verseTitleDisplay.textContent = "No verse found for this author.";
       debug("No verse found for this author.");
+
+      // Disable buttons if no verse
+      [addNovelBtn, addSeriesBtn].forEach(btn => {
+        if (btn) {
+          btn.disabled = true;
+          btn.style.color = '#999';
+          btn.style.cursor = 'default';
+        }
+      });
+
       return;
     }
 

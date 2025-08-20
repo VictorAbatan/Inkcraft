@@ -31,9 +31,10 @@ body.light-mode {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  border-left: 5px solid gold;
-  border-right: 5px solid gold;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+  border-left: 5px solid #4fc3f7;
+  border-right: 5px solid #4fc3f7;
+  box-shadow: 0 0 20px rgba(79, 195, 247, 0.25);
+  animation: fadeIn 0.8s ease;
 }
 
 body.light-mode .dashboard-container {
@@ -48,7 +49,7 @@ header {
   flex-direction: column;
   align-items: center;
   padding: 2rem 1.5rem;
-  border-bottom: 1px solid gold;
+  border-bottom: 1px solid #4fc3f7;
   position: relative;
   text-align: center;
   background: rgba(0, 0, 0, 0.45);
@@ -58,13 +59,15 @@ header {
 header h1 {
   margin: 0;
   font-size: 2rem;
-  color: gold;
+  color: #4fc3f7;
+  text-shadow: 1px 1px 5px #000;
 }
 
 header p {
   margin: 0.3rem 0 0;
   font-size: 1rem;
   color: #ccc;
+  text-shadow: 0 0 3px #000;
 }
 
 .header-right {
@@ -78,29 +81,31 @@ header p {
 
 #logout-btn,
 #dark-toggle {
-  background: rgba(220, 20, 60, 0.8);
+  background: rgba(79, 195, 247, 0.85);
   color: white;
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1.2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
   backdrop-filter: blur(5px);
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.4);
 }
 
 #dark-toggle {
-  background: rgba(51, 51, 51, 0.8);
+  background: rgba(51, 51, 51, 0.85);
+  box-shadow: 0 0 8px rgba(51, 51, 51, 0.5);
 }
 
 #logout-btn:hover {
-  background: #a40000;
-  transform: scale(1.05);
+  background: #0288d1;
+  transform: scale(1.07);
 }
 
 #dark-toggle:hover {
   background: #111;
-  transform: scale(1.05);
+  transform: scale(1.07);
 }
 
 /* === Notifications === */
@@ -108,25 +113,27 @@ header p {
   position: relative;
   font-size: 1.4rem;
   cursor: pointer;
-  color: gold;
-  transition: transform 0.2s ease;
+  color: #4fc3f7;
+  transition: transform 0.3s ease, color 0.3s ease;
 }
 
 #notification-bell:hover {
-  transform: rotate(10deg);
+  transform: rotate(15deg);
+  color: #00bcd4;
 }
 
 .notif-count {
   position: absolute;
   top: -8px;
   right: -10px;
-  background: gold;
+  background: #4fc3f7;
   color: black;
   border-radius: 50%;
   padding: 2px 6px;
   font-size: 0.8rem;
   font-weight: bold;
-  box-shadow: 0 0 5px gold;
+  box-shadow: 0 0 6px #4fc3f7;
+  animation: pulse 1.5s infinite;
 }
 
 /* === Dashboard Stats === */
@@ -140,24 +147,25 @@ header p {
 }
 
 .stat-card {
-  background: rgba(17, 17, 17, 0.65);
-  padding: 1.2rem 2rem;
-  border-radius: 12px;
+  background: rgba(17, 17, 17, 0.75);
+  padding: 1.5rem 2.5rem;
+  border-radius: 15px;
   text-align: center;
-  border: 1px solid gold;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-  backdrop-filter: blur(8px);
-  transition: transform 0.2s ease;
+  border: 1px solid #4fc3f7;
+  box-shadow: 0 0 15px rgba(79, 195, 247, 0.25);
+  backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 0 25px rgba(79, 195, 247, 0.45);
 }
 
 .stat-card h2 {
   margin: 0;
-  font-size: 2.2rem;
-  color: gold;
+  font-size: 2.4rem;
+  color: #4fc3f7;
 }
 
 .stat-card p {
@@ -174,33 +182,36 @@ body.light-mode .stat-card h2 {
   color: #333;
 }
 
-/* === Submissions List === */
-main#submission-list {
-  padding: 2rem;
-  max-width: 1100px;
-  margin: auto;
-  flex: 1;
+/* === Submission Cards === */
+.submission-card {
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1.8rem;
+  margin-bottom: 2rem;
+  border-radius: 15px;
+  border-left: 5px solid #4fc3f7;
+  display: flex;
+  gap: 1.5rem;
+  box-shadow: 0 0 15px rgba(79, 195, 247, 0.15);
+  backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 
-.submission-card {
-  background: rgba(0, 0, 0, 0.4);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border-radius: 12px;
-  border-left: 5px solid gold;
-  display: flex;
-  gap: 1.2rem;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
-  backdrop-filter: blur(10px);
-  transition: background 0.3s ease;
+.submission-card:hover {
+  transform: translateY(-6px);
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .submission-card img {
   width: 130px;
   height: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   object-fit: cover;
   border: 1px solid #444;
+  transition: transform 0.3s ease;
+}
+
+.submission-card img:hover {
+  transform: scale(1.03);
 }
 
 .submission-details {
@@ -217,31 +228,60 @@ main#submission-list {
 }
 
 .action-buttons button {
-  padding: 0.5rem 1.3rem;
+  padding: 0.55rem 1.5rem;
   margin-right: 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 8px;
   font-weight: bold;
-  transition: background 0.3s ease;
+  color: #fff;
+  transition: all 0.3s ease;
 }
 
 .approve-btn {
-  background: rgba(40, 167, 69, 0.85);
-  color: #fff;
+  background: #28a745;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
 }
 
 .approve-btn:hover {
   background: #218838;
+  box-shadow: 0 0 20px rgba(40, 167, 69, 0.7);
 }
 
 .reject-btn {
-  background: rgba(220, 53, 69, 0.85);
-  color: #fff;
+  background: #dc3545;
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
 }
 
 .reject-btn:hover {
   background: #c82333;
+  box-shadow: 0 0 20px rgba(220, 53, 69, 0.7);
+}
+
+/* === Pending Novels Section (NEW) === */
+#pending-novels-section {
+  padding: 2rem;
+  margin-top: 2rem;
+  background-color: rgba(0, 0, 0, 0.35);
+  border-top: 2px solid #4fc3f7;
+  border-radius: 12px;
+  max-width: 1100px;
+  margin-inline: auto;
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+#pending-novels-section h2 {
+  color: #4fc3f7;
+  font-size: 1.7rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 1px 1px 3px #000;
+}
+
+#pending-novels-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 0.5rem;
 }
 
 /* === Approved Novels === */
@@ -249,20 +289,20 @@ main#submission-list {
   padding: 2rem;
   margin-top: 2rem;
   background-color: rgba(0, 0, 0, 0.35);
-  border-top: 2px solid gold;
-  border-radius: 10px;
+  border-top: 2px solid #4fc3f7;
+  border-radius: 12px;
   max-width: 1100px;
   margin-inline: auto;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.15);
   backdrop-filter: blur(8px);
 }
 
 #approved-novels-section h2 {
-  color: #00aced;
+  color: #00bcd4;
   font-size: 1.7rem;
   margin-bottom: 1.5rem;
   text-align: center;
-  text-shadow: 1px 1px 2px #000;
+  text-shadow: 1px 1px 3px #000;
 }
 
 #approved-novels-container {
@@ -276,31 +316,33 @@ main#submission-list {
 
 .approved-novel-card {
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0.8rem;
   text-align: center;
   color: #fff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(6px);
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .approved-novel-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
+  box-shadow: 0 0 25px rgba(79, 195, 247, 0.25);
 }
 
 .approved-novel-card img {
   width: 100%;
   height: 200px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #333;
+  margin-bottom: 0.8rem;
 }
 
 .approved-novel-card h4 {
   margin: 0.6rem 0 0.3rem;
   font-size: 1rem;
-  color: #ffd700;
+  color: #4fc3f7;
 }
 
 .approved-novel-card p {
@@ -324,11 +366,12 @@ main#submission-list {
   font-size: 0.8rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .approved-actions button:hover {
   background: #0056b3;
+  transform: scale(1.05);
 }
 
 .approved-actions .rollback-btn {
@@ -337,6 +380,131 @@ main#submission-list {
 
 .approved-actions .rollback-btn:hover {
   background: #a94442;
+  transform: scale(1.05);
+}
+
+/* === Pending Verses === */
+#pending-verses-section,
+#approved-verses-section {
+  padding: 2rem;
+  margin-top: 2rem;
+  background-color: rgba(0, 0, 0, 0.35);
+  border-top: 2px solid #4fc3f7;
+  border-radius: 12px;
+  max-width: 1100px;
+  margin-inline: auto;
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+#pending-verses-section h2 {
+  color: #4fc3f7;
+  font-size: 1.7rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 1px 1px 3px #000;
+}
+
+#approved-verses-section h2 {
+  color: #00ffcc;
+  font-size: 1.7rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 1px 1px 3px #000;
+}
+
+#pending-verses-list,
+#approved-verses-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+  padding: 0.5rem;
+}
+
+/* === Verse Card Styles === */
+.verse-card,
+.approved-verse-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 5px solid #4fc3f7;
+  position: relative;
+}
+
+.approved-verse-card {
+  border-image: linear-gradient(45deg, #00ffcc, #00aaff, #ff00ff, #ffcc00) 1;
+  border-left-width: 5px;
+  border-left-style: solid;
+  animation: gradientShift 3s linear infinite;
+}
+
+.verse-card:hover,
+.approved-verse-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 0 25px rgba(79, 195, 247, 0.4);
+}
+
+.verse-card img,
+.approved-verse-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #444;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.verse-card img:hover,
+.approved-verse-card img:hover {
+  transform: scale(1.03);
+}
+
+.verse-details h3 {
+  font-size: 1.3rem;
+  color: #4fc3f7;
+  margin-bottom: 0.4rem;
+  text-shadow: 1px 1px 3px #000;
+}
+
+.verse-details p {
+  font-size: 0.95rem;
+  color: #ddd;
+  margin-bottom: 0.8rem;
+}
+
+.action-buttons button {
+  padding: 0.5rem 1.3rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.approve-btn {
+  background: #28a745;
+  box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
+.approve-btn:hover {
+  background: #218838;
+  box-shadow: 0 0 20px rgba(40, 167, 69, 0.7);
+}
+
+.reject-btn {
+  background: #dc3545;
+  box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+}
+
+.reject-btn:hover {
+  background: #c82333;
+  box-shadow: 0 0 20px rgba(220, 53, 69, 0.7);
 }
 
 /* === Footer === */
@@ -345,174 +513,27 @@ footer {
   padding: 1rem;
   font-size: 0.9rem;
   color: #aaa;
-  border-top: 1px solid gold;
+  border-top: 1px solid #4fc3f7;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   margin-top: auto;
 }
 
-/* ✅ Pending Verses Section */
-#pending-verses-section {
-  padding: 2rem;
-  margin-top: 2rem;
-  background-color: rgba(0, 0, 0, 0.35);
-  border-top: 2px solid gold;
-  border-radius: 10px;
-  max-width: 1100px;
-  margin-inline: auto;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-  backdrop-filter: blur(8px);
+/* === Animations === */
+@keyframes fadeIn {
+  0% {opacity: 0; transform: translateY(10px);}
+  100% {opacity: 1; transform: translateY(0);}
 }
 
-#pending-verses-section h2 {
-  color: #ffd700;
-  font-size: 1.7rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  text-shadow: 1px 1px 2px #000;
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
-#pending-verses-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.2rem;
-}
-
-/* ✅ Verse Card Style */
-.verse-card {
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.1);
-  transition: transform 0.3s ease;
-  border-left: 4px solid gold;
-}
-
-.verse-card:hover {
-  transform: translateY(-4px);
-}
-
-.verse-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #333;
-}
-
-.verse-details {
-  flex: 1;
-}
-
-.verse-details h3 {
-  font-size: 1.2rem;
-  margin: 0 0 0.5rem;
-  color: #ffd700;
-}
-
-.verse-details p {
-  font-size: 0.95rem;
-  color: #ddd;
-  margin-bottom: 1rem;
-}
-
-.verse-card .action-buttons {
-  display: flex;
-  justify-content: space-between;
-}
-
-.verse-card .approve-btn,
-.verse-card .reject-btn {
-  padding: 0.5rem 1.2rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  color: #fff;
-}
-
-.verse-card .approve-btn {
-  background: rgba(40, 167, 69, 0.85);
-}
-
-.verse-card .approve-btn:hover {
-  background: #218838;
-}
-
-.verse-card .reject-btn {
-  background: rgba(220, 53, 69, 0.85);
-}
-
-.verse-card .reject-btn:hover {
-  background: #c82333;
-}
-
-/* ✅ Approved Verses Section */
-#approved-verses-section {
-  padding: 2rem;
-  margin-top: 2rem;
-  background-color: rgba(0, 0, 0, 0.35);
-  border-top: 2px solid gold;
-  border-radius: 10px;
-  max-width: 1100px;
-  margin-inline: auto;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-  backdrop-filter: blur(8px);
-}
-
-#approved-verses-section h2 {
-  color: #00ffcc;
-  font-size: 1.7rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  text-shadow: 1px 1px 2px #000;
-}
-
-#approved-verses-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.2rem;
-  padding: 0.5rem;
-}
-
-/* ✅ Approved Verse Card */
-.approved-verse-card {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 1rem;
-  text-align: center;
-  color: #fff;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(6px);
-  transition: transform 0.2s ease;
-  border-left: 4px solid #00ffcc;
-}
-
-.approved-verse-card:hover {
-  transform: translateY(-5px);
-}
-
-.approved-verse-card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #333;
-  margin-bottom: 0.8rem;
-}
-
-.approved-verse-card .verse-details h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.3rem;
-  color: #00ffcc;
-}
-
-.approved-verse-card .verse-details p {
-  font-size: 0.9rem;
-  color: #ddd;
+@keyframes gradientShift {
+  0% { border-color: #00ffcc; }
+  25% { border-color: #00aaff; }
+  50% { border-color: #ff00ff; }
+  75% { border-color: #ffcc00; }
+  100% { border-color: #00ffcc; }
 }

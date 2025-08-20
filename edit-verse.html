@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Verse</title>
+  <link rel="stylesheet" href="edit-verse.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Edit Verse</h1>
+    <form id="editVerseForm">
+      <label for="verseTitle">Verse Title</label>
+      <input type="text" id="verseTitle" placeholder="Enter new verse title">
+
+      <label for="verseDescription">Description</label>
+      <textarea id="verseDescription" placeholder="Enter new description"></textarea>
+
+      <label>Current Cover Image</label>
+      <img id="currentImage" src="placeholder.png" alt="Verse cover" class="current-image-preview">
+
+      <label for="verseImage">Change Cover Image (optional)</label>
+      <input type="file" id="verseImage" accept="image/*">
+
+      <button type="submit">Save Changes</button>
+    </form>
+
+    <div id="debug"></div>
+  </div>
+
+  <script type="module" src="edit-verse.js"></script>
+</body>
+</html>

@@ -6,149 +6,198 @@ import {
   where,
   doc,
   updateDoc,
-  arrayUnion
+  arrayUnion,
+  getDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 function debug(msg) {
-  console.log(msg); // keep console logging
+  console.log(msg);
 }
 
-const novelSelect = document.getElementById('novelSelect');
-const seriesSelect = document.getElementById('seriesSelect');
-const form = document.getElementById('addToVerseForm');
-const verseTitleDisplay = document.getElementById('verseTitleDisplay');
+document.addEventListener('DOMContentLoaded', () => {
+  const novelSelect = document.getElementById('novelSelect');
+  const seriesSelect = document.getElementById('seriesSelect');
+  const form = document.getElementById('addToVerseForm');
+  const verseTitleDisplay = document.getElementById('verseTitleDisplay');
 
-const addNovelBtn = document.getElementById('add-novel-btn');
-const addSeriesBtn = document.getElementById('add-series-btn');
+  const addNovelBtn = document.getElementById('add-novel-btn');
+  const addSeriesBtn = document.getElementById('add-series-btn');
 
-let currentVerseId = null;
+  const addedNovelsList = document.getElementById('added-novels-list');
+  const addedSeriesList = document.getElementById('added-series-list');
 
-// 🔹 Load verse, novels & series for logged-in author
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    debug("User not logged in.");
-    return;
-  }
+  let currentVerseId = null;
 
-  debug(`Logged in as: ${user.uid}`);
+  // Helper function to create list item with image and correct link
+  const createListItem = (title, imageUrl, type, id) => {
+    const li = document.createElement('li');
+    li.className = 'added-item';
 
-  try {
-    // 🔹 Fetch this author's verse (only one)
-    const versesRef = collection(db, "verses");
-    const versesQ = query(versesRef, where("createdBy", "==", user.uid));
-    const versesSnap = await getDocs(versesQ);
+    const a = document.createElement('a');
+    if (type === "novel") {
+      a.href = `author-novels.html?novelId=${encodeURIComponent(id)}`;
+    } else if (type === "series") {
+      a.href = `author-series.html?seriesId=${encodeURIComponent(id)}`;
+    }
+    a.target = "_blank";
 
-    if (!versesSnap.empty) {
-      const verseDoc = versesSnap.docs[0]; // only one per author
-      const verseData = verseDoc.data();
-      verseTitleDisplay.textContent = verseData.title || "Untitled Verse";
-      currentVerseId = verseDoc.id;
+    const img = document.createElement('img');
+    img.src = imageUrl || 'placeholder.png';
+    img.alt = title;
+    img.className = 'added-item-img';
 
-      // 🔹 Enable navigation buttons using currentVerseId
-      if (addNovelBtn) {
-        addNovelBtn.addEventListener('click', () => {
+    const span = document.createElement('span');
+    span.textContent = title;
+    span.className = 'added-item-title';
+
+    a.appendChild(img);
+    a.appendChild(span);
+    li.appendChild(a);
+
+    return li;
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return debug("User not logged in.");
+    debug(`Logged in as: ${user.uid}`);
+
+    try {
+      const versesRef = collection(db, "verses");
+      const versesQ = query(versesRef, where("createdBy", "==", user.uid));
+      const versesSnap = await getDocs(versesQ);
+
+      if (!versesSnap.empty) {
+        const verseDoc = versesSnap.docs[0];
+        const verseData = verseDoc.data();
+        verseTitleDisplay.textContent = verseData.title || "Untitled Verse";
+        currentVerseId = verseDoc.id;
+
+        // Populate already added novels
+        addedNovelsList.innerHTML = '';
+        if (verseData.novels && verseData.novels.length) {
+          for (const novelId of verseData.novels) {
+            const novelRef = doc(db, "novels", novelId);
+            const novelSnap = await getDoc(novelRef);
+            if (novelSnap.exists()) {
+              const data = novelSnap.data();
+              const li = createListItem(data.title, data.coverUrl, "novel", novelId);
+              addedNovelsList.appendChild(li);
+            }
+          }
+        } else {
+          addedNovelsList.innerHTML = '<li>No novels added yet.</li>';
+        }
+
+        // Populate already added series
+        addedSeriesList.innerHTML = '';
+        if (verseData.series && verseData.series.length) {
+          for (const seriesId of verseData.series) {
+            const seriesRef = doc(db, "series", seriesId);
+            const seriesSnap = await getDoc(seriesRef);
+            if (seriesSnap.exists()) {
+              const data = seriesSnap.data();
+              const li = createListItem(data.title, data.coverImageURL, "series", seriesId);
+              addedSeriesList.appendChild(li);
+            }
+          }
+        } else {
+          addedSeriesList.innerHTML = '<li>No series added yet.</li>';
+        }
+
+        if (addNovelBtn) addNovelBtn.addEventListener('click', () => {
           window.location.href = `select-novel.html?verseId=${encodeURIComponent(currentVerseId)}`;
         });
-      }
-      if (addSeriesBtn) {
-        addSeriesBtn.addEventListener('click', () => {
+        if (addSeriesBtn) addSeriesBtn.addEventListener('click', () => {
           window.location.href = `select-series.html?verseId=${encodeURIComponent(currentVerseId)}`;
         });
+
+      } else {
+        verseTitleDisplay.textContent = "No verse found for this author.";
+        [addNovelBtn, addSeriesBtn].forEach(btn => {
+          if (btn) {
+            btn.disabled = true;
+            btn.style.color = '#999';
+            btn.style.cursor = 'default';
+          }
+        });
+        return;
       }
 
-    } else {
-      verseTitleDisplay.textContent = "No verse found for this author.";
-      debug("No verse found for this author.");
-
-      // Disable buttons if no verse
-      [addNovelBtn, addSeriesBtn].forEach(btn => {
-        if (btn) {
-          btn.disabled = true;
-          btn.style.color = '#999';
-          btn.style.cursor = 'default';
+      // Novels dropdown
+      const novelsRef = collection(db, "novels");
+      const novelsQ = query(novelsRef, where("submittedBy", "==", user.uid));
+      const novelsSnap = await getDocs(novelsQ);
+      novelSelect.innerHTML = `<option value="">-- Select a Novel --</option>`;
+      novelsSnap.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.status && ["approved", "published"].includes(data.status.toLowerCase())) {
+          const option = document.createElement("option");
+          option.value = docSnap.id;
+          option.textContent = data.title;
+          option.dataset.cover = data.coverUrl || '';
+          novelSelect.appendChild(option);
         }
       });
 
-      return;
-    }
-
-    // 🔹 Novels (only approved/published by this user)
-    const novelsRef = collection(db, "novels");
-    const novelsQ = query(novelsRef, where("submittedBy", "==", user.uid));
-    const novelsSnap = await getDocs(novelsQ);
-
-    let foundNovels = 0;
-    novelSelect.innerHTML = `<option value="">-- Select a Novel --</option>`;
-    novelsSnap.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.status && ["approved", "published"].includes(data.status.toLowerCase())) {
+      // Series dropdown
+      const seriesRef = collection(db, "series");
+      const seriesQ = query(seriesRef, where("createdBy", "==", user.uid));
+      const seriesSnap = await getDocs(seriesQ);
+      seriesSelect.innerHTML = `<option value="">-- Select a Series --</option>`;
+      seriesSnap.forEach(docSnap => {
+        const data = docSnap.data();
         const option = document.createElement("option");
         option.value = docSnap.id;
         option.textContent = data.title;
-        novelSelect.appendChild(option);
-        foundNovels++;
-      }
-    });
-    if (!foundNovels) {
-      novelSelect.innerHTML += `<option disabled>No approved novels available</option>`;
-    }
-
-    // 🔹 Series (only approved/published by this user)
-    const seriesRef = collection(db, "series");
-    const seriesQ = query(seriesRef, where("createdBy", "==", user.uid));
-    const seriesSnap = await getDocs(seriesQ);
-
-    let foundSeries = 0;
-    seriesSelect.innerHTML = `<option value="">-- Select a Series --</option>`;
-    seriesSnap.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.status && ["approved", "published"].includes((data.status || "").toLowerCase())) {
-        const option = document.createElement("option");
-        option.value = docSnap.id;
-        option.textContent = data.title;
+        option.dataset.cover = data.coverImageURL || '';
         seriesSelect.appendChild(option);
-        foundSeries++;
+      });
+
+    } catch (error) {
+      debug("Error loading novels/series/verse: " + error.message);
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const novelId = novelSelect.value;
+    const seriesId = seriesSelect.value;
+
+    if (!currentVerseId) return alert("No verse found for this author.");
+    if (!novelId && !seriesId) return alert("Select a novel or series!");
+
+    try {
+      const verseRef = doc(db, "verses", currentVerseId);
+
+      if (novelId) {
+        await updateDoc(verseRef, { novels: arrayUnion(novelId) });
+        debug(`Novel ${novelId} added to verse ${currentVerseId}`);
+
+        const selectedOption = novelSelect.options[novelSelect.selectedIndex];
+        const li = createListItem(selectedOption.text, selectedOption.dataset.cover, "novel", novelId);
+        if (addedNovelsList.querySelector('li')?.textContent === "No novels added yet.") {
+          addedNovelsList.innerHTML = '';
+        }
+        addedNovelsList.appendChild(li);
       }
-    });
-    if (!foundSeries) {
-      seriesSelect.innerHTML += `<option disabled>No approved series available</option>`;
+
+      if (seriesId) {
+        await updateDoc(verseRef, { series: arrayUnion(seriesId) });
+        debug(`Series ${seriesId} added to verse ${currentVerseId}`);
+
+        const selectedOption = seriesSelect.options[seriesSelect.selectedIndex];
+        const li = createListItem(selectedOption.text, selectedOption.dataset.cover, "series", seriesId);
+        if (addedSeriesList.querySelector('li')?.textContent === "No series added yet.") {
+          addedSeriesList.innerHTML = '';
+        }
+        addedSeriesList.appendChild(li);
+      }
+
+      alert("Verse updated successfully!");
+    } catch (error) {
+      debug("Error updating verse: " + error.message);
     }
-
-  } catch (error) {
-    debug("Error loading novels/series/verse: " + error.message);
-  }
-});
-
-// 🔹 Handle form submission
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const novelId = novelSelect.value;
-  const seriesId = seriesSelect.value;
-
-  if (!currentVerseId) return alert("No verse found for this author.");
-  if (!novelId && !seriesId) return alert("Select a novel or series!");
-
-  try {
-    const verseRef = doc(db, "verses", currentVerseId);
-
-    if (novelId) {
-      await updateDoc(verseRef, {
-        novels: arrayUnion(novelId)
-      });
-      debug(`Novel ${novelId} added to verse ${currentVerseId}`);
-    }
-
-    if (seriesId) {
-      await updateDoc(verseRef, {
-        series: arrayUnion(seriesId)
-      });
-      debug(`Series ${seriesId} added to verse ${currentVerseId}`);
-    }
-
-    alert("Verse updated successfully!");
-  } catch (error) {
-    debug("Error updating verse: " + error.message);
-  }
+  });
 });

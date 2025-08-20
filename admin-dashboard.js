@@ -18,6 +18,7 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const listContainer = document.getElementById('submission-list');
+  const pendingNovelsSection = document.getElementById('pending-novels-list'); // NEW
   const logoutBtn = document.getElementById('logout-btn');
   const darkToggle = document.getElementById('dark-toggle');
   const notifCount = document.getElementById('notif-count');
@@ -25,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const statRejected = document.getElementById('stat-rejected');
   const statPending = document.getElementById('stat-pending');
   const approvedContainer = document.getElementById('approved-novels-container');
-  const pendingVersesContainer = document.getElementById('pending-verses-list'); // ✅ New
-  const approvedVersesContainer = document.getElementById('approved-verses-container'); // ✅ New
+  const pendingVersesContainer = document.getElementById('pending-verses-list');
+  const approvedVersesContainer = document.getElementById('approved-verses-container');
 
   darkToggle.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
@@ -61,8 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (snapshot.empty) {
         listContainer.innerHTML = '<p>No pending submissions.</p>';
+        if (pendingNovelsSection) pendingNovelsSection.innerHTML = '<p>No pending novels.</p>';
       } else {
         listContainer.innerHTML = '';
+        if (pendingNovelsSection) pendingNovelsSection.innerHTML = '';
 
         snapshot.forEach(docSnap => {
           const novel = docSnap.data();
@@ -139,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             });
 
+            // Append card to both main submission list and the pending novels section
             listContainer.appendChild(card);
+            if (pendingNovelsSection) pendingNovelsSection.appendChild(card.cloneNode(true));
           }
         });
       }
@@ -147,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStats();
       updateNotif();
 
-      // ✅ Load and display approved novels
+      // Load and display approved novels
       const publishedSnapshot = await getDocs(collection(db, 'novels'));
 
       if (publishedSnapshot.empty) {
@@ -218,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // ✅ Load Pending Verses
+      // Load Pending Verses
       const verseSnapshot = await getDocs(collection(db, 'pending_verses'));
       if (verseSnapshot.empty) {
         pendingVersesContainer.innerHTML = '<p>No pending verses found.</p>';
@@ -244,13 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
           card.querySelector('.approve-btn').addEventListener('click', async () => {
             try {
-      const { status, ...verseData } = verse; // strip old status
-await setDoc(doc(db, 'verses', id), {
-  ...verseData,
-  status: 'approved',
-  approvedAt: serverTimestamp()
-});
-
+              const { status, ...verseData } = verse; // strip old status
+              await setDoc(doc(db, 'verses', id), {
+                ...verseData,
+                status: 'approved',
+                approvedAt: serverTimestamp()
+              });
 
               await deleteDoc(doc(db, 'pending_verses', id));
 
@@ -292,7 +296,7 @@ await setDoc(doc(db, 'verses', id), {
         });
       }
 
-      // ✅ Load Approved Verses
+      // Load Approved Verses with Rollback
       const approvedVerseSnapshot = await getDocs(collection(db, 'verses'));
       if (approvedVerseSnapshot.empty) {
         approvedVersesContainer.innerHTML = '<p>No approved verses yet.</p>';
@@ -300,6 +304,7 @@ await setDoc(doc(db, 'verses', id), {
         approvedVersesContainer.innerHTML = '';
         approvedVerseSnapshot.forEach(docSnap => {
           const verse = docSnap.data();
+          const id = docSnap.id;
 
           const card = document.createElement('div');
           card.className = 'approved-verse-card';
@@ -308,8 +313,37 @@ await setDoc(doc(db, 'verses', id), {
             <div class="verse-details">
               <h3>${verse.title}</h3>
               <p>${verse.description}</p>
+              <div class="approved-actions">
+                <button class="rollback-verse-btn">Rollback</button>
+              </div>
             </div>
           `;
+
+          card.querySelector('.rollback-verse-btn').addEventListener('click', async () => {
+            if (confirm(`Are you sure you want to rollback the verse "${verse.title}" to pending?`)) {
+              try {
+                await setDoc(doc(db, 'pending_verses', id), {
+                  ...verse,
+                  status: 'pending',
+                  rolledBackAt: serverTimestamp()
+                });
+
+                await deleteDoc(doc(db, 'verses', id));
+
+                await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
+                  type: 'verse_rollback',
+                  message: `Your verse "${verse.title}" was rolled back for revision.`,
+                  timestamp: serverTimestamp()
+                });
+
+                card.remove();
+                alert(`Verse "${verse.title}" has been rolled back to pending.`);
+              } catch (err) {
+                console.error("Verse rollback failed:", err);
+                alert("Failed to rollback this verse.");
+              }
+            }
+          });
 
           approvedVersesContainer.appendChild(card);
         });

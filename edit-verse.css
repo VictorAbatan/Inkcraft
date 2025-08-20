@@ -1,0 +1,74 @@
+body {
+  background: url('Star map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  font-family: Arial, sans-serif;
+  color: #f2f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  margin: 0;
+}
+
+.container {
+  background: rgba(26, 26, 26, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  width: 450px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.5);
+}
+
+h1 {
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+input, textarea, button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 15px;
+  background: #262626;
+  color: #f2f2f2;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+button {
+  background: #4caf50;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+.current-image-preview {
+  display: block;
+  max-width: 200px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+#debug {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #aaa;
+  background: #111;
+  padding: 10px;
+  border-radius: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}

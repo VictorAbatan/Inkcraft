@@ -64,3 +64,40 @@ button:hover {
   max-height: 120px;
   overflow-y: auto;
 }
+
+/* 🔹 Added styles for the added novels/series subsection */
+
+#added-novels-list,
+#added-series-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* spacing between items */
+  margin-top: 10px;
+}
+
+.added-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100px; /* container width */
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #1a1a1a;
+}
+
+.added-item-img {
+  width: auto;
+  height: 80px; /* medium-small size */
+  object-fit: cover;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+
+.added-item-title {
+  font-size: 0.9rem;
+  word-wrap: break-word;
+}

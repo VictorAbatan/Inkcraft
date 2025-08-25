@@ -111,6 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const coverFile = coverInput.files[0];
     const coverUrl = coverPreview.src;
 
+    // ✅ Get optional pen name override from form (if field exists)
+    let penNameOverride = null;
+    const penNameField = document.getElementById('penNameOverride');
+    if (penNameField && penNameField.value.trim()) {
+      penNameOverride = penNameField.value.trim();
+    }
+
     // ✅ Fetch author's display name
     let authorName = 'Unknown Author';
     try {
@@ -132,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
       coverUrl,
       status: 'pending',
       submittedBy: currentUser.uid,
+      authorId: currentUser.uid,     // ✅ Always link to logged-in user
       submittedAt: serverTimestamp(),
-      authorName // ✅ Added here
+      authorName,
+      penNameOverride: penNameOverride || null // ✅ Optional custom pen name
     };
 
     const novelId = `novel_${Date.now()}`;

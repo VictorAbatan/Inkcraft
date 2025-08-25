@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inkcraft | Verse Details</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="verse-details.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+  <!-- Floating Menu -->
+  <div id="floating-menu-container"></div>
+
+  <header class="verse-header">
+    <h1 id="verseTitle"></h1>
+    <p id="verseDescription" class="tagline"></p>
+  </header>
+
+  <main class="verse-content">
+    <div class="verse-image">
+      <img id="verseCover" src="" alt="Verse Cover">
+    </div>
+
+    <section class="verse-novels">
+      <h2>Novels in this Verse</h2>
+      <!-- JS will populate with clickable novel cards linking to novel-details.html -->
+      <div id="novelList" class="novel-grid"></div>
+    </section>
+
+    <section class="verse-series">
+      <h2>Series in this Verse</h2>
+      <!-- JS will populate with clickable series cards linking to series-details.html -->
+      <div id="seriesList" class="series-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inkcraft. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="verse-details.js"></script>
+</body>
+</html>

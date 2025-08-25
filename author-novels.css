@@ -52,6 +52,8 @@ footer {
   overflow: hidden;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .novel-card:hover {
@@ -61,11 +63,15 @@ footer {
 .novel-card img {
   width: 100%;
   height: 280px;
-  object-fit: cover;
+  object-fit: cover; /* ✅ keeps cover neat */
+  display: block;
 }
 
 .novel-details {
   padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .novel-details h3 {
@@ -77,6 +83,12 @@ footer {
   font-size: 0.95rem;
   margin: 0.2rem 0;
   color: #ccc;
+  line-height: 1.4;
+  display: -webkit-box;              /* ✅ ellipsis for multi-line */
+  -webkit-line-clamp: 3;             /* limit to 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* === Status Badges === */
@@ -187,5 +199,34 @@ footer {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* === Responsive Fixes for Cards === */
+@media (max-width: 768px) {
+  #novels-container {
+    grid-template-columns: 1fr 1fr; /* 2 cards per row */
+  }
+
+  .novel-card img {
+    height: 200px;
+  }
+
+  .novel-details p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  #novels-container {
+    grid-template-columns: 1fr; /* stack vertically */
+  }
+
+  .novel-card img {
+    height: 160px;
+  }
+
+  .novel-details p {
+    font-size: 0.85rem;
   }
 }

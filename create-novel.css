@@ -95,6 +95,17 @@ textarea {
   min-height: 100px;
 }
 
+/* ✅ New: Specific styling for optional pen name override */
+#penNameOverride {
+  font-style: italic;
+  color: #ddd;
+}
+
+#penNameOverride::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
 button[type="submit"] {
   margin-top: 1.8rem;
   padding: 12px;

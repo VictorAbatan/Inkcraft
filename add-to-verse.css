@@ -100,4 +100,33 @@ button:hover {
 .added-item-title {
   font-size: 0.9rem;
   word-wrap: break-word;
+  /* 🔹 Center the title/link text under image */
+  display: block;
+  margin-top: 2px;
+  font-weight: bold;
+  color: #1e90ff;
+  text-decoration: underline;
+}
+
+.added-item-title:hover {
+  color: #0056b3;
+}
+
+/* 🔹 Section container spacing for added novels/series */
+.added-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;        /* space between cards */
+  justify-content: center; /* center all cards in the section */
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Optional: section header */
+.added-section h3 {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #f2f2f2;
 }

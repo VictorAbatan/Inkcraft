@@ -1,0 +1,82 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: url("Star map.jpg") no-repeat center center/cover;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+}
+
+/* Floating Menu Container */
+#floating-menu-container {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  z-index: 1000;
+}
+
+/* Series Container */
+.series-container {
+  max-width: 1000px;
+  margin: 100px auto;
+  padding: 20px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 12px;
+  text-align: center; /* Center contents */
+}
+
+/* Series Header - centralized layout */
+.series-header {
+  display: flex;
+  flex-direction: column; /* stack vertically */
+  align-items: center;
+  gap: 20px;
+}
+
+.series-cover {
+  width: 250px;
+  height: 350px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.series-info h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.series-info p {
+  margin: 8px 0;
+  line-height: 1.5;
+  max-width: 800px;
+}
+
+/* Novels inside the series */
+.series-novels {
+  margin-top: 40px;
+}
+
+.novels-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.novel-card {
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.novel-card:hover {
+  transform: translateY(-5px);
+}
+
+.novel-card img {
+  width: 150px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}

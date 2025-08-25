@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         id: docSnap.id,
         title: data.title || 'Untitled',
         cover: data.cover || data.coverUrl || 'default-cover.jpg',
-        author: data.authorName || 'Unknown Author'  // ✅ Now using denormalized field
+        // ✅ Use penNameOverride first, then fallback to authorName, else Unknown Author
+        author: data.penNameOverride || data.authorName || 'Unknown Author'
       });
     });
 

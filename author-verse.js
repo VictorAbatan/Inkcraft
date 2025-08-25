@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="verse-actions">
           <a href="add-to-verse.html?verseId=${id}" class="btn btn-add">Add Content</a>
           <a href="edit-verse.html?id=${id}" class="btn btn-edit">Edit</a>
+          <a href="verse-contents.html?id=${id}" class="btn btn-view">View Content</a>
         </div>
       `;
 

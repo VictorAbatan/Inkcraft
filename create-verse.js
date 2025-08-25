@@ -93,13 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
           title,
           description,
           coverURL,
-          createdBy: uid,
+          authorId: uid,   // ✅ Ensures verse is tied to Firebase Auth UID
+          createdBy: uid,  // (kept for consistency / security rules)
           createdAt: serverTimestamp(),
           status: 'pending'
         };
 
-        const docId = `${uid}_${Date.now()}`;
-        const verseRef = doc(db, `pending_verses/${docId}`); // ✅ UPDATED COLLECTION PATH
+        const docId = `verse_${uid}_${Date.now()}`; // ✅ clearer unique ID
+        const verseRef = doc(db, "pending_verses", docId); // ✅ proper collection path
         await setDoc(verseRef, verseData);
 
         alert('Verse submitted for review. You’ll be notified once it is approved.');

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Series Novels | Inkcraft</title>
-  <link rel="stylesheet" href="series-novels.css" />
+  <title>Verse Contents | Inkcraft</title>
+  <link rel="stylesheet" href="verse-contents.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
@@ -12,18 +12,23 @@
   <!-- Floating Menu -->
   <div id="floating-menu-container"></div>
 
+  <!-- Header -->
   <header>
-    <h1>Novels in Series</h1>
-    <p>All novels currently part of this series</p>
+    <h1>Verse Details</h1>
+    <p>All your novels and series in this verse</p>
   </header>
 
   <main>
-    <section id="series-info">
-      <!-- Series title and description will be loaded here -->
-    </section>    
+    <section id="verse-info">
+      <!-- Verse title, description, cover will be loaded here -->
+    </section>
 
-    <section id="novels-list" class="novels-grid">
-      <!-- Novels will be dynamically loaded here -->
+    <section id="novels-list" class="cards-grid">
+      <!-- Novels in this verse will be loaded here -->
+    </section>
+
+    <section id="series-list" class="cards-grid">
+      <!-- Series in this verse will be loaded here -->
     </section>
   </main>
 
@@ -31,8 +36,6 @@
     <p>&copy; 2025 Inkcraft. All rights reserved.</p>
   </footer>
 
-  <script type="module" src="series-novels.js"></script>
-  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="verse-contents.js"></script>
 </body>
 </html>
-

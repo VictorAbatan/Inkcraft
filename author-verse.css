@@ -84,7 +84,7 @@ footer {
   height: 160px;
   object-fit: cover;
   margin: 1rem auto;
-  border-radius: 50%; /* Circular crop */
+  border-radius: 50%;
   border: 3px solid rgba(255, 215, 0, 0.6);
   box-shadow: 0 0 15px rgba(0, 174, 239, 0.5);
   transition: transform 0.3s ease;
@@ -157,6 +157,16 @@ footer {
   box-shadow: 0 0 12px rgba(0, 123, 255, 0.7);
 }
 
+/* View Content button */
+.btn-view {
+  background: linear-gradient(135deg, #ff8c00, #ffa500);
+  color: #fff;
+}
+
+.btn-view:hover {
+  background: linear-gradient(135deg, #e67600, #ff9a00);
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.7);
+}
 
 /* === Floating Menu === */
 .floating-menu {
@@ -176,8 +186,8 @@ footer {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8); /* dark black transparent background */
-  color: white; /* white icon color */
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -189,7 +199,7 @@ footer {
 
 .menu-item i {
   font-size: 1.4rem;
-  color: white; /* icon white */
+  color: white;
   pointer-events: none;
   z-index: 1;
 }
@@ -200,7 +210,7 @@ footer {
 
 .menu-item:hover,
 .menu-item.active {
-  background: #007bff; /* bright blue on hover/active */
+  background: #007bff;
   color: white;
 }
 
@@ -234,8 +244,9 @@ footer {
 }
 
 .menu-item {
-  background: rgba(0, 0, 0, 0.8); /* ✅ now hover blue will show */
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .menu-item i {
   color: white !important;
+}

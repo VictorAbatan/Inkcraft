@@ -28,7 +28,7 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
-  const docRef = doc(db, 'authors', user.uid);
+  const docRef = doc(db, 'authors', user.uid); // Always use UID as ID
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -78,10 +78,15 @@ saveBtn.addEventListener('click', async () => {
       }
     }
 
-    await setDoc(doc(db, 'authors', currentUser.uid), {
-      penName,
-      profilePicURL
-    });
+    // ✅ Always save profile under the user's Auth UID (not a random ID)
+    await setDoc(
+      doc(db, 'authors', currentUser.uid),
+      {
+        penName,
+        profilePicURL
+      },
+      { merge: true } // <-- Prevents overwriting future fields
+    );
 
     alert('Profile updated successfully!');
     window.location.href = 'author-centre.html';

@@ -35,14 +35,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('coverImage').src = data.cover || data.coverUrl || 'default-cover.jpg';
   document.getElementById('novelTitle').textContent = data.title || 'Untitled';
 
-  let authorName = 'Unknown';
-  if (data.submittedBy) {
+  // ✅ Unified author logic
+  let authorName = data.penNameOverride || data.authorName || 'Unknown';
+  if ((!data.penNameOverride && !data.authorName) && data.submittedBy) {
     try {
       const authorRef = doc(db, 'authors', data.submittedBy);
       const authorSnap = await getDoc(authorRef);
       if (authorSnap.exists()) {
         const authorData = authorSnap.data();
-        authorName = authorData.name || authorData.penName || authorName;
+        authorName = authorData.penName || authorData.name || authorName;
       }
     } catch (err) {
       console.warn('Failed to fetch author name:', err);

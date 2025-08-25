@@ -78,15 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const seriesData = {
             title,
             description,
-            createdBy: uid,
-            ownerId: uid, // ✅ Required for Firestore update permissions
+            authorId: uid, // ✅ Always tie series to Firebase Auth UID
+            createdBy: uid, // (kept for consistency if referenced elsewhere)
+            ownerId: uid,   // ✅ Ensures correct Firestore security ownership
             createdAt: serverTimestamp(),
             novels: [],
             coverImageURL: coverUrl || '' // ✅ updated field name
           };
 
-          const docId = `${uid}_${Date.now()}`;
-          const seriesRef = doc(db, `series/${docId}`); // ✅ corrected collection path
+          const docId = `series_${uid}_${Date.now()}`; // ✅ clearer unique ID
+          const seriesRef = doc(db, "series", docId); // ✅ corrected collection path
           await setDoc(seriesRef, seriesData);
 
           alert('Series created successfully! You can now add novels to it.');

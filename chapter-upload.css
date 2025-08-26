@@ -222,7 +222,6 @@ footer {
   }
 }
 
-
 .chapter-actions {
   margin-top: 0.5rem;
   display: flex;
@@ -261,4 +260,15 @@ footer {
 .chapter-actions .move-up:hover,
 .chapter-actions .move-down:hover {
   background-color: #495057;
+}
+
+/* ✅ Paragraph spacing and line-height fix for chapter content */
+.chapter-body,
+.chapter-notes {
+  line-height: 1.8;         /* more breathing room between lines */
+}
+
+.chapter-body p,
+.chapter-notes p {
+  margin-bottom: 1.2rem;    /* extra space between paragraphs */
 }

@@ -40,6 +40,14 @@ const previewArea = document.getElementById('previewArea');
 let chapters = [];
 let editingChapterId = null;
 
+// ✅ Helper: format text into paragraphs
+function formatTextToParagraphs(text) {
+  return text
+    .split(/\n\s*\n/) // split on double line breaks
+    .map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
 // AUTH & INITIALIZATION
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -115,6 +123,7 @@ onAuthStateChanged(auth, async user => {
     }
   });
 
+  // ✅ Updated preview with .chapter-body wrapper
   previewBtn.addEventListener('click', () => {
     const number = numberInput.value;
     const title = titleInput.value;
@@ -123,7 +132,9 @@ onAuthStateChanged(auth, async user => {
     previewArea.innerHTML = `
       <hr>
       <h3>Preview - Chapter ${number}${title ? `: ${title}` : ''}</h3>
-      <p style="white-space:pre-line;">${body}</p>
+      <div class="chapter-body">
+        ${formatTextToParagraphs(body)}
+      </div>
     `;
   });
 

@@ -2,6 +2,27 @@ import { db } from './firebase-config.js';
 import { doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // ✅ Load floating menu
+  const menuContainer = document.getElementById('floating-menu-container');
+  if (menuContainer) {
+    try {
+      const res = await fetch('./floating-menu.html');
+      if (res.ok) {
+        const html = await res.text();
+        menuContainer.innerHTML = html;
+
+        const currentPage = window.location.pathname.split('/').pop();
+        document.querySelectorAll('.floating-menu a').forEach(link => {
+          if (link.getAttribute('href') === currentPage) {
+            link.classList.add('active');
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load floating menu:", err);
+    }
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const seriesId = urlParams.get("id");
 
@@ -32,28 +53,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     const novelsList = document.getElementById("novels-list");
     novelsList.innerHTML = "";
 
-    const novelsQuery = query(
-      collection(db, "novels"),
-      where("seriesId", "==", seriesId)
-    );
+    // ✅ Use the novels array from seriesData if it exists
+    const novelIds = seriesData.novels || [];
 
-    const novelsSnap = await getDocs(novelsQuery);
+    if (novelIds.length === 0) {
+      novelsList.innerHTML = "<p style='text-align:center; color:white;'>No novels in this series yet.</p>";
+    } else {
+      for (const novelId of novelIds) {
+        const novelDoc = await getDoc(doc(db, "novels", novelId));
+        if (novelDoc.exists()) {
+          const novel = novelDoc.data();
 
-    novelsSnap.forEach(docSnap => {
-      const novel = docSnap.data();
+          const card = document.createElement("div");
+          card.className = "novel-card";
+          card.innerHTML = `
+            <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="${novel.title}">
+            <p>${novel.title}</p>
+          `;
+          // ✅ Link novels with ?novelId to match novel-details.js
+          card.addEventListener("click", () => {
+            window.location.href = `novel-details.html?novelId=${novelDoc.id}`;
+          });
 
-      const card = document.createElement("div");
-      card.className = "novel-card";
-      card.innerHTML = `
-        <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="${novel.title}">
-        <p>${novel.title}</p>
-      `;
-      card.addEventListener("click", () => {
-        window.location.href = `novel-details.html?id=${docSnap.id}`;
-      });
+          novelsList.appendChild(card);
+        }
+      }
+    }
 
-      novelsList.appendChild(card);
-    });
+    // ✅ If this series belongs to a verse, make it clickable back to verse-details
+    if (seriesData.verseId) {
+      const verseLink = document.getElementById("verse-link");
+      if (verseLink) {
+        verseLink.style.display = "inline-block";
+        verseLink.addEventListener("click", () => {
+          window.location.href = `verse-details.html?id=${seriesData.verseId}`;
+        });
+      }
+    }
 
   } catch (error) {
     console.error("Error loading series details:", error);

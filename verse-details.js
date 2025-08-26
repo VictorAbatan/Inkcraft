@@ -70,12 +70,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (novelDoc.exists()) {
           const novel = novelDoc.data();
           let coverURL = fallbackCover;
-          if (novel.coverUrl) { // ✅ use correct field for novels
-            try {
-              coverURL = novel.coverUrl; // already a URL in doc
-            } catch (err) {
-              console.warn("Failed to load novel cover:", novelId, err);
-            }
+          if (novel.coverUrl) {
+            coverURL = novel.coverUrl; // already a URL in doc
           }
           const div = document.createElement('div');
           div.className = 'novel-card';
@@ -83,7 +79,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             <img src="${coverURL}" alt="${novel.title}">
             <span>${novel.title}</span>
           `;
-          // ✅ updated to use novelId in URL
           div.addEventListener('click', () => window.location.href = `novel-details.html?novelId=${novelDoc.id}`);
           novelGrid.appendChild(div);
         }
@@ -104,12 +99,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (seriesDoc.exists()) {
           const series = seriesDoc.data();
           let coverURL = fallbackCover;
-          if (series.coverImageURL) { // ✅ use correct field for series
-            try {
-              coverURL = series.coverImageURL; // already a URL in doc
-            } catch (err) {
-              console.warn("Failed to load series cover:", seriesId, err);
-            }
+          if (series.coverImageURL) {
+            coverURL = series.coverImageURL;
           }
           const div = document.createElement('div');
           div.className = 'series-card';
@@ -117,8 +108,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <img src="${coverURL}" alt="${series.title}">
             <span>${series.title}</span>
           `;
-          // ✅ updated to use seriesId in URL
-          div.addEventListener('click', () => window.location.href = `series-details.html?seriesId=${seriesDoc.id}`);
+          // ✅ FIXED: use ?id= instead of ?seriesId=
+          div.addEventListener('click', () => window.location.href = `series-details.html?id=${seriesDoc.id}`);
           seriesGrid.appendChild(div);
         }
       }

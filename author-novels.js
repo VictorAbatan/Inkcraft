@@ -48,10 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
 
-        // 📌 Clicking cover or title → Novel details page
+        // 📌 Clicking cover or title → Chapter upload page instead of novel details
         card.querySelectorAll('.cover-click, .title-click').forEach(el => {
           el.addEventListener('click', () => {
-            window.location.href = `novel-details.html?novelId=${id}`;
+            window.location.href = `chapter-upload.html?novelId=${id}`;
           });
         });
 

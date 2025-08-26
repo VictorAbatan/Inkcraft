@@ -93,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = coverInput.files[0];
 
     if (file) {
-      const fileRef = ref(storage, `covers/${novelId}-${Date.now()}`);
+      // ✅ Updated path to match storage rules
+      const fileRef = ref(storage, `novel-covers/${user.uid}/${novelId}-${Date.now()}`);
       await uploadBytes(fileRef, file);
       coverUrl = await getDownloadURL(fileRef);
     }

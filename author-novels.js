@@ -41,18 +41,25 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'novel-card';
 
         card.innerHTML = `
-          <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover cover-click" data-id="${id}" />
+          <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover" />
           <div class="novel-details">
-            <h3 class="title-click" data-id="${id}">${novel.title || 'Untitled Novel'}</h3>
+            <h3>${novel.title || 'Untitled Novel'}</h3>
             <p><strong>Description:</strong> ${novel.synopsis ? novel.synopsis.substring(0, 150) + (novel.synopsis.length > 150 ? '...' : '') : 'No synopsis available.'}</p>
+          </div>
+          <div class="novel-actions">
+            <button class="action-btn upload-btn" data-id="${id}">Upload Chapter</button>
+            <button class="action-btn edit-btn" data-id="${id}">Edit Novel</button>
           </div>
         `;
 
-        // 📌 Clicking cover or title → Chapter upload page instead of novel details
-        card.querySelectorAll('.cover-click, .title-click').forEach(el => {
-          el.addEventListener('click', () => {
-            window.location.href = `chapter-upload.html?novelId=${id}`;
-          });
+        // 📌 Button: Upload Chapter
+        card.querySelector('.upload-btn').addEventListener('click', () => {
+          window.location.href = `chapter-upload.html?novelId=${id}`;
+        });
+
+        // 📌 Button: Edit Novel
+        card.querySelector('.edit-btn').addEventListener('click', () => {
+          window.location.href = `edit-novel.html?novelId=${id}`;
         });
 
         novelContainer.appendChild(card);

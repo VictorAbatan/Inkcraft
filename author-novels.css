@@ -117,22 +117,42 @@ footer {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  padding: 0 1rem 1rem;
 }
 
-.novel-actions button {
+.novel-actions .action-btn {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  font-family: inherit;
   background-color: #007bff;
   color: #fff;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 0.85rem;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.novel-actions button:hover {
-  background-color: #0056b3;
+.novel-actions .action-btn:hover {
   transform: scale(1.05);
+}
+
+/* 🔵 Upload Chapter Button */
+.novel-actions .upload-btn {
+  background-color: #007bff;
+}
+.novel-actions .upload-btn:hover {
+  background-color: #0056b3;
+}
+
+/* 🟢 Edit Novel Button */
+.novel-actions .edit-btn {
+  background-color: #28a745;
+}
+.novel-actions .edit-btn:hover {
+  background-color: #1e7e34;
 }
 
 /* === Floating Menu (copied from author-centre.css, overridden if needed) === */
@@ -228,5 +248,14 @@ footer {
 
   .novel-details p {
     font-size: 0.85rem;
+  }
+
+  /* ✅ Stack buttons full-width on small screens */
+  .novel-actions {
+    flex-direction: column;
+  }
+
+  .novel-actions .action-btn {
+    width: 100%;
   }
 }

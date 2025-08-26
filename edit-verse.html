@@ -10,21 +10,37 @@
   <div class="container">
     <h1>Edit Verse</h1>
     <form id="editVerseForm">
-      <label for="verseTitle">Verse Title</label>
-      <input type="text" id="verseTitle" placeholder="Enter new verse title">
+      <!-- Verse Title -->
+      <div class="form-group">
+        <label for="verseTitle">Verse Title</label>
+        <input type="text" id="verseTitle" name="verseTitle" placeholder="Enter new verse title">
+      </div>
 
-      <label for="verseDescription">Description</label>
-      <textarea id="verseDescription" placeholder="Enter new description"></textarea>
+      <!-- Verse Description -->
+      <div class="form-group">
+        <label for="verseDescription">Description</label>
+        <textarea id="verseDescription" name="verseDescription" placeholder="Enter new description"></textarea>
+      </div>
 
-      <label>Current Cover Image</label>
-      <img id="currentImage" src="placeholder.png" alt="Verse cover" class="current-image-preview">
+      <!-- Current Image Preview -->
+      <div class="form-group">
+        <label>Current Cover Image</label>
+        <img id="currentImage" src="placeholder.png" alt="Verse cover" class="current-image-preview">
+      </div>
 
-      <label for="verseImage">Change Cover Image (optional)</label>
-      <input type="file" id="verseImage" accept="image/*">
+      <!-- Upload New Image -->
+      <div class="form-group">
+        <label for="newVerseImage">Change Cover Image (optional)</label>
+        <input type="file" id="newVerseImage" name="newVerseImage" accept="image/*">
+      </div>
 
-      <button type="submit">Save Changes</button>
+      <!-- Submit -->
+      <div class="form-group">
+        <button type="submit">Save Changes</button>
+      </div>
     </form>
 
+    <!-- Debug Section -->
     <div id="debug"></div>
   </div>
 

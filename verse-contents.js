@@ -107,9 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p class="card-synopsis">${series.description ? series.description.substring(0,200)+(series.description.length>200?'...':'') : 'No description available.'}</p>
               </div>
             `;
-            // ✅ fixed to use seriesId param
+            // ✅ fixed to use series-details.html with "id" param
             card.addEventListener('click', () => {
-              window.location.href = `series-novels.html?seriesId=${seriesSnap.id}`;
+              window.location.href = `series-details.html?id=${seriesSnap.id}`;
             });
             seriesList.appendChild(card);
           }

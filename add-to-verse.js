@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Novels dropdown
       const novelsRef = collection(db, "novels");
-      const novelsQ = query(novelsRef, where("submittedBy", "==", user.uid));
+      const novelsQ = query(novelsRef, where("authorId", "==", user.uid)); // ✅ fixed from submittedBy → authorId
       const novelsSnap = await getDocs(novelsQ);
       novelSelect.innerHTML = `<option value="">-- Select a Novel --</option>`;
       novelsSnap.forEach(docSnap => {

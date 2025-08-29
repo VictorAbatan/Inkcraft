@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ${coverImage}
         <div class="card-content">
           <h2>${data.title}</h2>
-          <p>${data.description}</p>
+          <p class="series-description">${data.description}</p>
+          <span class="read-more">Read more</span>
         </div>
         <div class="series-actions">
           <a href="edit-series.html?id=${id}" class="btn btn-edit">Edit</a>
@@ -77,6 +78,24 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
       container.appendChild(card);
+    });
+
+    // Enable Read more / Read less toggle
+    const cards = document.querySelectorAll('.series-card');
+    cards.forEach(card => {
+      const desc = card.querySelector('.series-description');
+      const toggle = card.querySelector('.read-more');
+
+      if (desc && toggle) {
+        toggle.addEventListener('click', () => {
+          desc.classList.toggle('expanded');
+          if (desc.classList.contains('expanded')) {
+            toggle.textContent = 'Read less';
+          } else {
+            toggle.textContent = 'Read more';
+          }
+        });
+      }
     });
   });
 });

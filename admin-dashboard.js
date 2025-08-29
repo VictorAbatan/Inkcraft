@@ -57,11 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const snapshot = await getDocs(collection(db, 'pending_novels'));
+      // 🔥 Now we fetch ALL novels from "novels" collection
+      const snapshot = await getDocs(collection(db, 'novels'));
       let approved = 0, rejected = 0, pending = 0, notifications = 0;
 
       if (snapshot.empty) {
-        listContainer.innerHTML = '<p>No pending submissions.</p>';
+        listContainer.innerHTML = '<p>No submissions found.</p>';
         if (pendingNovelsSection) pendingNovelsSection.innerHTML = '<p>No pending novels.</p>';
       } else {
         listContainer.innerHTML = '';
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const novel = docSnap.data();
           const id = docSnap.id;
 
-          if (novel.status === 'approved') approved++;
+          if (novel.status === 'published' || novel.status === 'approved') approved++;
           if (novel.status === 'rejected') rejected++;
 
           if (novel.status === 'pending') {
@@ -94,10 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.approve-btn').addEventListener('click', async () => {
               try {
-                await updateDoc(doc(db, 'pending_novels', id), { status: 'approved' });
-
-                await setDoc(doc(db, 'novels', id), {
-                  ...novel,
+                await updateDoc(doc(db, 'novels', id), {
                   status: 'published',
                   approvedAt: serverTimestamp()
                 });
@@ -122,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.reject-btn').addEventListener('click', async () => {
               try {
-                await updateDoc(doc(db, 'pending_novels', id), { status: 'rejected' });
+                await updateDoc(doc(db, 'novels', id), { status: 'rejected' });
 
                 await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
                   type: 'rejection',
@@ -193,13 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
           card.querySelector('.rollback-btn').addEventListener('click', async () => {
             if (confirm(`Are you sure you want to unpublish "${novel.title}"?`)) {
               try {
-                await setDoc(doc(db, 'pending_novels', id), {
-                  ...novel,
+                await updateDoc(doc(db, 'novels', id), {
                   status: 'pending',
                   rolledBackAt: serverTimestamp()
                 });
-
-                await deleteDoc(doc(db, 'novels', id));
 
                 await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
                   type: 'rollback',
@@ -223,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // Load Pending Verses
+      // 🔥 Verse code remains unchanged
       const verseSnapshot = await getDocs(collection(db, 'pending_verses'));
       if (verseSnapshot.empty) {
         pendingVersesContainer.innerHTML = '<p>No pending verses found.</p>';
@@ -296,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // Load Approved Verses with Rollback
       const approvedVerseSnapshot = await getDocs(collection(db, 'verses'));
       if (approvedVerseSnapshot.empty) {
         approvedVersesContainer.innerHTML = '<p>No approved verses yet.</p>';

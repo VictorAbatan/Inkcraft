@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -41,22 +41,90 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'login.html'; // redirect if not logged in
       return;
     }
-    
-    const docRef = doc(db, 'authors', user.uid);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      const data = docSnap.data();
+    try {
+      // --- Load author info from 'authors' collection ---
+      const authorRef = doc(db, 'authors', user.uid);
+      const authorSnap = await getDoc(authorRef);
 
-      // Update pen name label
-      if (data.penName) {
-        penNameElement.textContent = data.penName;
+      console.log("Firestore author doc exists:", authorSnap.exists());
+      if (authorSnap.exists()) {
+        const data = authorSnap.data();
+        console.log("Author data:", data);
+
+        // ✅ Ensure fields come from Firestore correctly
+        if (penNameElement) {
+          penNameElement.textContent = (data.penName && data.penName.trim() !== "")
+            ? data.penName
+            : "Unknown Author";
+        }
+        if (profilePicElement) {
+          profilePicElement.src = (data.profilePicURL && data.profilePicURL.trim() !== "")
+            ? data.profilePicURL
+            : "default-profile.png";
+        }
+      } else {
+        console.warn(`No author doc found for UID ${user.uid} in 'authors' collection`);
+        if (penNameElement) penNameElement.textContent = 'Unknown Author';
+        if (profilePicElement) profilePicElement.src = 'default-profile.png'; // fallback image
       }
 
-      // Update profile pic src if available
-      if (data.profilePicURL) {
-        profilePicElement.src = data.profilePicURL;
+      // --- Load approved novels submitted by this author ---
+      const novelsQuery = query(
+        collection(db, 'novels'),
+        where('submittedBy', '==', user.uid)
+      );
+      const novelsSnap = await getDocs(novelsQuery);
+      const novelsContainer = document.getElementById('author-novels-container');
+      if (novelsContainer) {
+        novelsContainer.innerHTML = '';
+        novelsSnap.forEach(doc => {
+          const novel = doc.data();
+          const div = document.createElement('div');
+          div.className = 'author-novel-item';
+          div.innerHTML = `<h3>${novel.title}</h3>`;
+          novelsContainer.appendChild(div);
+        });
       }
+
+      // --- Load series created by this author ---
+      const seriesQuery = query(
+        collection(db, 'series'),
+        where('createdBy', '==', user.uid)
+      );
+      const seriesSnap = await getDocs(seriesQuery);
+      const seriesContainer = document.getElementById('author-series-container');
+      if (seriesContainer) {
+        seriesContainer.innerHTML = '';
+        seriesSnap.forEach(doc => {
+          const series = doc.data();
+          const div = document.createElement('div');
+          div.className = 'author-series-item';
+          div.innerHTML = `<h3>${series.title}</h3>`;
+          seriesContainer.appendChild(div);
+        });
+      }
+
+      // --- Load verses created by this author ---
+      const versesQuery = query(
+        collection(db, 'verses'),
+        where('createdBy', '==', user.uid)
+      );
+      const versesSnap = await getDocs(versesQuery);
+      const versesContainer = document.getElementById('author-verses-container');
+      if (versesContainer) {
+        versesContainer.innerHTML = '';
+        versesSnap.forEach(doc => {
+          const verse = doc.data();
+          const div = document.createElement('div');
+          div.className = 'author-verse-item';
+          div.innerHTML = `<h3>${verse.title}</h3>`;
+          versesContainer.appendChild(div);
+        });
+      }
+
+    } catch (error) {
+      console.error('Error loading author data:', error);
     }
   });
 });

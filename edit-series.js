@@ -19,6 +19,7 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const storage = getStorage(app);
+  let currentCoverURL = ''; // store original cover URL
 
   // === Load Floating Menu ===
   fetch('author-floating-menu.html')
@@ -83,15 +84,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
       titleInput.value = series.title || '';
       descInput.value = series.description || '';
-
       if (series.coverImageURL) {
-        previewImg.src = series.coverImageURL;
+        currentCoverURL = series.coverImageURL;
+        previewImg.src = currentCoverURL;
         previewImg.style.display = 'block';
       }
     } catch (error) {
       console.error('Error loading series:', error);
       alert('Failed to load series data.');
     }
+
+    // === Cover Preview Update with revert ===
+    coverInput.addEventListener('change', () => {
+      const file = coverInput.files[0];
+      if (file) {
+        previewImg.src = URL.createObjectURL(file);
+        previewImg.style.display = 'block';
+      } else {
+        // revert to original cover if input cleared
+        previewImg.src = currentCoverURL;
+      }
+    });
 
     // === Submit Handler ===
     form.addEventListener('submit', async e => {
@@ -120,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await updateDoc(seriesRef, updateData);
         alert('Series updated successfully!');
-        form.reset();
+        window.location.href = 'author-series.html'; // redirect after submit
       } catch (err) {
         console.error('Error updating series:', err);
         alert('Something went wrong. Please try again.');

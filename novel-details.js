@@ -6,7 +6,9 @@ import {
   getDocs,
   query,
   orderBy,
-  setDoc
+  setDoc,
+  addDoc,
+  serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
@@ -19,6 +21,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
   const auth = getAuth(app);
+
+  // ✅ Inbox logic (status, comment, reply notifications)
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      const inboxContainer = document.getElementById('inboxContainer');
+      if (inboxContainer) {
+        inboxContainer.innerHTML = '<p>Please log in to view your inbox.</p>';
+      }
+      return;
+    }
+
+    try {
+      const inboxRef = collection(db, `users/${user.uid}/inbox`);
+      const q = query(inboxRef, orderBy('timestamp', 'desc'));
+      const snap = await getDocs(q);
+
+      const inboxContainer = document.getElementById('inboxContainer');
+      if (inboxContainer) {
+        inboxContainer.innerHTML = '<h2>Inbox</h2>';
+
+        if (snap.empty) {
+          inboxContainer.innerHTML += '<p>No messages yet.</p>';
+          return;
+        }
+
+        snap.forEach(docSnap => {
+          const msg = docSnap.data();
+          const div = document.createElement('div');
+          div.classList.add('inbox-message');
+
+          let content = '';
+          if (msg.type === 'status') {
+            content = `<p>📖 <strong>${msg.novelTitle || 'Your novel'}</strong> was <em>${msg.status}</em>.</p>`;
+          } else if (msg.type === 'comment') {
+            content = `<p>💬 New comment on <strong>${msg.novelTitle || 'your novel'}</strong> by ${msg.userName || 'Anonymous'}: "${msg.text}"</p>`;
+          } else if (msg.type === 'reply') {
+            content = `<p>↩️ ${msg.userName || 'Anonymous'} replied to your comment on <strong>${msg.novelTitle || 'your novel'}</strong>: "${msg.text}"</p>`;
+          } else {
+            content = `<p>${msg.text || 'You have a new message.'}</p>`;
+          }
+
+          const time = msg.timestamp?.toDate
+            ? msg.timestamp.toDate().toLocaleString()
+            : 'Unknown time';
+
+          div.innerHTML = `
+            ${content}
+            <small>${time}</small>
+          `;
+
+          inboxContainer.appendChild(div);
+        });
+      }
+    } catch (err) {
+      console.error('Error loading inbox:', err);
+      const inboxContainer = document.getElementById('inboxContainer');
+      if (inboxContainer) {
+        inboxContainer.innerHTML = '<p>Failed to load inbox.</p>';
+      }
+    }
+  });
+
+  // ✅ Novel details logic (only runs if novelId exists)
   const urlParams = new URLSearchParams(window.location.search);
   const novelId = urlParams.get('novelId');
   if (!novelId) return;
@@ -51,13 +116,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   document.getElementById('authorName').textContent = authorName;
 
-  document.getElementById('genreList').textContent = (data.genres || []).join(', ') || 'Unspecified';
-  document.getElementById('viewCount').textContent = data.views || 'N/A';
-  document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
+  // ✅ SAFE genre check
+  const genre = Array.isArray(data.genre) && data.genre.length > 0
+    ? data.genre.join(', ')
+    : data.genre || 'Unspecified';
+  document.getElementById('genreList').textContent = genre;
 
+  document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
   document.getElementById('readButton').href = `read-novel.html?novelId=${novelId}`;
 
-  // ✅ Load chapters for count and ToC
+  // ✅ Load chapters
   try {
     const chaptersRef = collection(db, `novels/${novelId}/published_chapters`);
     const q = query(chaptersRef, orderBy('order'));
@@ -67,24 +135,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('chapterCount').textContent = chapterCount;
 
     const contentsTab = document.getElementById('contentsTab');
+    contentsTab.innerHTML = '<h2>Chapters</h2>';
+
     if (!snapshot.empty) {
       const ul = document.createElement('ul');
       snapshot.forEach((docSnap) => {
         const chapter = docSnap.data();
-        const chapterNumber = chapter.number || 1;
+        const chapterId = docSnap.id;
+        const chapterNumber = chapter.number != null ? chapter.number : 1;
         const chapterTitle = chapter.title || `Chapter ${chapterNumber}`;
         const li = document.createElement('li');
-        li.innerHTML = `<a href="read-novel.html?novelId=${novelId}&chapter=${chapterNumber}">📖 ${chapterTitle}</a>`;
+        li.innerHTML = `<a href="read-novel.html?novelId=${novelId}&chapterId=${chapterId}">
+                          <span class="chapter-number">${chapterNumber}.</span>
+                          <span class="chapter-title">${chapterTitle}</span>
+                        </a>`;
         ul.appendChild(li);
       });
-      contentsTab.innerHTML = '<h2>Chapters</h2>';
       contentsTab.appendChild(ul);
     } else {
-      contentsTab.innerHTML = '<h2>Chapters</h2><p>No chapters uploaded yet.</p>';
+      const p = document.createElement('p');
+      p.textContent = 'No chapters uploaded yet.';
+      contentsTab.appendChild(p);
     }
   } catch (err) {
     console.error('Error loading chapters:', err);
     document.getElementById('chapterCount').textContent = '—';
+    const contentsTab = document.getElementById('contentsTab');
+    contentsTab.innerHTML = '<h2>Chapters</h2><p>Unable to load chapters.</p>';
   }
 
   // Tabs
@@ -132,6 +209,88 @@ document.addEventListener('DOMContentLoaded', async () => {
           alert('Error saving novel to library.');
         }
       });
+    });
+  }
+
+  // ✅ Comments Section
+  const commentsTab = document.getElementById('commentsTab');
+  if (commentsTab) {
+    const commentsList = document.createElement('div');
+    commentsList.id = 'commentsList';
+    commentsTab.appendChild(commentsList);
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = '💬 Show Comments';
+    toggleBtn.style.margin = '1rem 0';
+    commentsTab.insertBefore(toggleBtn, commentsList);
+
+    commentsList.style.display = 'none';
+
+    toggleBtn.addEventListener('click', () => {
+      commentsList.style.display = commentsList.style.display === 'none' ? 'block' : 'none';
+      toggleBtn.textContent = commentsList.style.display === 'none' ? '💬 Show Comments' : '💬 Hide Comments';
+    });
+
+    async function loadComments() {
+      commentsList.innerHTML = '<p>Loading comments...</p>';
+      try {
+        const commentsRef = collection(db, `novels/${novelId}/comments`);
+        const q = query(commentsRef, orderBy('timestamp', 'asc'));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          commentsList.innerHTML = '<p>No comments yet.</p>';
+          return;
+        }
+
+        commentsList.innerHTML = '';
+        snap.forEach(docSnap => {
+          const c = docSnap.data();
+          const div = document.createElement('div');
+          div.classList.add('comment');
+          div.innerHTML = `
+            <p><strong>${c.userName || 'Anonymous'}:</strong> ${c.text}</p>
+          `;
+          commentsList.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Error loading comments:', err);
+        commentsList.innerHTML = '<p>Failed to load comments.</p>';
+      }
+    }
+
+    loadComments();
+
+    const form = document.createElement('form');
+    form.innerHTML = `
+      <textarea placeholder="Write a comment..." required></textarea>
+      <button type="submit">Post</button>
+    `;
+    commentsTab.appendChild(form);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) {
+        alert('You must be logged in to comment.');
+        return;
+      }
+      const text = form.querySelector('textarea').value.trim();
+      if (!text) return;
+
+      try {
+        await addDoc(collection(db, `novels/${novelId}/comments`), {
+          text,
+          userId: user.uid,
+          userName: user.displayName || 'Anonymous',
+          timestamp: serverTimestamp()
+        });
+        form.reset();
+        loadComments();
+      } catch (err) {
+        console.error('Failed to post comment:', err);
+        alert('Error posting comment.');
+      }
     });
   }
 });

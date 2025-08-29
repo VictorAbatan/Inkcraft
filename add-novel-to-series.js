@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Load all novels created by this user that are approved or published
       const novelsQuery = query(
         collection(db, 'novels'),
-        where('submittedBy', '==', user.uid)
+        where('authorId', '==', user.uid) // ✅ fixed from submittedBy → authorId
       );
 
       const snapshot = await getDocs(novelsQuery);

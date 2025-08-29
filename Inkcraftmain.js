@@ -1,6 +1,6 @@
 import { app, db } from './firebase-config.js';
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, query, orderBy, limit, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu dynamically
@@ -85,15 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const versesSnapshot = await getDocs(collection(db, 'verses'));
     const verses = versesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    if (verses.length === 0) return; // no verses, exit
+    if (verses.length === 0) return;
 
-    // create cards for each verse
     verses.forEach(verse => {
       const card = document.createElement('div');
       card.classList.add('icon-card');
 
       const link = document.createElement('a');
-      // 🔥 FIXED: send to verse-details instead of verse.html
       link.href = `verse-details.html?id=${verse.id}`;
 
       const img = document.createElement('img');
@@ -110,12 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
       track.appendChild(card);
     });
 
-    // update carousel references
     cards = Array.from(track.children);
     cardWidth = cards[0].offsetWidth + parseInt(getComputedStyle(track).gap || 0);
 
     if (cards.length > 1) {
-      // enable cloning and infinite scroll
       prependClones = cards.map(c => c.cloneNode(true)).reverse();
       appendClones = cards.map(c => c.cloneNode(true));
 
@@ -128,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentIndex = offset;
       carousel.scrollLeft = currentIndex * cardWidth;
     } else {
-      // only one verse, static
       totalReal = 1;
       offset = 0;
       currentIndex = 0;
@@ -140,8 +135,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadHomeVerses();
 
-  // Autoplay carousel (only works if more than 1 verse)
   setInterval(() => {
     if (cards.length > 1) slideTo(currentIndex + 1);
   }, 5000);
-});
+
+  // === 🔹 LOAD NEW BOOKS (latest 2 only, published only) ===
+  async function loadNewBooks() {
+    const grid = document.querySelector('.new-books .book-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    const q = query(
+      collection(db, 'novels'),
+      where('status', '==', 'published'), // ✅ Only published novels
+      orderBy('submittedAt', 'desc'),
+      limit(2)
+    );
+
+    const snapshot = await getDocs(q);
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const card = document.createElement('a');
+      card.href = `novel-details.html?novelId=${docSnap.id}`;
+      card.className = 'book-card';
+
+      const img = document.createElement('img');
+      img.src = data.coverUrl || 'default-book-cover.jpg';
+      img.alt = data.title;
+
+      const span = document.createElement('span');
+      span.textContent = data.title;
+
+      card.appendChild(img);
+      card.appendChild(span);
+      grid.appendChild(card);
+    });
+  }
+
+  loadNewBooks();
+
+  // === 🔹 LOAD READER PROFILE (name + image) ===
+  async function loadReaderProfile() {
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+
+      const profileNameEl = document.getElementById('reader-name');
+      const profileImgEl = document.getElementById('reader-img');
+
+      // Set temporary placeholder immediately
+      if (profileImgEl) profileImgEl.src = 'default-profile.jpg';
+      if (profileNameEl) profileNameEl.textContent = 'Loading...';
+
+      try {
+        // Fetch both regular user and author profile concurrently
+        const userRef = doc(db, "users", user.uid);
+        const authorRef = doc(db, "authorProfiles", user.uid);
+
+        const [userSnap, authorSnap] = await Promise.all([getDoc(userRef), getDoc(authorRef)]);
+        const data = (authorSnap.exists() ? authorSnap.data() : userSnap.data()) || {};
+
+        // Update profile name
+        if (profileNameEl) profileNameEl.textContent = data.displayName || user.displayName || "Anonymous Reader";
+
+        // Preload image for faster rendering
+        if (profileImgEl) {
+          const img = new Image();
+          img.src = data.photoURL || user.photoURL || 'default-profile.jpg';
+          img.onload = () => {
+            profileImgEl.src = img.src;
+          };
+        }
+      } catch (err) {
+        console.error("Error loading reader profile:", err);
+        if (profileNameEl) profileNameEl.textContent = "Anonymous Reader";
+        if (profileImgEl) profileImgEl.src = 'default-profile.jpg';
+      }
+    });
+  }
+
+  loadReaderProfile();
+
+}); // <- final closing for DOMContentLoaded

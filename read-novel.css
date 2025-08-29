@@ -61,12 +61,38 @@ header {
   margin-bottom: 0.5rem;
 }
 
+/* === Paragraph Spacing Update === */
 #chapterContent p {
   white-space: pre-line;
-  line-height: 1.6;
-  margin: 1rem 0;
+  line-height: 1.8; /* slightly more readable spacing */
+  margin: 1.2rem 0; /* increased margin for better separation */
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* ✅ Subtle spacing for <br> so line breaks don’t look cramped */
+#chapterContent br {
+  display: block;
+  margin-bottom: 0.8rem;
+  content: "";
+}
+
+/* === Author Notes Styling === */
+.author-notes {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 1rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #333;
+  border-radius: 6px;
+  line-height: 1.6; /* slightly increased for readability */
+}
+
+body.dark-mode .author-notes {
+  background: #2a2a2a;
+  border-left-color: #1e90ff;
+  color: #f1f1f1;
 }
 
 /* === Chapter Nav Buttons === */
@@ -165,7 +191,7 @@ header {
   display: block;
 }
 
-/* === Added fallback for chapter popup visibility */
+/* === Added fallback for chapter popup visibility === */
 #chapterListPopup.active {
   display: block;
 }
@@ -268,31 +294,30 @@ header {
   font-size: 0.9rem;
 }
 
-/* === Page Mode Layout === */
+/* === Page Mode Layout (Updated) === */
 body.page-mode #chapterContent {
   display: flex;
-  overflow-x: hidden;
-  gap: 2rem;
-  padding: 2rem 1rem;
-  scroll-behavior: smooth;
-  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }
 
 body.page-mode #chapterContent > section {
   display: none;
   flex-shrink: 0;
+  width: 100%;
+  height: auto;
+  padding: 2rem 1rem;
+  background: transparent; /* ✅ no box */
   border: none;
-  border-radius: 10px;
-  background: #fefefe;
-  padding: 1.5rem;
-  box-shadow: 0 0 10px rgba(0,0,0,0.05);
-  white-space: normal;
-  line-height: 1.6;
+  box-shadow: none;
+  line-height: 1.8;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  overflow: hidden;
+  white-space: normal;
   box-sizing: border-box;
-  max-width: 100%;
 }
 
 body.page-mode #chapterContent > section.active,
@@ -300,9 +325,31 @@ body.page-mode #chapterContent > section.active-pair {
   display: block;
 }
 
+/* ✅ Flip animations */
+body.page-mode #chapterContent > section.flipping-next {
+  animation: flipNext 0.6s ease;
+  transform-origin: right center;
+  backface-visibility: hidden;
+}
+@keyframes flipNext {
+  0%   { transform: perspective(1000px) rotateY(0deg); }
+  50%  { transform: perspective(1000px) rotateY(-90deg); }
+  100% { transform: perspective(1000px) rotateY(0deg); }
+}
+
+body.page-mode #chapterContent > section.flipping-prev {
+  animation: flipPrev 0.6s ease;
+  transform-origin: left center;
+  backface-visibility: hidden;
+}
+@keyframes flipPrev {
+  0%   { transform: perspective(1000px) rotateY(0deg); }
+  50%  { transform: perspective(1000px) rotateY(90deg); }
+  100% { transform: perspective(1000px) rotateY(0deg); }
+}
+
 @media (min-width: 768px) {
   body.page-mode #chapterContent {
-    justify-content: space-between;
     gap: 4%;
   }
 
@@ -316,13 +363,14 @@ body.page-mode #chapterContent > section.active-pair {
 
 @media (max-width: 767px) {
   body.page-mode #chapterContent > section.active {
-    width: 95vw;
+    width: 100%;
     padding: 1rem;
   }
 }
 
 body.page-mode.dark-mode #chapterContent > section {
-  background: #1a1a1a;
+  background: transparent;
+  color: #f1f1f1;
 }
 
 /* === Page Indicator === */

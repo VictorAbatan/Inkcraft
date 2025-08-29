@@ -1,185 +1,230 @@
-import { app, db } from './firebase-config.js';
-import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  doc,
-  setDoc,
-  serverTimestamp,
-  getDocs,
-  getDoc,
-  query,
-  collection,
-  where
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { doc, getDoc, collection, getDocs, query, where, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+const storage = getStorage();
 
 document.addEventListener('DOMContentLoaded', () => {
-  const auth = getAuth(app);
+  // Load floating menu
+  fetch('author-floating-menu.html')
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      return response.text();
+    })
+    .then(html => {
+      const container = document.getElementById('floating-menu-container');
+      if (!container) return;
 
-  const form = document.getElementById('create-novel-form');
+      container.innerHTML = html;
+
+      const menuItems = container.querySelectorAll('.floating-menu .menu-item');
+      menuItems.forEach((item, index) => {
+        item.style.animationDelay = `${index * 0.2}s`;
+        item.classList.add('show');
+      });
+
+      const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+      container.querySelectorAll('.floating-menu a').forEach(link => {
+        const href = link.getAttribute('href').toLowerCase();
+        if (href === currentPage) {
+          link.classList.add('active');
+        }
+      });
+    })
+    .catch(error => console.error('Error loading floating menu:', error));
+
+  // Profile pic & pen name & cover preview
+  const profilePicElement = document.getElementById('author-profile-pic');
+  const penNameElement = document.getElementById('author-pen-name');
   const coverInput = document.getElementById('cover');
-  const coverPreview = document.getElementById('cover-preview');
-  const submitBtn = document.getElementById('submit-btn');
+  const coverPreview = document.getElementById('cover-preview'); // single global reference
 
-  // Ensure a message box exists
-  let messageBox = document.getElementById('submission-message');
-  if (!messageBox) {
-    messageBox = document.createElement('div');
-    messageBox.id = 'submission-message';
-    messageBox.style.cssText = 'margin-top: 1rem; color: lightgreen; display: none;';
-    form.appendChild(messageBox);
-  }
-
-  // Show preview of cover image
-  coverInput.addEventListener('change', () => {
-    const file = coverInput.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        coverPreview.src = e.target.result;
-        coverPreview.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // Enable submit button only when form is valid
-  form.addEventListener('input', () => {
-    const title = document.getElementById('title').value.trim();
-    const synopsis = document.getElementById('synopsis').value.trim();
-    const genreCheckboxes = document.querySelectorAll('input[name="genre"]:checked');
-    const genresSelected = genreCheckboxes.length > 0;
-    const isValid = title && synopsis && genresSelected && coverInput.files.length > 0;
-    submitBtn.disabled = !isValid;
-  });
-
-  // Track authenticated user
-  let currentUser = null;
-
-  onAuthStateChanged(auth, user => {
+  onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      alert("You must be logged in to submit a novel.");
       window.location.href = 'login.html';
       return;
     }
-    currentUser = user;
-  });
 
-  // Submit handler
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    if (!currentUser) {
-      alert("You must be logged in.");
-      return;
-    }
-
-    const title = document.getElementById('title').value.trim();
-
-    // ✅ Check if novel with same title already exists by same user
-    const lowerTitle = title.toLowerCase();
-    const checkDuplicate = async () => {
-      const collectionsToCheck = ['pending_novels', 'novels'];
-      for (let collectionName of collectionsToCheck) {
-        const q = query(
-          collection(db, collectionName),
-          where("submittedBy", "==", currentUser.uid),
-          where("title", "==", title)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) return true;
-      }
-      return false;
-    };
-
-    const alreadyExists = await checkDuplicate();
-    if (alreadyExists) {
-      alert("You've already submitted a novel with this title.");
-      return;
-    }
-
-    // ✅ Get checked genres
-    const genreCheckboxes = document.querySelectorAll('input[name="genre"]:checked');
-    const genres = Array.from(genreCheckboxes).map(cb => cb.value);
-
-    const tags = document.getElementById('tags').value
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(Boolean);
-    const synopsis = document.getElementById('synopsis').value.trim();
-    const coverFile = coverInput.files[0];
-    const coverUrl = coverPreview.src;
-
-    // ✅ Get optional pen name override from form (if field exists)
-    let penNameOverride = null;
-    const penNameField = document.getElementById('penNameOverride');
-    if (penNameField && penNameField.value.trim()) {
-      penNameOverride = penNameField.value.trim();
-    }
-
-    // ✅ Fetch author's display name
-    let authorName = 'Unknown Author';
     try {
-      const authorRef = doc(db, 'authors', currentUser.uid);
-      const authorSnap = await getDoc(authorRef);
+      const authorSnap = await getDoc(doc(db, 'authors', auth.currentUser.uid));
+      let authorName = "Unknown Author";
+
       if (authorSnap.exists()) {
-        const authorData = authorSnap.data();
-        authorName = authorData.name || authorData.penName || authorName;
+        const data = authorSnap.data();
+        if (penNameElement) { // ✅ Check element exists
+          if (data.penName) {
+            penNameElement.textContent = data.penName;
+            authorName = data.penName;
+          }
+        }
+        if (data.profilePicURL && profilePicElement) profilePicElement.src = data.profilePicURL;
       }
-    } catch (error) {
-      console.warn("Could not fetch author name:", error);
-    }
 
-    const novelData = {
-      title,
-      genres,
-      tags,
-      synopsis,
-      coverUrl,
-      status: 'pending',
-      submittedBy: currentUser.uid,
-      authorId: currentUser.uid,     // ✅ Always link to logged-in user
-      submittedAt: serverTimestamp(),
-      authorName,
-      penNameOverride: penNameOverride || null // ✅ Optional custom pen name
-    };
-
-    const novelId = `novel_${Date.now()}`;
-
-    try {
-      await setDoc(doc(db, 'pending_novels', novelId), novelData);
-
-      form.reset();
-      coverPreview.style.display = 'none';
-      submitBtn.disabled = true;
-      messageBox.textContent = '✅ Novel submitted! Await admin approval.';
-      messageBox.style.display = 'block';
-    } catch (error) {
-      console.error("Error submitting novel:", error);
-      alert("Something went wrong while submitting.");
-    }
-  });
-
-  // Load floating menu
-  fetch('author-floating-menu.html')
-    .then(res => res.text())
-    .then(html => {
-      const container = document.getElementById('floating-menu-container');
-      if (container) {
-        container.innerHTML = html;
-
-        const items = container.querySelectorAll('.menu-item');
-        items.forEach((item, index) => {
-          setTimeout(() => item.classList.add('show'), index * 300);
-        });
-
-        const currentPath = window.location.pathname.split('/').pop().toLowerCase();
-        container.querySelectorAll('a').forEach(link => {
-          if (link.getAttribute('href').toLowerCase() === currentPath) {
-            link.classList.add('active');
+      // Novel cover preview
+      if (coverInput && coverPreview) {
+        coverInput.addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              coverPreview.src = e.target.result;
+              coverPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            coverPreview.src = '';
+            coverPreview.style.display = 'none';
           }
         });
       }
+
+      // Load novels
+      const novelsQuery = query(
+        collection(db, 'novels'),
+        where('authorId', '==', user.uid),
+        where('status', '==', 'approved')
+      );
+      const novelsSnap = await getDocs(novelsQuery);
+      const novelsContainer = document.getElementById('author-novels-container');
+      if (novelsContainer) {
+        novelsContainer.innerHTML = '';
+        if (novelsSnap.empty) {
+          novelsContainer.innerHTML = "<p>You haven't created any novels yet.</p>";
+        } else {
+          novelsSnap.forEach(doc => {
+            const novel = doc.data();
+            const div = document.createElement('div');
+            div.className = 'author-novel-item';
+            div.innerHTML = `<h3>${novel.title}</h3>`;
+            novelsContainer.appendChild(div);
+          });
+        }
+      }
+
+      // Load series
+      const seriesQuery = query(
+        collection(db, 'series'),
+        where('createdBy', '==', user.uid)
+      );
+      const seriesSnap = await getDocs(seriesQuery);
+      const seriesContainer = document.getElementById('author-series-container');
+      if (seriesContainer) {
+        seriesContainer.innerHTML = '';
+        seriesSnap.forEach(doc => {
+          const series = doc.data();
+          const div = document.createElement('div');
+          div.className = 'author-series-item';
+          div.innerHTML = `<h3>${series.title}</h3>`;
+          seriesContainer.appendChild(div);
+        });
+      }
+
+      // Load verses
+      const versesQuery = query(
+        collection(db, 'verses'),
+        where('createdBy', '==', user.uid)
+      );
+      const versesSnap = await getDocs(versesQuery);
+      const versesContainer = document.getElementById('author-verses-container');
+      if (versesContainer) {
+        versesContainer.innerHTML = '';
+        versesSnap.forEach(doc => {
+          const verse = doc.data();
+          const div = document.createElement('div');
+          div.className = 'author-verse-item';
+          div.innerHTML = `<h3>${verse.title}</h3>`;
+          versesContainer.appendChild(div);
+        });
+      }
+
+    } catch (error) {
+      console.error('Error loading author data:', error);
+    }
+  });
+});
+
+// Form submission
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("create-novel-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const coverPreview = document.getElementById('cover-preview');
+
+  if (!form) return console.error("❌ Form element not found");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("title")?.value.trim();
+    const synopsis = document.getElementById("synopsis")?.value.trim();
+    const formPenName = document.getElementById("penNameOverride")?.value.trim(); // ✅ Updated ID to match HTML
+
+    const selectedGenres = Array.from(document.querySelectorAll('input[name="genre"]:checked'))
+      .map(input => input.value)
+      .filter(Boolean);
+    const genre = selectedGenres.length ? selectedGenres : null;
+
+    const tagsRaw = document.getElementById("tags")?.value?.trim() || "";
+    const tags = tagsRaw ? tagsRaw.split(",").map(tag => tag.trim()).filter(Boolean) : [];
+    const coverFile = document.getElementById("cover")?.files?.[0];
+
+    try {
+      let coverUrl = "";
+      if (coverFile) {
+        const coverRef = ref(
+          storage,
+          `novel-covers/${auth.currentUser.uid}/${Date.now()}-${coverFile.name}`
+        );
+        await uploadBytes(coverRef, coverFile);
+        coverUrl = await getDownloadURL(coverRef);
+      }
+
+      const authorSnap = await getDoc(doc(db, 'authors', auth.currentUser.uid));
+      const authorName = formPenName || (authorSnap.exists() && authorSnap.data()?.penName) || "Unknown Author";
+
+      await addDoc(collection(db, "novels"), {
+        title,
+        synopsis,
+        genre,
+        tags,
+        coverUrl,
+        authorId: auth.currentUser.uid,
+        authorName,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+
+      alert("✅ Your novel has been submitted for review!");
+      form.reset();
+      if (coverPreview) coverPreview.src = "";
+
+    } catch (error) {
+      console.error("❌ Error submitting novel:", error);
+      alert("❌ Failed to submit novel. Please try again.");
+    }
+  });
+
+  // Submit button enable/disable logic
+  if (submitBtn) {
+    const requiredFields = [
+      document.getElementById("title"),
+      document.getElementById("synopsis"),
+      document.getElementById("cover")
+    ];
+
+    function checkFormValidity() {
+      const allFilled = requiredFields.every(field => {
+        if (!field) return false;
+        return field.type === "file" ? field.files.length > 0 : field.value.trim() !== "";
+      });
+      submitBtn.disabled = !allFilled;
+    }
+
+    checkFormValidity();
+    requiredFields.forEach(field => {
+      if (!field) return;
+      field.addEventListener("input", checkFormValidity);
+      field.addEventListener("change", checkFormValidity);
     });
+  }
 });

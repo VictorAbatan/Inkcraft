@@ -17,9 +17,21 @@
   </header>
 
   <main class="inbox-container">
-    <ul id="notification-list">
-      <li>Loading notifications...</li>
-    </ul>
+    <!-- ✅ Approval/Status notifications -->
+    <section>
+      <h2>System Notifications</h2>
+      <ul id="notification-list" aria-live="polite">
+        <li>Loading notifications...</li>
+      </ul>
+    </section>
+
+    <!-- ✅ Reader comments -->
+    <section>
+      <h2>Reader Comments</h2>
+      <ul id="comment-notification-list" aria-live="polite">
+        <li>Loading comments...</li>
+      </ul>
+    </section>
   </main>
 
   <footer>

@@ -67,7 +67,7 @@ footer {
 
 .series-cover {
   width: 100%;
-  height: 140px;
+  height: 180px; /* adjusted to fit */
   object-fit: cover;
   display: block;
   border-top-left-radius: 10px;
@@ -86,11 +86,36 @@ footer {
   font-size: 1.2rem;
 }
 
+/* Description with ellipsis */
 .series-card p {
   font-size: 0.95rem;
   line-height: 1.4;
   color: #ccc;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* show only 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.series-card p.expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* Read More / Read Less link */
+.read-more {
+  color: #00aced;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 0.3rem;
+  transition: color 0.3s ease;
+}
+
+.read-more:hover {
+  color: #ffd700;
 }
 
 /* === Actions === */

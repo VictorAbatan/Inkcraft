@@ -19,7 +19,10 @@
 
   <!-- Book Details Section -->
   <section class="novel-container">
+
     <div class="cover-section">
+      <!-- Glowing Inkcraft Header Above Cover -->
+      <header class="novel-header">Inkcraft</header>
       <img id="coverImage" src="" alt="Novel Cover">
     </div>
 
@@ -30,12 +33,11 @@
         <p><strong>Author:</strong> <span id="authorName">-</span></p>
         <p><strong>Genre:</strong> <span id="genreList">-</span></p>
         <p><strong>Chapters:</strong> <span id="chapterCount">-</span></p>
-        <p><strong>Views:</strong> <span id="viewCount">-</span></p>
+        <!-- Removed Views -->
       </div>
 
       <div class="buttons">
         <a id="readButton" href="#" class="read-btn">READ</a>
-        <!-- ✅ Updated this button to include the correct ID -->
         <button id="addToLibraryBtn" class="library-btn">
           <i class="fas fa-plus"></i> ADD TO LIBRARY
         </button>
@@ -48,6 +50,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="about">About</button>
       <button class="tab" data-tab="contents">Table of Contents</button>
+      <button class="tab" data-tab="comments">Comments</button>
     </div>
 
     <div class="tab-content" id="aboutTab">
@@ -61,6 +64,14 @@
         <!-- Chapter links will be injected here by novel-details.js -->
       </ul>
     </div>
+
+    <!-- ✅ Updated Comments Section to match novel-details.js -->
+    <div class="tab-content" id="commentsTab" style="display: none;">
+      <h2>Comments</h2>
+      <!-- toggleBtn is injected by JS -->
+      <div id="commentsList"></div>
+      <!-- comment form is injected by JS -->
+    </div>
   </section>
 
   <footer>
@@ -71,7 +82,6 @@
   <script type="module" src="novel-details.js"></script>
   <script src="Inkcraftmain.js"></script>
 
-  <!-- ✅ Set read button href using novelId -->
   <script>
     const params = new URLSearchParams(window.location.search);
     const novelId = params.get('novelId');

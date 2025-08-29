@@ -52,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const novel = docSnap.data();
 
-      if (novel.submittedBy !== user.uid) {
+      // ✅ Updated to check authorId instead of submittedBy
+      if (novel.authorId !== user.uid) {
         alert("You are not allowed to edit this novel.");
         window.location.href = 'author-novels.html';
         return;

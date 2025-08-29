@@ -9,18 +9,55 @@
   width: 100%;
   background-color: #111;
   color: #fff;
-  padding: 12px 0;
+  padding: 12px 20px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between; /* so left + right elements can stay at edges */
   z-index: 1000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Centered logo + title */
 .header-content {
+  position: absolute;   /* take out of flex flow */
+  left: 50%;
+  transform: translateX(-50%); /* perfectly center horizontally */
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+
+/* 🔹 Reader Profile */
+.reader-profile {
+  margin-left: auto; /* push profile to far right */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reader-profile a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;  /* remove underline */
+  color: inherit;         /* keep same color as surrounding text */
+}
+
+.reader-profile .profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #A259FF;
+  box-shadow: 0 0 6px rgba(162, 89, 255, 0.5);
+}
+
+.reader-profile .profile-name {
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
 /* Logo */
@@ -58,14 +95,10 @@ body {
   font-family: 'Cormorant Garamond', serif;
 }
 
-
-
 /* Global Font */
 body, button, input, a, span, h1, h2, h3, h4, h5, h6, p {
   font-family: 'Cormorant Garamond', serif;
 }
-
-
 
 /* ====== RESET & BASE STYLES ====== */
 * {
@@ -80,14 +113,13 @@ body, html {
 }
 
 body {
-  background-image: url('Star\ map.jpg');
+  background-image: url('Star map.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   font-family: Arial, sans-serif;
 }
 
-/* ====== MAIN CONTAINER ====== */
 /* ====== MAIN CONTAINER ====== */
 .verse-container {
   background: transparent;
@@ -97,8 +129,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* Slight shrink */
   transform: scale(0.95);
   transform-origin: top center;
 }
@@ -210,8 +240,6 @@ body {
   color: #ff5e5e;
 }
 
-
-
 /* ====== ARROW NAVIGATION (Verse Icon Section) ====== */
 .nav-arrow {
   position: absolute;
@@ -233,16 +261,13 @@ body {
   background-color: rgba(26, 26, 26, 1);
 }
 
-/* Position top arrow */
 .nav-arrow.left {
-  top: -30px; /* adjust distance above carousel */
+  top: -30px;
 }
 
-/* Position bottom arrow */
 .nav-arrow.right {
-  bottom: -30px; /* adjust distance below carousel */
+  bottom: -30px;
 }
-
 
 /* === FLOATING MENU === */
 .floating-menu {
@@ -292,7 +317,6 @@ body {
   background:#007bff;
 }
 
-/* === Label pops out to the left === */
 .menu-item .label {
   position: absolute;
   right: 58px;

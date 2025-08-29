@@ -23,15 +23,134 @@ body {
   padding: 2rem;
   background: rgba(0, 0, 0, 0.6);
   border-bottom: 1px solid #333;
+  align-items: flex-start;
+  flex-direction: column; /* default: header above cover */
+  gap: 2rem; /* spacing between cover and info */
 }
 
+/* Desktop: cover on left, info on right */
+@media (min-width: 769px) {
+  .novel-container {
+    flex-direction: row; /* cover + info side by side */
+    align-items: flex-start;
+  }
+
+  .cover-section {
+    flex-shrink: 0;
+  }
+
+  .info-section {
+    flex: 1;
+    padding-left: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .buttons {
+    margin-top: auto; /* pushes buttons to bottom of info section if desired */
+  }
+}
+
+/* Cover image stays same */
 .cover-section img {
   max-width: 280px;
   width: 100%;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  margin: 0 auto; /* center image under header for mobile */
 }
 
+/* Info section text */
+.info-section h1 {
+  color: #A259FF;
+  margin-bottom: 0.5rem;
+}
+
+.meta p {
+  margin: 0.4rem 0;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .novel-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  .novel-header {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .info-section {
+    padding: 1rem 0;
+    text-align: center;
+  }
+
+  .buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+
+/* Glowing Inkcraft Header Above Cover */
+.novel-header {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #A259FF;
+  letter-spacing: 3px;
+  text-align: center;
+  margin-bottom: 1rem; /* space between header and cover */
+  text-shadow:
+    0 0 5px #A259FF,
+    0 0 10px #A259FF,
+    0 0 20px #A259FF,
+    0 0 40px #7D2BFF,
+    0 0 80px #7D2BFF;
+  animation: glowPulse 2.5s ease-in-out infinite alternate;
+}
+
+/* Pulse glow for the text */
+@keyframes glowPulse {
+  from {
+    text-shadow:
+      0 0 5px #A259FF,
+      0 0 10px #A259FF,
+      0 0 20px #A259FF,
+      0 0 40px #7D2BFF,
+      0 0 80px #7D2BFF;
+  }
+  to {
+    text-shadow:
+      0 0 10px #A259FF,
+      0 0 20px #A259FF,
+      0 0 40px #A259FF,
+      0 0 60px #7D2BFF,
+      0 0 120px #7D2BFF;
+  }
+}
+
+/* Cover image */
+.cover-section img {
+  max-width: 280px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  margin: 0 auto; /* center image under header */
+}
+
+/* Info section */
 .info-section {
   flex: 1;
   padding: 1rem 2rem;
@@ -128,6 +247,11 @@ footer {
     padding: 1.5rem;
   }
 
+  .novel-header {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+
   .info-section {
     padding: 1rem 0;
     text-align: center;
@@ -138,6 +262,7 @@ footer {
     align-items: center;
   }
 }
+
 /* === FLOATING MENU === */
 .floating-menu {
   position: fixed;
@@ -215,4 +340,204 @@ footer {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* === Table of Contents Chapters Styling === */
+#contentsTab ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#contentsTab ul li {
+  margin: 0.5rem 0;
+}
+
+#contentsTab ul li a {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.85rem;
+  text-decoration: none;
+  color: #FFD700;             /* brighter golden text */
+  background: #2a2a2a;        /* slightly lighter dark background */
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  animation: chapterPulse 3s ease-in-out infinite alternate; /* pulsing for mobile */
+}
+
+#contentsTab ul li a:hover {
+  background: #4B0082;       /* brighter purple hover */
+  color: #FFFA65;            /* icon + text bright on hover */
+  transform: translateX(4px);
+}
+
+#contentsTab ul li a::before {
+  content: "📖";              
+  margin-right: 0.6rem;
+  font-size: 1.2rem;
+  transition: color 0.25s ease;
+}
+
+#contentsTab ul li a:hover::before {
+  color: #FFFA65;             /* icon color changes on hover */
+}
+
+#contentsTab ul li a span.chapter-number {
+  font-weight: 700;
+  margin-right: 0.5rem;
+  color: #FFA500;             /* brighter orange number */
+}
+
+#contentsTab ul li a span.chapter-title {
+  flex: 1;
+  color: inherit;             /* inherits hover/text color */
+}
+
+/* Responsive adjustment for small screens */
+@media (max-width: 480px) {
+  #contentsTab ul li a {
+    font-size: 1rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  #contentsTab ul li a::before {
+    margin-right: 0.4rem;
+  }
+}
+
+/* Chapter Pulse Animation for Mobile + Desktop */
+@keyframes chapterPulse {
+  0% {
+    background-color: #2a2a2a;
+    color: #FFD700;
+  }
+  50% {
+    background-color: #3c1a6b;
+    color: #FFEB7F;
+  }
+  100% {
+    background-color: #2a2a2a;
+    color: #FFD700;
+  }
+}
+
+/* === COMMENTS SECTION === */
+#commentsTab {
+  margin-top: 1.5rem;
+}
+
+.toggle-comments-btn {
+  background: #A259FF;
+  border: none;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background 0.3s ease;
+}
+
+.toggle-comments-btn:hover {
+  background: #7D2BFF;
+}
+
+#commentsSection {
+  background: rgba(20, 20, 20, 0.85);
+  padding: 1rem;
+  border-radius: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+#commentsList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+#commentsList li {
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+}
+
+#commentsList li .comment-author {
+  font-weight: bold;
+  color: #FFD700;
+  margin-bottom: 0.3rem;
+}
+
+#commentsList li .comment-text {
+  color: #ccc;
+}
+
+#commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#commentInput {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+  min-height: 80px;
+  resize: vertical;
+}
+
+.comment-submit {
+  align-self: flex-end;
+  padding: 0.6rem 1.2rem;
+  background: #007bff;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.comment-submit:hover {
+  background: #0056b3;
+}
+
+/* === INBOX PAGE === */
+.inbox-container {
+  flex: 1;
+  padding: 2rem;
+  background: rgba(0,0,0,0.7);
+}
+
+.inbox-container section {
+  margin-bottom: 2rem;
+}
+
+.inbox-container h2 {
+  color: #A259FF;
+  margin-bottom: 1rem;
+}
+
+#notification-list,
+#comment-notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#notification-list li,
+#comment-notification-list li {
+  padding: 0.8rem 1rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  margin-bottom: 0.8rem;
+  transition: background 0.3s;
+}
+
+#notification-list li:hover,
+#comment-notification-list li:hover {
+  background: #3a3a3a;
 }

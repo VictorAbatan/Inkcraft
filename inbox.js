@@ -47,17 +47,31 @@ document.addEventListener('DOMContentLoaded', () => {
     list.innerHTML = '<li>Loading notifications...</li>';
 
     try {
-      const q = query(collection(db, `users/${uid}/notifications`), orderBy('timestamp', 'desc'));
-      const snapshot = await getDocs(q);
+      // ✅ Fetch both notifications and inbox messages
+      const notifQuery = query(collection(db, `users/${uid}/notifications`), orderBy('timestamp', 'desc'));
+      const inboxQuery = query(collection(db, `users/${uid}/inbox`), orderBy('timestamp', 'desc'));
 
-      if (snapshot.empty) {
+      const [notifSnap, inboxSnap] = await Promise.all([getDocs(notifQuery), getDocs(inboxQuery)]);
+
+      // Merge both collections into one array
+      const allMessages = [];
+      notifSnap.forEach(doc => allMessages.push(doc.data()));
+      inboxSnap.forEach(doc => allMessages.push(doc.data()));
+
+      if (allMessages.length === 0) {
         list.innerHTML = '<li>No notifications yet.</li>';
         return;
       }
 
+      // Sort merged messages by timestamp
+      allMessages.sort((a, b) => {
+        const aTime = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+        const bTime = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+        return bTime - aTime; // newest first
+      });
+
       list.innerHTML = '';
-      snapshot.forEach(doc => {
-        const notif = doc.data();
+      allMessages.forEach(notif => {
         const li = document.createElement('li');
 
         // Format message type
@@ -80,11 +94,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Render notification
-        li.innerHTML = `
+        let content = `
           <strong>${typeLabel}</strong> — ${notif.message || ''}
           <br><small>${notif.timestamp?.toDate ? new Date(notif.timestamp.toDate()).toLocaleString() : ''}</small>
         `;
 
+        // If it's a comment, make it clickable (redirect to novel-details comments tab)
+        if ((notif.type === 'comment' || notif.type === 'reply') && notif.novelId) {
+          const novelLink = `novel-details.html?novelId=${notif.novelId}#commentsTab`;
+          content = `
+            <a href="${novelLink}" class="notif-link">
+              <strong>${typeLabel}</strong> — ${notif.message || 'New activity on your novel'}
+            </a>
+            <br><small>${notif.timestamp?.toDate ? new Date(notif.timestamp.toDate()).toLocaleString() : ''}</small>
+          `;
+        }
+
+        li.innerHTML = content;
         list.appendChild(li);
       });
     } catch (err) {

@@ -76,6 +76,46 @@ header {
   border-left-color: #dc3545;
 }
 
+/* === Reader Comment Notifications === */
+#comment-notification-list {
+  list-style: none;
+  padding: 0;
+}
+
+#comment-notification-list li {
+  background: rgba(0, 0, 0, 0.6);
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  border-left: 4px solid #0d6efd; /* blue for comments */
+}
+
+#comment-notification-list li strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
+  color: #0d6efd;
+}
+
+#comment-notification-list li small {
+  display: block;
+  font-size: 0.8rem;
+  color: #bbb;
+  margin-top: 0.5rem;
+}
+
+#comment-notification-list li a {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+#comment-notification-list li a:hover {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+
 /* === Floating menu styles (override included from author-centre.css if needed) === */
 .floating-menu {
   position: fixed;

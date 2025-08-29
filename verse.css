@@ -1,15 +1,23 @@
 /* Import Cormorant Garamond font */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
 
-body {
+* {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
+}
+
+body {
   font-family: 'Cormorant Garamond', serif;
-  background: url('Star map.jpg') no-repeat center center fixed;
+  background: url('Star map.jpg') no-repeat top center;
   background-size: cover;
+  background-attachment: scroll; /* Prevent horizontal issues on mobile */
   color: #fff;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* Remove horizontal scroll */
 }
 
 .verse-header {
@@ -32,8 +40,8 @@ body {
 
 .verse-catalog {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
   padding: 2rem 1rem;
   width: 100%;
   max-width: 1200px;
@@ -52,19 +60,21 @@ body {
 }
 
 .verse-item:hover {
-  transform: translateY(-5px) rotateX(5deg) rotateY(5deg); /* ✅ Cube-like tilt */
+  transform: translateY(-5px) rotateX(5deg) rotateY(5deg);
   box-shadow: 0 12px 25px rgba(0, 172, 237, 0.4);
 }
 
 .verse-item img {
-  width: 140px;   /* ✅ Square size */
-  height: 140px;
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  aspect-ratio: 1/1;
   object-fit: cover;
-  border-radius: 8px;   /* ✅ Square with slightly rounded edges */
+  border-radius: 8px;
   transition: transform 0.4s ease;
+  margin: 0 auto;
 }
 
-/* ✅ Zoom + tilt on hover */
 .verse-item:hover img {
   transform: scale(1.08);
 }
@@ -73,9 +83,9 @@ body {
   margin-top: 0.75rem;
   font-size: 1.1rem;
   color: #A259FF;
+  word-wrap: break-word;
 }
 
-/* ✅ NEW: verse description styling */
 .verse-item p {
   margin-top: 0.5rem;
   font-size: 0.9rem;
@@ -83,10 +93,10 @@ body {
   color: #ddd;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 3;   /* clamp to 3 lines */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
-  min-height: 3.9em; /* ensures equal height across cards */
+  min-height: 3.9em;
 }
 
 footer {
@@ -104,21 +114,6 @@ footer {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* Mobile Friendly */
-@media (max-width: 600px) {
-  .verse-header h1 {
-    font-size: 2rem;
-  }
-
-  .verse-item h3 {
-    font-size: 1rem;
-  }
-
-  .verse-catalog {
-    gap: 1.5rem;
   }
 }
 
@@ -201,7 +196,36 @@ footer {
   }
 }
 
-@media (max-width: 600px) {
+/* Mobile adjustments */
+@media (max-width: 800px) {
+  .verse-header h1 {
+    font-size: 2rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
+  }
+
+  .verse-item h3 {
+    font-size: 1rem;
+  }
+
+  .verse-item p {
+    font-size: 0.85rem;
+    min-height: 3.3em;
+  }
+
+  .verse-catalog {
+    gap: 1rem;
+    padding: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .verse-item img {
+    max-width: 120px;
+    height: auto;
+  }
+
   .floating-menu {
     right: 5px;
     gap: 0.8rem;
@@ -219,5 +243,29 @@ footer {
   .menu-item .label {
     font-size: 0.75rem;
     padding: 4px 8px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 400px) {
+  .verse-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .verse-item img {
+    max-width: 100px;
+  }
+
+  .verse-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .verse-item p {
+    font-size: 0.8rem;
+  }
+
+  .verse-catalog {
+    gap: 0.8rem;
+    padding: 0.8rem;
   }
 }

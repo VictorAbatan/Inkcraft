@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile | Inkcraft</title>
+  <link rel="stylesheet" href="user-profile.css">
+</head>
+<body>
+  <!-- Floating menu container -->
+  <div id="floating-menu-container"></div>
+
+  <header class="profile-header">
+    <h1>My Profile</h1>
+  </header>
+
+  <main class="profile-container">
+    <!-- Profile image upload -->
+    <div class="profile-pic-wrapper">
+      <img id="profile-pic" src="default-avatar.png" alt="Profile Picture">
+      <label for="profile-pic-input" class="upload-btn">Change Picture</label>
+      <input type="file" id="profile-pic-input" accept="image/*" hidden>
+    </div>
+
+    <!-- Profile details -->
+    <div class="profile-details">
+      <label for="display-name">Display Name</label>
+      <input type="text" id="display-name" placeholder="Enter your name">
+
+      <button id="save-profile">Save Profile</button>
+    </div>
+  </main>
+
+  <script type="module" src="user-profile.js"></script>
+</body>
+</html>

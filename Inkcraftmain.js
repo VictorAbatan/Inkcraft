@@ -198,13 +198,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const [userSnap, authorSnap] = await Promise.all([getDoc(userRef), getDoc(authorRef)]);
         const data = (authorSnap.exists() ? authorSnap.data() : userSnap.data()) || {};
 
-        // Update profile name
-        if (profileNameEl) profileNameEl.textContent = data.displayName || user.displayName || "Anonymous Reader";
+        // --- ✅ Updated profile name logic ---
+        if (profileNameEl) {
+          profileNameEl.textContent =
+            data.username ||    // 👈 prefer username first
+            data.displayName ||
+            user.displayName ||
+            user.email ||
+            "Anonymous Reader";
+        }
 
-        // Preload image for faster rendering
+        // --- ✅ Updated profile image logic ---
         if (profileImgEl) {
           const img = new Image();
-          img.src = data.photoURL || user.photoURL || 'default-profile.jpg';
+          img.src =
+            data.profileImage ||  // 👈 prefer custom uploaded profileImage first
+            data.photoURL ||
+            user.photoURL ||
+            'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
           img.onload = () => {
             profileImgEl.src = img.src;
           };
@@ -212,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (err) {
         console.error("Error loading reader profile:", err);
         if (profileNameEl) profileNameEl.textContent = "Anonymous Reader";
-        if (profileImgEl) profileImgEl.src = 'default-profile.jpg';
+        if (profileImgEl) profileImgEl.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
       }
     });
   }

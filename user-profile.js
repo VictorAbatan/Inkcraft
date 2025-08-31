@@ -26,11 +26,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Determine which document to use
     const activeRef = authorSnap.exists() ? authorRef : userRef;
-
-    // Load initial data
     const data = (authorSnap.exists() ? authorSnap.data() : userSnap.data()) || {};
-    if (data.displayName) displayNameInput.value = data.displayName;
-    if (data.photoURL) profilePic.src = data.photoURL;
+
+    // --- ✅ Load initial data with fallbacks ---
+    if (data.displayName) {
+      displayNameInput.value = data.displayName;
+    } else if (data.username) {
+      displayNameInput.value = data.username; // use username from Firestore if no displayName
+    } else {
+      displayNameInput.value = user.email; // fallback to email
+    }
+
+    if (data.photoURL) {
+      profilePic.src = data.photoURL;
+    } else if (data.profileImage) {
+      profilePic.src = data.profileImage; // support field "profileImage"
+    } else {
+      profilePic.src = "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"; // 👤 placeholder
+    }
 
     // Handle profile picture preview & upload
     profilePicInput.addEventListener("change", async (e) => {
@@ -67,7 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      await setDoc(activeRef, { displayName: name, photoURL: tempPhotoURL || profilePic.src }, { merge: true });
+      await setDoc(
+        activeRef,
+        { 
+          displayName: name,
+          photoURL: tempPhotoURL || profilePic.src 
+        },
+        { merge: true }
+      );
+
       alert("Profile updated successfully!");
     });
   });

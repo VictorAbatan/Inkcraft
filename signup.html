@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -28,10 +25,20 @@
   <main>
     <section class="form-section">
       <h2>Create a New Account</h2>
-      <form action="#" method="post">
-        <input type="text" placeholder="Username" required><br>
-        <input type="email" placeholder="Email" required><br>
-        <input type="password" placeholder="Password" required><br>
+      <form id="signup-form" action="#" method="post">
+        <input type="text" id="signup-username" placeholder="Username" required><br>
+        <input type="email" id="signup-email" placeholder="Email" required><br>
+
+        <div class="password-container">
+          <input type="password" id="signup-password" placeholder="Password" required>
+          <button type="button" id="toggle-password" class="toggle-password">🙈</button>
+        </div>
+
+        <div class="password-container">
+          <input type="password" id="signup-confirm-password" placeholder="Confirm Password" required>
+          <button type="button" id="toggle-confirm-password" class="toggle-password">🙈</button>
+        </div>
+
         <button type="submit" class="btn">Sign Up</button>
       </form>
       <p>Already have an account? <a href="login.html">Login here</a></p>
@@ -43,7 +50,6 @@
   </footer>
 
   <!-- Correct JS File for This Page -->
- <script type="module" src="signup.js"></script>
-
+  <script type="module" src="signup.js"></script>
 </body>
 </html>

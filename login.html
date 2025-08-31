@@ -26,7 +26,17 @@
     <h2>Login to Your Account</h2>
     <form id="login-form" action="#" method="post">
       <input id="email" type="email" placeholder="Email" required /><br />
-      <input id="password" type="password" placeholder="Password" required /><br />
+
+      <div class="password-container">
+        <input id="password" type="password" placeholder="Password" required />
+        <span id="toggle-login-password" class="toggle-eye">🙈</span>
+      </div>
+
+      <!-- Forgot Password link -->
+      <p class="forgot-password">
+        <a href="#" id="forgot-password-link">Forgot Password?</a>
+      </p>
+
       <button type="submit" class="btn">Login</button>
     </form>
     <p>Don't have an account? <a href="signup.html">Sign Up here</a></p>

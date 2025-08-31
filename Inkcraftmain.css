@@ -445,3 +445,58 @@ body {
   padding-top: 15px;
   font-size: 0.85rem;
 }
+
+/* ====== RESPONSIVE HEADER FIXES ====== */
+@media (max-width: 768px) {
+  .site-header {
+    flex-direction: row;
+    padding: 10px 15px;
+  }
+
+  .header-content {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+    gap: 8px;
+  }
+
+  .site-title {
+    font-size: 1.6rem;
+  }
+
+  /* ✅ Keep username visible on tablets */
+  .reader-profile .profile-name {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+
+  .header-content {
+    gap: 6px;
+  }
+
+  .site-logo {
+    height: 32px;
+  }
+
+  .site-title {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  .reader-profile .profile-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* ✅ Username still visible, slightly smaller */
+  .reader-profile .profile-name {
+    font-size: 0.8rem;
+  }
+}

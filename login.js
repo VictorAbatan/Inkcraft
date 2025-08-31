@@ -2,7 +2,8 @@ import { app } from './firebase-config.js';
 import {
   getAuth,
   signInWithEmailAndPassword,
-  getIdTokenResult
+  getIdTokenResult,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -52,6 +53,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (passInput && !passInput.id) passInput.id = 'password';
     form.id = 'login-form';
 
+    // === Password Toggle 🙈 / 🙉 ===
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.classList.add('toggle-eye');
+    toggleBtn.textContent = '🙈';
+    passInput.parentElement.classList.add('password-container');
+    passInput.parentElement.appendChild(toggleBtn);
+
+    toggleBtn.addEventListener('click', () => {
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        toggleBtn.textContent = '🙉';
+      } else {
+        passInput.type = 'password';
+        toggleBtn.textContent = '🙈';
+      }
+    });
+
+    // === Forgot Password Link ===
+    const forgotLink = document.getElementById('forgot-password');
+    if (forgotLink) {
+      forgotLink.addEventListener('click', async e => {
+        e.preventDefault();
+        const emailVal = emailInput.value.trim();
+        if (!emailVal) {
+          alert('Please enter your email first.');
+          return;
+        }
+        try {
+          const auth = getAuth(app);
+          await sendPasswordResetEmail(auth, emailVal);
+          alert("Password reset email sent!");
+        } catch (err) {
+          console.error("Reset error:", err.message);
+          alert("Failed to send reset email: " + err.message);
+        }
+      });
+    }
+
+    // === Login Submission ===
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
@@ -65,7 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const auth = getAuth(app);
-        const userCredential = await signInWithEmailAndPassword(auth, email.value.trim(), password.value.trim());
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email.value.trim(),
+          password.value.trim()
+        );
         const user = userCredential.user;
 
         // ✅ Check if user is admin

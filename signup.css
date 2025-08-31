@@ -47,6 +47,47 @@ input, .btn {
   background: #0056b3;
 }
 
+/* === Password Field with Toggle === */
+.password-container {
+  position: relative;
+  width: 80%;
+  max-width: 300px;
+  margin: 0.5rem auto;
+}
+
+.password-container input {
+  width: 100%;
+  padding-right: 40px; /* leave room for emoji toggle */
+  box-sizing: border-box;
+}
+
+.toggle-eye {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  user-select: none;
+  padding: 0;
+}
+
+.toggle-eye:hover {
+  opacity: 0.8;
+}
+
+/* Optional error message styling */
+.error-message {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
 footer {
   margin-top: 3rem;
   font-size: 0.8rem;
@@ -137,6 +178,15 @@ footer {
   .btn {
     font-size: 1rem;
     padding: 0.6rem;
+  }
+
+  .password-container {
+    width: 90%;
+  }
+
+  .toggle-eye {
+    font-size: 1rem;
+    right: 8px;
   }
 
   .floating-menu {

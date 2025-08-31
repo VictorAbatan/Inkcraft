@@ -44,27 +44,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // --- Load author info from 'authors' collection ---
+      let authorData = null;
+
       const authorRef = doc(db, 'authors', user.uid);
       const authorSnap = await getDoc(authorRef);
 
-      console.log("Firestore author doc exists:", authorSnap.exists());
       if (authorSnap.exists()) {
-        const data = authorSnap.data();
-        console.log("Author data:", data);
+        console.log("Firestore author doc exists with UID:", user.uid);
+        authorData = authorSnap.data();
+      } else {
+        console.warn(`No author doc found for UID ${user.uid}. Trying fallback by email...`);
 
-        // ✅ Ensure fields come from Firestore correctly
+        // ✅ fallback: try query by email for old docs
+        const q = query(collection(db, 'authors'), where('email', '==', user.email));
+        const querySnap = await getDocs(q);
+        if (!querySnap.empty) {
+          const firstDoc = querySnap.docs[0];
+          console.log("Found old author doc by email:", firstDoc.id);
+          authorData = firstDoc.data();
+        }
+      }
+
+      if (authorData) {
+        console.log("Author data:", authorData);
+
         if (penNameElement) {
-          penNameElement.textContent = (data.penName && data.penName.trim() !== "")
-            ? data.penName
+          penNameElement.textContent = (authorData.penName && authorData.penName.trim() !== "")
+            ? authorData.penName
             : "Unknown Author";
         }
         if (profilePicElement) {
-          profilePicElement.src = (data.profilePicURL && data.profilePicURL.trim() !== "")
-            ? data.profilePicURL
+          profilePicElement.src = (authorData.profilePicURL && authorData.profilePicURL.trim() !== "")
+            ? authorData.profilePicURL
             : "default-profile.png";
         }
       } else {
-        console.warn(`No author doc found for UID ${user.uid} in 'authors' collection`);
+        console.warn("No author profile found for this user at all.");
         if (penNameElement) penNameElement.textContent = 'Unknown Author';
         if (profilePicElement) profilePicElement.src = 'default-profile.png'; // fallback image
       }

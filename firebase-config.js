@@ -1,5 +1,9 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { 
+  getAuth, 
+  setPersistence, 
+  browserLocalPersistence 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
@@ -17,6 +21,9 @@ const app = initializeApp(firebaseConfig);
 
 // Services
 export const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence)
+  .catch((err) => console.error("⚠️ Auth persistence error:", err));
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

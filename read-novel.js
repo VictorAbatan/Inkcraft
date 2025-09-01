@@ -1,7 +1,7 @@
 import { app, db } from './firebase-config.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
-  doc, getDoc, collection, getDocs, query, orderBy
+  doc, getDoc, collection, query, orderBy, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontPopup = document.getElementById('fontPopup');
   const sizePopup = document.getElementById('sizePopup');
   const chapterListPopup = document.getElementById('chapterListPopup');
+  const backBtn = document.getElementById('backToDetailsBtn'); // ✅ NEW: back button
 
   // === Popup & Menu Toggle Logic ===
   function closeAllPopups(except = null) {
@@ -119,6 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('scroll', updateScrollProgress);
 
+  // === Back Button Fix ===
+  backBtn?.addEventListener('click', () => {
+    if (novelId) {
+      // Force full reload of novel-details page
+      window.location.href = `novel-details.html?novelId=${novelId}`;
+    }
+  });
+
   // === Load Novel & Author Notes ===
   async function loadNovel() {
     try {
@@ -129,25 +138,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const novelData = snap.data();
       novelTitle.textContent = novelData.title || 'Untitled Novel';
 
-      // Global notes
       authorNotesEl.textContent = novelData.notes || '';
       authorNotesEl.style.display = novelData.notes ? 'block' : 'none';
 
-      await loadChapters();
+      loadChaptersRealTime();
     } catch (err) {
       console.error('Error loading novel:', err);
     }
   }
 
-  async function loadChapters() {
-    try {
-      const q = query(
-        collection(db, `novels/${novelId}/published_chapters`),
-        orderBy('number')
-      );
-      const snapshot = await getDocs(q);
+  function loadChaptersRealTime() {
+    const q = query(
+      collection(db, `novels/${novelId}/published_chapters`),
+      orderBy('number')
+    );
+
+    onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
+        chapters = [];
         chapterSelect.innerHTML = '<option>No chapters</option>';
+        chapterContent.innerHTML = '';
         return;
       }
 
@@ -160,29 +170,24 @@ document.addEventListener('DOMContentLoaded', () => {
         chapterSelect.appendChild(opt);
       });
 
-      const index = chapterIdFromUrl
+      let index = chapterIdFromUrl
         ? chapters.findIndex(c => c.id === chapterIdFromUrl)
         : 0;
 
-      scrollToChapter(index >= 0 ? index : 0);
-    } catch (err) {
-      console.error('Error loading chapters:', err);
-    }
+      if (index < 0) index = 0;
+
+      scrollToChapter(index);
+    });
   }
 
-  // === Dynamic Pagination Based on Screen Size ===
+  // === Pagination & Chapters ===
   function calculateWordsPerPage() {
     const screenArea = window.innerWidth * window.innerHeight;
 
-    if (screenArea < 400 * 900) {
-      return 120; // small phones
-    } else if (screenArea < 800 * 1000) {
-      return 200; // mid-size devices
-    } else if (screenArea < 1200 * 1000) {
-      return 300; // tablets
-    } else {
-      return 450; // desktops & large screens
-    }
+    if (screenArea < 400 * 900) return 120;
+    if (screenArea < 800 * 1000) return 200;
+    if (screenArea < 1200 * 1000) return 300;
+    return 450;
   }
 
   function splitIntoChunks(text) {
@@ -190,19 +195,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const words = text.split(/\s+/).filter(w => w.trim() !== '');
     const chunks = [];
     let start = 0;
-
     while (start < words.length) {
       const end = Math.min(start + maxWords, words.length);
-      const chunkWords = words.slice(start, end);
-      chunks.push(chunkWords.join(' '));
+      chunks.push(words.slice(start, end).join(' '));
       start = end;
     }
-
     return chunks;
   }
 
   function scrollToChapter(index, goToLastPage = false) {
     currentChapterIndex = index;
+    if (!chapters[index]) return;
     chapterSelect.value = chapters[index].id;
     chapterContent.innerHTML = '';
     pageChunks = [];
@@ -210,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const chapter = chapters[index];
 
     if (scrollMode) {
-      // Scroll mode: body then notes
       const section = document.createElement('section');
       section.innerHTML = `
         <h2>Chapter ${chapter.number}: ${chapter.title || 'Untitled'}</h2>
@@ -227,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       pageChunks.push(section);
     } else {
-      // Page mode
       const chunks = splitIntoChunks(chapter.body);
       chunks.forEach((chunk, i) => {
         const section = document.createElement('section');
@@ -241,7 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pageChunks.push(section);
       });
 
-      // Notes on last page
       if (chapter.notes && pageChunks.length > 0) {
         const notesBlock = document.createElement('div');
         notesBlock.classList.add('author-notes');
@@ -255,12 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applyFontSettings();
     updateScrollProgress();
-
-    // ✅ Always reset scroll to top on new chapter
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // === Flip Animation Fixed (direction-aware) ===
   function showPage(index, direction = 'next') {
     pageChunks.forEach((pg, i) => {
       if (i === index) {
@@ -274,8 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     currentPageIndex = index;
     updateScrollProgress();
-
-    // ✅ Reset scroll to top when showing a page
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -311,7 +306,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ✅ Swipe Support with direction
   let touchStartX = 0;
   let touchEndX = 0;
 

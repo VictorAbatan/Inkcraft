@@ -8,7 +8,8 @@ import {
   orderBy,
   setDoc,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
@@ -125,44 +126,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
   document.getElementById('readButton').href = `read-novel.html?novelId=${novelId}`;
 
-  // ✅ Load chapters
-  try {
-    const chaptersRef = collection(db, `novels/${novelId}/published_chapters`);
-    const q = query(chaptersRef, orderBy('order'));
-    const snapshot = await getDocs(q);
+  // ✅ Real-time Chapters Listener
+  const contentsTab = document.getElementById('contentsTab');
+  const chapterCountEl = document.getElementById('chapterCount');
 
-    const chapterCount = snapshot.size;
-    document.getElementById('chapterCount').textContent = chapterCount;
-
-    const contentsTab = document.getElementById('contentsTab');
+  function renderChapters(snapshot) {
     contentsTab.innerHTML = '<h2>Chapters</h2>';
-
-    if (!snapshot.empty) {
-      const ul = document.createElement('ul');
-      snapshot.forEach((docSnap) => {
-        const chapter = docSnap.data();
-        const chapterId = docSnap.id;
-        const chapterNumber = chapter.number != null ? chapter.number : 1;
-        const chapterTitle = chapter.title || `Chapter ${chapterNumber}`;
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="read-novel.html?novelId=${novelId}&chapterId=${chapterId}">
-                          <span class="chapter-number">${chapterNumber}.</span>
-                          <span class="chapter-title">${chapterTitle}</span>
-                        </a>`;
-        ul.appendChild(li);
-      });
-      contentsTab.appendChild(ul);
-    } else {
+    if (snapshot.empty) {
+      chapterCountEl.textContent = 0;
       const p = document.createElement('p');
       p.textContent = 'No chapters uploaded yet.';
       contentsTab.appendChild(p);
+      return;
     }
-  } catch (err) {
-    console.error('Error loading chapters:', err);
-    document.getElementById('chapterCount').textContent = '—';
-    const contentsTab = document.getElementById('contentsTab');
-    contentsTab.innerHTML = '<h2>Chapters</h2><p>Unable to load chapters.</p>';
+
+    const ul = document.createElement('ul');
+    snapshot.forEach((docSnap) => {
+      const chapter = docSnap.data();
+      const chapterId = docSnap.id;
+      const chapterNumber = chapter.number != null ? chapter.number : 1;
+      const chapterTitle = chapter.title || `Chapter ${chapterNumber}`;
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="read-novel.html?novelId=${novelId}&chapterId=${chapterId}">
+                        <span class="chapter-number">${chapterNumber}.</span>
+                        <span class="chapter-title">${chapterTitle}</span>
+                      </a>`;
+      ul.appendChild(li);
+    });
+    contentsTab.appendChild(ul);
+    chapterCountEl.textContent = snapshot.size;
   }
+
+  const chaptersRef = collection(db, `novels/${novelId}/published_chapters`);
+  const q = query(chaptersRef, orderBy('order'));
+  onSnapshot(q, renderChapters);
 
   // Tabs
   document.querySelectorAll('.tab').forEach(tab => {

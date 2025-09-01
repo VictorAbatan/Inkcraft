@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
+        // ✅ Validate file before upload
+        if (!(file instanceof File)) throw new Error('Invalid file.');
+
         // Upload cover image
         const storageRef = ref(storage, `verse-covers/${uid}/${Date.now()}-${file.name}`);
         await uploadBytes(storageRef, file);
@@ -93,23 +96,33 @@ document.addEventListener('DOMContentLoaded', () => {
           title,
           description,
           coverURL,
-          authorId: uid,   // ✅ Ensures verse is tied to Firebase Auth UID
-          createdBy: uid,  // (kept for consistency / security rules)
+          authorId: uid,
+          createdBy: uid,
           createdAt: serverTimestamp(),
-          status: 'pending'
+          status: 'pending' // optional: can be changed to 'published' if you want auto-approved
         };
 
-        const docId = `verse_${uid}_${Date.now()}`; // ✅ clearer unique ID
-        const verseRef = doc(db, "pending_verses", docId); // ✅ proper collection path
+        const docId = `verse_${uid}_${Date.now()}`; 
+        const verseRef = doc(db, "verses", docId);  // ✅ Authors can now freely create
+
+        // ✅ Ensure we catch Firestore-specific errors
         await setDoc(verseRef, verseData);
 
-        alert('Verse submitted for review. You’ll be notified once it is approved.');
+        alert('Verse created successfully');
         form.reset();
         preview.style.display = 'none';
 
       } catch (error) {
         console.error('Error submitting verse:', error);
-        alert('Submission failed. Please try again.');
+
+        // ✅ Provide more context to user
+        if (error.code === 'permission-denied') {
+          alert('You do not have permission to submit a verse.');
+        } else if (error.message.includes('network')) {
+          alert('Network error. Please check your connection and try again.');
+        } else {
+          alert('Submission failed. Please try again.');
+        }
       }
     });
   });

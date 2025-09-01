@@ -6,356 +6,252 @@ import {
 import {
   collection,
   getDocs,
-  updateDoc,
-  setDoc,
   doc,
-  serverTimestamp,
-  addDoc,
-  deleteDoc,
-  getDoc
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
+
   const listContainer = document.getElementById('submission-list');
-  const pendingNovelsSection = document.getElementById('pending-novels-list'); // NEW
   const logoutBtn = document.getElementById('logout-btn');
   const darkToggle = document.getElementById('dark-toggle');
   const notifCount = document.getElementById('notif-count');
   const statApproved = document.getElementById('stat-approved');
   const statRejected = document.getElementById('stat-rejected');
   const statPending = document.getElementById('stat-pending');
+  const statSeries = document.getElementById('stat-series');
+  const statVerses = document.getElementById('stat-verses');
   const approvedContainer = document.getElementById('approved-novels-container');
-  const pendingVersesContainer = document.getElementById('pending-verses-list');
-  const approvedVersesContainer = document.getElementById('approved-verses-container');
 
-  darkToggle.addEventListener('click', () => {
-    document.body.classList.toggle('light-mode');
-  });
+  [listContainer, logoutBtn, darkToggle, notifCount, statApproved, statRejected, statPending, statSeries, statVerses, approvedContainer]
+    .forEach(el => { if (!el) console.error(`${el?.id || 'Element'} not found!`); });
 
-  logoutBtn.addEventListener('click', () => {
-    auth.signOut().then(() => {
-      window.location.href = 'login.html';
-    }).catch(error => {
-      console.error('Logout failed:', error);
-      alert('Logout failed.');
-    });
+  darkToggle?.addEventListener('click', () => document.body.classList.toggle('light-mode'));
+
+  logoutBtn?.addEventListener('click', () => {
+    auth.signOut().then(() => window.location.href = 'login.html')
+      .catch(error => { console.error('Logout failed:', error); alert('Logout failed.'); });
   });
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      alert("You must be logged in.");
-      window.location.href = 'login.html';
-      return;
-    }
-
+    if (!user) { alert("You must be logged in."); window.location.href = 'login.html'; return; }
     const tokenResult = await user.getIdTokenResult();
-    if (!tokenResult.claims.admin) {
-      alert("Access denied. Admins only.");
-      window.location.href = 'login.html';
-      return;
-    }
+    if (!tokenResult.claims.admin) { alert("Access denied. Admins only."); window.location.href = 'login.html'; return; }
 
     try {
-      // 🔥 Now we fetch ALL novels from "novels" collection
-      const snapshot = await getDocs(collection(db, 'novels'));
+      const [novelSnap, seriesSnap, verseSnap, usersSnap] = await Promise.all([
+        getDocs(collection(db, 'novels')),
+        getDocs(collection(db, 'series')),
+        getDocs(collection(db, 'verses')),
+        getDocs(collection(db, 'users'))
+      ]);
+
+      const authorMap = new Map();
+      usersSnap.forEach(docSnap => {
+        const userData = docSnap.data();
+        authorMap.set(docSnap.id, userData.penName || 'Unknown Author');
+      });
+
       let approved = 0, rejected = 0, pending = 0, notifications = 0;
+      let seriesCount = 0, verseCount = 0;
 
-      if (snapshot.empty) {
-        listContainer.innerHTML = '<p>No submissions found.</p>';
-        if (pendingNovelsSection) pendingNovelsSection.innerHTML = '<p>No pending novels.</p>';
-      } else {
-        listContainer.innerHTML = '';
-        if (pendingNovelsSection) pendingNovelsSection.innerHTML = '';
+      // === Novels ===
+      if (listContainer) listContainer.innerHTML = '';
+      novelSnap.forEach(docSnap => {
+        const novel = docSnap.data();
+        const id = docSnap.id;
+        if (novel.status === 'published' || novel.status === 'approved') approved++;
+        if (novel.status === 'rejected') rejected++;
+        if (novel.status === 'pending') pending++;
+        if (!listContainer) return;
 
-        snapshot.forEach(docSnap => {
-          const novel = docSnap.data();
-          const id = docSnap.id;
+        const authorName = authorMap.get(novel.author || novel.authorId) || 'Unknown Author';
 
-          if (novel.status === 'published' || novel.status === 'approved') approved++;
-          if (novel.status === 'rejected') rejected++;
+        const card = document.createElement('div');
+        card.className = 'submission-card';
+        card.style.maxWidth = '350px';
+        card.style.margin = '0.5rem';
+        card.innerHTML = `
+          <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover" />
+          <div class="submission-details">
+            <h3>${novel.title || 'Untitled'}</h3>
+            <p><strong>Author:</strong> ${authorName}</p>
+            <p><strong>Genre:</strong> ${novel.genre || '—'}</p>
+            <p><strong>Tags:</strong> ${Array.isArray(novel.tags) ? novel.tags.join(', ') : '—'}</p>
+            <p><strong>Synopsis:</strong> ${novel.synopsis || 'No synopsis available.'}</p>
+            <p><strong>Status:</strong> ${novel.status}</p>
+            <div class="action-buttons">
+              <button class="rollback-btn">Rollback</button>
+              ${novel.status === 'pending' ? '<button class="approve-btn">Approve</button>' : ''}
+            </div>
+          </div>
+        `;
+        listContainer.appendChild(card);
 
-          if (novel.status === 'pending') {
-            pending++;
-            const card = document.createElement('div');
-            card.className = 'submission-card';
-            card.innerHTML = `
-              <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover" />
-              <div class="submission-details">
-                <h3>${novel.title || 'Untitled'}</h3>
-                <p><strong>Genre:</strong> ${novel.genre || '—'}</p>
-                <p><strong>Tags:</strong> ${Array.isArray(novel.tags) ? novel.tags.join(', ') : '—'}</p>
-                <p><strong>Synopsis:</strong> ${novel.synopsis || 'No synopsis available.'}</p>
-                <div class="action-buttons">
-                  <button class="approve-btn">Approve</button>
-                  <button class="reject-btn">Reject</button>
-                </div>
-              </div>
-            `;
-
-            card.querySelector('.approve-btn').addEventListener('click', async () => {
-              try {
-                await updateDoc(doc(db, 'novels', id), {
-                  status: 'published',
-                  approvedAt: serverTimestamp()
-                });
-
-                await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
-                  type: 'approval',
-                  message: `Your novel "${novel.title}" has been approved.`,
-                  timestamp: serverTimestamp()
-                });
-
-                card.remove();
-                approved++;
-                pending--;
-                notifications++;
-                updateStats();
-                updateNotif();
-              } catch (error) {
-                console.error("Error approving novel:", error);
-                alert("Failed to approve novel.");
-              }
-            });
-
-            card.querySelector('.reject-btn').addEventListener('click', async () => {
-              try {
-                await updateDoc(doc(db, 'novels', id), { status: 'rejected' });
-
-                await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
-                  type: 'rejection',
-                  message: `Your novel "${novel.title}" was rejected.`,
-                  timestamp: serverTimestamp()
-                });
-
-                card.remove();
-                rejected++;
-                pending--;
-                notifications++;
-                updateStats();
-                updateNotif();
-              } catch (error) {
-                console.error("Error rejecting novel:", error);
-                alert("Failed to reject novel.");
-              }
-            });
-
-            // Append card to both main submission list and the pending novels section
-            listContainer.appendChild(card);
-            if (pendingNovelsSection) pendingNovelsSection.appendChild(card.cloneNode(true));
-          }
-        });
-      }
-
-      updateStats();
-      updateNotif();
-
-      // Load and display approved novels
-      const publishedSnapshot = await getDocs(collection(db, 'novels'));
-
-      if (publishedSnapshot.empty) {
-        approvedContainer.innerHTML = '<p>No approved novels yet.</p>';
-      } else {
-        approvedContainer.innerHTML = '';
-
-        publishedSnapshot.forEach(async (docSnap) => {
-          const novel = docSnap.data();
-          const id = docSnap.id;
-
-          if (novel.status !== 'published') return;
-
-          let chapterCount = 0;
+        // Rollback
+        card.querySelector('.rollback-btn')?.addEventListener('click', async () => {
           try {
-            const chaptersSnapshot = await getDocs(collection(db, `novels/${id}/chapters`));
-            chapterCount = chaptersSnapshot.size;
-          } catch (err) {
-            console.warn(`No chapters found for ${novel.title}`);
-          }
+            await updateDoc(doc(db, 'novels', id), { status: 'pending' });
+            card.querySelector('p:nth-of-type(5)').textContent = `Status: pending`;
+            alert(`Novel "${novel.title}" rolled back to pending.`);
+
+            if (!card.querySelector('.approve-btn')) {
+              const approveBtn = document.createElement('button');
+              approveBtn.className = 'approve-btn';
+              approveBtn.textContent = 'Approve';
+              card.querySelector('.action-buttons').appendChild(approveBtn);
+
+              approveBtn.addEventListener('click', async () => {
+                try {
+                  await updateDoc(doc(db, 'novels', id), { status: 'approved' });
+                  card.querySelector('p:nth-of-type(5)').textContent = `Status: approved`;
+                  approveBtn.remove();
+                  alert(`Novel "${novel.title}" approved.`);
+                } catch (err) { console.error(err); alert('Approve failed.'); }
+              });
+            }
+          } catch (err) { console.error(err); alert('Rollback failed.'); }
+        });
+
+        // Approve button
+        const approveBtn = card.querySelector('.approve-btn');
+        if (approveBtn) {
+          approveBtn.addEventListener('click', async () => {
+            try {
+              await updateDoc(doc(db, 'novels', id), { status: 'approved' });
+              card.querySelector('p:nth-of-type(5)').textContent = `Status: approved`;
+              approveBtn.remove();
+              alert(`Novel "${novel.title}" approved.`);
+            } catch (err) { console.error(err); alert('Approve failed.'); }
+          });
+        }
+      });
+
+      // === Approved Novels Section ===
+      if (approvedContainer) approvedContainer.innerHTML = '';
+      novelSnap.forEach(async docSnap => {
+        const novel = docSnap.data();
+        const id = docSnap.id;
+        if (novel.status !== 'published') return;
+        if (!approvedContainer) return;
+
+        let chapterCount = 0;
+        try { chapterCount = (await getDocs(collection(db, `novels/${id}/chapters`))).size; } catch {}
+
+        const authorName = authorMap.get(novel.author || novel.authorId) || 'Unknown Author';
+
+        const card = document.createElement('div');
+        card.className = 'approved-novel-card';
+        card.style.maxWidth = '250px';
+        card.style.margin = '0.5rem';
+        card.innerHTML = `
+          <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover of ${novel.title}" />
+          <h4>${novel.title || 'Untitled'}</h4>
+          <p><strong>Author:</strong> ${authorName}</p>
+          <p>Chapters: ${chapterCount}</p>
+          <div class="approved-actions">
+            <button class="rollback-btn">Rollback</button>
+          </div>
+        `;
+        approvedContainer.appendChild(card);
+
+        card.querySelector('.rollback-btn')?.addEventListener('click', async () => {
+          try {
+            await updateDoc(doc(db, 'novels', id), { status: 'pending' });
+            card.remove();
+            alert(`Novel "${novel.title}" rolled back to pending.`);
+          } catch (err) { console.error(err); alert('Rollback failed.'); }
+        });
+      });
+
+      // === Series ===
+      if (listContainer) {
+        const seriesSection = document.createElement('section');
+        seriesSection.innerHTML = `<h2>📚 Series</h2>`;
+        const seriesContainer = document.createElement('div');
+        seriesContainer.id = 'series-container';
+        seriesContainer.style.display = 'flex';
+        seriesContainer.style.flexWrap = 'wrap';
+        seriesContainer.style.gap = '1rem';
+        seriesSection.appendChild(seriesContainer);
+        listContainer.appendChild(seriesSection);
+
+        for (const docSnap of seriesSnap.docs) {
+          const series = docSnap.data();
+          const id = docSnap.id;
+          seriesCount++;
+
+          const penName = authorMap.get(series.authorId || series.createdBy) || 'Unknown Author';
 
           const card = document.createElement('div');
-          card.className = 'approved-novel-card';
+          card.className = 'series-card';
+          card.style.maxWidth = '250px';
+          card.style.margin = '0.5rem';
           card.innerHTML = `
-            <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover of ${novel.title}" />
-            <h4>${novel.title || 'Untitled'}</h4>
-            <p>Chapters: ${chapterCount}</p>
-            <div class="approved-actions">
-              <button class="view-btn">View</button>
-              <button class="rollback-btn">Rollback</button>
-            </div>
+            <img src="${series.coverImageURL || 'placeholder.jpg'}" alt="Series Cover" />
+            <h4>${series.title || 'Untitled Series'}</h4>
+            <p>${series.description || ''}</p>
+            <p><strong>Author:</strong> ${penName}</p>
+            <button class="view-series-btn">View</button>
           `;
-
-          card.querySelector('.view-btn').addEventListener('click', () => {
-            alert(`Feature coming soon: View/edit "${novel.title}"`);
+          card.querySelector('.view-series-btn')?.addEventListener('click', () => {
+            alert(`Series: ${series.title}\nDescription: ${series.description || ''}`);
           });
-
-          card.querySelector('.rollback-btn').addEventListener('click', async () => {
-            if (confirm(`Are you sure you want to unpublish "${novel.title}"?`)) {
-              try {
-                await updateDoc(doc(db, 'novels', id), {
-                  status: 'pending',
-                  rolledBackAt: serverTimestamp()
-                });
-
-                await addDoc(collection(db, `users/${novel.submittedBy}/notifications`), {
-                  type: 'rollback',
-                  message: `Your novel "${novel.title}" was unpublished and sent back for revision.`,
-                  timestamp: serverTimestamp()
-                });
-
-                card.remove();
-                approved--;
-                pending++;
-                updateStats();
-                alert(`"${novel.title}" has been rolled back to pending novels.`);
-              } catch (err) {
-                console.error("Rollback failed:", err);
-                alert("Failed to rollback this novel.");
-              }
-            }
-          });
-
-          approvedContainer.appendChild(card);
-        });
+          seriesContainer.appendChild(card);
+        }
       }
 
-      // 🔥 Verse code remains unchanged
-      const verseSnapshot = await getDocs(collection(db, 'pending_verses'));
-      if (verseSnapshot.empty) {
-        pendingVersesContainer.innerHTML = '<p>No pending verses found.</p>';
-      } else {
-        pendingVersesContainer.innerHTML = '';
-        verseSnapshot.forEach(docSnap => {
+      // === Verses ===
+      if (listContainer) {
+        const verseSection = document.createElement('section');
+        verseSection.innerHTML = `<h2>📖 Verses</h2>`;
+        const verseContainer = document.createElement('div');
+        verseContainer.id = 'verse-container';
+        verseContainer.style.display = 'flex';
+        verseContainer.style.flexWrap = 'wrap';
+        verseContainer.style.gap = '1rem';
+        verseSection.appendChild(verseContainer);
+        listContainer.appendChild(verseSection);
+
+        for (const docSnap of verseSnap.docs) {
           const verse = docSnap.data();
           const id = docSnap.id;
+          verseCount++;
+
+          const penName = authorMap.get(verse.authorId || verse.createdBy) || 'Unknown Author';
 
           const card = document.createElement('div');
           card.className = 'verse-card';
+          card.style.maxWidth = '250px';
+          card.style.margin = '0.5rem';
           card.innerHTML = `
             <img src="${verse.coverURL || 'placeholder.jpg'}" alt="Verse Cover" />
             <div class="verse-details">
               <h3>${verse.title}</h3>
               <p>${verse.description}</p>
-              <div class="action-buttons">
-                <button class="approve-btn">Approve</button>
-                <button class="reject-btn">Reject</button>
-              </div>
+              <p><strong>Author:</strong> ${penName}</p>
+              <button class="view-verse-btn">View</button>
             </div>
           `;
-
-          card.querySelector('.approve-btn').addEventListener('click', async () => {
-            try {
-              const { status, ...verseData } = verse; // strip old status
-              await setDoc(doc(db, 'verses', id), {
-                ...verseData,
-                status: 'approved',
-                approvedAt: serverTimestamp()
-              });
-
-              await deleteDoc(doc(db, 'pending_verses', id));
-
-              await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
-                type: 'verse_approval',
-                message: `Your verse "${verse.title}" has been approved.`,
-                timestamp: serverTimestamp()
-              });
-
-              card.remove();
-              notifications++;
-              updateNotif();
-            } catch (err) {
-              console.error("Error approving verse:", err);
-              alert("Failed to approve verse.");
-            }
+          card.querySelector('.view-verse-btn')?.addEventListener('click', () => {
+            alert(`Verse: ${verse.title}\nDescription: ${verse.description || ''}`);
           });
-
-          card.querySelector('.reject-btn').addEventListener('click', async () => {
-            try {
-              await deleteDoc(doc(db, 'pending_verses', id));
-
-              await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
-                type: 'verse_rejection',
-                message: `Your verse "${verse.title}" was rejected.`,
-                timestamp: serverTimestamp()
-              });
-
-              card.remove();
-              notifications++;
-              updateNotif();
-            } catch (err) {
-              console.error("Error rejecting verse:", err);
-              alert("Failed to reject verse.");
-            }
-          });
-
-          pendingVersesContainer.appendChild(card);
-        });
+          verseContainer.appendChild(card);
+        }
       }
 
-      const approvedVerseSnapshot = await getDocs(collection(db, 'verses'));
-      if (approvedVerseSnapshot.empty) {
-        approvedVersesContainer.innerHTML = '<p>No approved verses yet.</p>';
-      } else {
-        approvedVersesContainer.innerHTML = '';
-        approvedVerseSnapshot.forEach(docSnap => {
-          const verse = docSnap.data();
-          const id = docSnap.id;
-
-          const card = document.createElement('div');
-          card.className = 'approved-verse-card';
-          card.innerHTML = `
-            <img src="${verse.coverURL || 'placeholder.jpg'}" alt="Approved Verse Cover" />
-            <div class="verse-details">
-              <h3>${verse.title}</h3>
-              <p>${verse.description}</p>
-              <div class="approved-actions">
-                <button class="rollback-verse-btn">Rollback</button>
-              </div>
-            </div>
-          `;
-
-          card.querySelector('.rollback-verse-btn').addEventListener('click', async () => {
-            if (confirm(`Are you sure you want to rollback the verse "${verse.title}" to pending?`)) {
-              try {
-                await setDoc(doc(db, 'pending_verses', id), {
-                  ...verse,
-                  status: 'pending',
-                  rolledBackAt: serverTimestamp()
-                });
-
-                await deleteDoc(doc(db, 'verses', id));
-
-                await addDoc(collection(db, `users/${verse.createdBy}/notifications`), {
-                  type: 'verse_rollback',
-                  message: `Your verse "${verse.title}" was rolled back for revision.`,
-                  timestamp: serverTimestamp()
-                });
-
-                card.remove();
-                alert(`Verse "${verse.title}" has been rolled back to pending.`);
-              } catch (err) {
-                console.error("Verse rollback failed:", err);
-                alert("Failed to rollback this verse.");
-              }
-            }
-          });
-
-          approvedVersesContainer.appendChild(card);
-        });
-      }
-
-      function updateStats() {
-        statApproved.textContent = approved;
-        statRejected.textContent = rejected;
-        statPending.textContent = pending;
-      }
-
-      function updateNotif() {
-        notifCount.textContent = notifications;
-      }
+      // Update Stats
+      if (statApproved) statApproved.textContent = approved;
+      if (statRejected) statRejected.textContent = rejected;
+      if (statPending) statPending.textContent = pending;
+      if (notifCount) notifCount.textContent = notifications;
+      if (statSeries) statSeries.textContent = seriesCount;
+      if (statVerses) statVerses.textContent = verseCount;
 
     } catch (err) {
       console.error("Error loading dashboard data:", err);
-      listContainer.innerHTML = '<p>Error loading submissions.</p>';
+      if (listContainer) listContainer.innerHTML = '<p>Error loading submissions.</p>';
     }
   });
 });

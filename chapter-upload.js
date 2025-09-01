@@ -14,7 +14,8 @@ import {
   serverTimestamp,
   query,
   orderBy,
-  setDoc
+  setDoc,
+  onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
@@ -74,7 +75,19 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
-  loadChapters();
+  // Real-time listener for chapter changes (updates novel-details/read-novel automatically)
+  const chaptersCol = collection(db, `novels/${novelId}/chapters`);
+  onSnapshot(chaptersCol, (snapshot) => {
+    chapters = [];
+    snapshot.forEach(docSnap => {
+      const c = docSnap.data();
+      chapters.push({ ...c, id: docSnap.id });
+    });
+    renderChapterList();
+    // Optionally trigger events to update read-novel and novel-details UIs
+    const event = new CustomEvent('chaptersUpdated', { detail: chapters });
+    window.dispatchEvent(event);
+  });
 
   // SAVE CHAPTER
   form.addEventListener('submit', async (e) => {
@@ -98,23 +111,16 @@ onAuthStateChanged(auth, async user => {
     `;
   });
 
-  // PUBLISH CHAPTER
   publishBtn.addEventListener('click', async () => {
     try {
-      // 🔥 Always save latest edits before publishing
       await saveChapter(true);
-
       if (!editingChapterId) {
         alert("Failed to save chapter before publishing.");
         return;
       }
-
       const chapterRef = doc(db, `novels/${novelId}/chapters/${editingChapterId}`);
       const chapterSnap = await getDoc(chapterRef);
-      if (!chapterSnap.exists()) {
-        alert("Chapter not found.");
-        return;
-      }
+      if (!chapterSnap.exists()) return;
 
       const chapterData = chapterSnap.data();
       const publishedRef = doc(db, `novels/${novelId}/published_chapters/${editingChapterId}`);
@@ -127,7 +133,6 @@ onAuthStateChanged(auth, async user => {
       alert("Chapter published successfully.");
       form.reset();
       editingChapterId = null;
-      loadChapters();
     } catch (err) {
       console.error("Publish failed:", err);
       alert("Failed to publish chapter.");
@@ -174,31 +179,19 @@ async function saveChapter(silent = false) {
     }
 
     if (!silent) form.reset();
-    loadChapters();
   } catch (err) {
     console.error("Save failed:", err);
     if (!silent) alert("Failed to save chapter.");
   }
 }
 
-// LOAD CHAPTERS
-async function loadChapters() {
-  const q = query(collection(db, `novels/${novelId}/chapters`), orderBy('order'));
-  const snapshot = await getDocs(q);
-
+// RENDER CHAPTER LIST
+function renderChapterList() {
   list.innerHTML = '';
-  chapters = [];
-
-  if (snapshot.empty) {
+  if (chapters.length === 0) {
     list.innerHTML = '<li>No chapters yet.</li>';
     return;
   }
-
-  snapshot.forEach(docSnap => {
-    const c = docSnap.data();
-    chapters.push({ ...c, id: docSnap.id });
-  });
-
   chapters.forEach((c, index) => {
     const li = document.createElement('li');
     li.innerHTML = `
@@ -233,8 +226,13 @@ window.deleteChapter = async function (chapterId) {
 
   try {
     await deleteDoc(doc(db, `novels/${novelId}/chapters/${chapterId}`));
+
+    const pubRef = doc(db, `novels/${novelId}/published_chapters/${chapterId}`);
+    const pubSnap = await getDoc(pubRef);
+    if (pubSnap.exists()) await deleteDoc(pubRef);
+
     alert("Chapter deleted.");
-    loadChapters();
+    // The onSnapshot listener automatically updates the UI and triggers 'chaptersUpdated'
   } catch (error) {
     console.error("Delete failed:", error);
     alert("Failed to delete chapter.");
@@ -253,7 +251,6 @@ window.moveChapter = async function (index, direction) {
       updateDoc(doc(db, `novels/${novelId}/chapters/${chapterA.id}`), { order: chapterB.order }),
       updateDoc(doc(db, `novels/${novelId}/chapters/${chapterB.id}`), { order: chapterA.order })
     ]);
-    loadChapters();
   } catch (error) {
     console.error("Reorder failed:", error);
     alert("Failed to reorder chapters.");

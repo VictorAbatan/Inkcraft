@@ -3,8 +3,8 @@ import {
   collection,
   getDocs,
   doc,
+  getDoc,
   query,
-  where,
   orderBy
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -28,23 +28,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('searchInput');
   let allBooks = [];
 
-  // Fetch published novels from Firestore
+  // ✅ Fetch novels (prefer authorName from novel doc itself)
   async function fetchPublishedNovels() {
-    const q = query(collection(db, 'novels'), where('status', '==', 'published'), orderBy('title'));
+    const q = query(collection(db, 'novels'), orderBy('title'));
     const snapshot = await getDocs(q);
-    allBooks = [];
 
-    snapshot.docs.forEach(docSnap => {
+    allBooks = [];
+    const authorCache = new Map();
+
+    for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
+
+      // ✅ Use authorName from the novel document if it exists
+      let authorName = data.authorName || 'Unknown Author';
+
+      // Optionally, if you also want to cross-check with users/{id}
+      if (!data.authorName && data.authorId) {
+        if (authorCache.has(data.authorId)) {
+          authorName = authorCache.get(data.authorId);
+        } else {
+          const userDoc = await getDoc(doc(db, 'users', data.authorId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            authorName = userData.authorName || userData.penName || 'Unknown Author';
+            authorCache.set(data.authorId, authorName);
+          }
+        }
+      }
 
       allBooks.push({
         id: docSnap.id,
         title: data.title || 'Untitled',
         cover: data.cover || data.coverUrl || 'default-cover.jpg',
-        // ✅ Use penNameOverride first, then fallback to authorName, else Unknown Author
-        author: data.penNameOverride || data.authorName || 'Unknown Author'
+        author: authorName
       });
-    });
+    }
 
     renderBooks(allBooks);
   }

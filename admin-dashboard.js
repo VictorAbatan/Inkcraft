@@ -7,7 +7,9 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc
+  updateDoc,
+  setDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,6 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   [listContainer, logoutBtn, darkToggle, notifCount, statApproved, statRejected, statPending, statSeries, statVerses, approvedContainer]
     .forEach(el => { if (!el) console.error(`${el?.id || 'Element'} not found!`); });
+
+  // ✅ Helper: send notification
+  async function sendNotification(authorId, type, message) {
+    const notifRef = doc(collection(db, "notifications", authorId, "items"));
+    await setDoc(notifRef, {
+      type,
+      message,
+      createdAt: serverTimestamp(),
+      read: false
+    });
+  }
 
   darkToggle?.addEventListener('click', () => document.body.classList.toggle('light-mode'));
 
@@ -63,7 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = docSnap.id;
         if (novel.status === 'published' || novel.status === 'approved') approved++;
         if (novel.status === 'rejected') rejected++;
-        if (novel.status === 'pending') pending++;
+        if (novel.status === 'pending') {
+          pending++;
+          // 🔔 Notify when novel first enters pending
+          sendNotification(
+            novel.authorId,
+            "pending",
+            `Your novel "${novel.title}" has been submitted and is pending review.`
+          ).catch(err => console.error("Failed to send pending notification:", err));
+        }
         if (!listContainer) return;
 
         const authorName = authorMap.get(novel.author || novel.authorId) || 'Unknown Author';
@@ -84,18 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="action-buttons">
               <button class="rollback-btn">Rollback</button>
               ${novel.status === 'pending' ? '<button class="approve-btn">Approve</button>' : ''}
+              ${novel.status !== 'rejected' ? '<button class="reject-btn">Reject</button>' : ''}
             </div>
           </div>
         `;
         listContainer.appendChild(card);
 
-        // Rollback
+        // ✅ Rollback button
         card.querySelector('.rollback-btn')?.addEventListener('click', async () => {
           try {
             await updateDoc(doc(db, 'novels', id), { status: 'pending' });
             card.querySelector('p:nth-of-type(5)').textContent = `Status: pending`;
             alert(`Novel "${novel.title}" rolled back to pending.`);
+            await sendNotification(novel.authorId, "rollback", `Your novel "${novel.title}" was rolled back by admin.`);
 
+            // Re-add Approve button if missing
             if (!card.querySelector('.approve-btn')) {
               const approveBtn = document.createElement('button');
               approveBtn.className = 'approve-btn';
@@ -108,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   card.querySelector('p:nth-of-type(5)').textContent = `Status: approved`;
                   approveBtn.remove();
                   alert(`Novel "${novel.title}" approved.`);
+                  await sendNotification(novel.authorId, "approval", `Your novel "${novel.title}" has been approved and is live.`);
                 } catch (err) { console.error(err); alert('Approve failed.'); }
               });
             }
@@ -123,7 +148,22 @@ document.addEventListener('DOMContentLoaded', () => {
               card.querySelector('p:nth-of-type(5)').textContent = `Status: approved`;
               approveBtn.remove();
               alert(`Novel "${novel.title}" approved.`);
+              await sendNotification(novel.authorId, "approval", `Your novel "${novel.title}" has been approved and is live.`);
             } catch (err) { console.error(err); alert('Approve failed.'); }
+          });
+        }
+
+        // Reject button
+        const rejectBtn = card.querySelector('.reject-btn');
+        if (rejectBtn) {
+          rejectBtn.addEventListener('click', async () => {
+            try {
+              await updateDoc(doc(db, 'novels', id), { status: 'rejected' });
+              card.querySelector('p:nth-of-type(5)').textContent = `Status: rejected`;
+              rejectBtn.remove();
+              alert(`Novel "${novel.title}" rejected.`);
+              await sendNotification(novel.authorId, "rejection", `Your novel "${novel.title}" was rejected. Please review feedback and resubmit.`);
+            } catch (err) { console.error(err); alert('Reject failed.'); }
           });
         }
       });
@@ -156,11 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         approvedContainer.appendChild(card);
 
+        // ✅ Rollback approved novels
         card.querySelector('.rollback-btn')?.addEventListener('click', async () => {
           try {
             await updateDoc(doc(db, 'novels', id), { status: 'pending' });
             card.remove();
             alert(`Novel "${novel.title}" rolled back to pending.`);
+            await sendNotification(novel.authorId, "rollback", `Your novel "${novel.title}" was rolled back by admin.`);
           } catch (err) { console.error(err); alert('Rollback failed.'); }
         });
       });

@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { doc, getDoc, collection, getDocs, query, where, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { doc, getDoc, collection, getDocs, query, where, addDoc, serverTimestamp, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const storage = getStorage();
@@ -182,7 +182,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const authorSnap = await getDoc(doc(db, 'authors', auth.currentUser.uid));
       const authorName = formPenName || (authorSnap.exists() && authorSnap.data()?.penName) || "Unknown Author";
 
-      await addDoc(collection(db, "novels"), {
+      // ✅ Save novel
+      const novelRef = await addDoc(collection(db, "novels"), {
         title,
         synopsis,
         genre,
@@ -192,6 +193,14 @@ document.addEventListener("DOMContentLoaded", () => {
         authorName,
         status: "pending",
         createdAt: serverTimestamp()
+      });
+
+      // ✅ Wire Pending Notification directly
+      await setDoc(doc(db, `users/${auth.currentUser.uid}/notifications`, novelRef.id), {
+        type: "pending",
+        message: `Your novel "${title}" has been submitted and is pending review.`,
+        novelId: novelRef.id,
+        timestamp: serverTimestamp()
       });
 
       alert("✅ Your novel has been submitted for review!");

@@ -124,7 +124,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('genreList').textContent = genre;
 
   document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
-  document.getElementById('readButton').href = `read-novel.html?novelId=${novelId}`;
+  const readButton = document.getElementById('readButton');
+  readButton.href = `read-novel.html?novelId=${novelId}`;
+
+  // ✅ Store lastNovelId for robust back button
+  readButton.addEventListener('click', () => {
+    localStorage.setItem('lastNovelId', novelId);
+  });
 
   // ✅ Real-time Chapters Listener
   const contentsTab = document.getElementById('contentsTab');
@@ -209,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ✅ Comments Section
+  // ✅ COMMENTS + REPLIES SECTION (Fully Functional)
   const commentsTab = document.getElementById('commentsTab');
   if (commentsTab) {
     const commentsList = document.createElement('div');
@@ -222,42 +228,110 @@ document.addEventListener('DOMContentLoaded', async () => {
     commentsTab.insertBefore(toggleBtn, commentsList);
 
     commentsList.style.display = 'none';
-
     toggleBtn.addEventListener('click', () => {
       commentsList.style.display = commentsList.style.display === 'none' ? 'block' : 'none';
       toggleBtn.textContent = commentsList.style.display === 'none' ? '💬 Show Comments' : '💬 Hide Comments';
     });
 
-    async function loadComments() {
-      commentsList.innerHTML = '<p>Loading comments...</p>';
-      try {
-        const commentsRef = collection(db, `novels/${novelId}/comments`);
-        const q = query(commentsRef, orderBy('timestamp', 'asc'));
-        const snap = await getDocs(q);
-
-        if (snap.empty) {
+    async function renderCommentsRealtime() {
+      const commentsRef = collection(db, `novels/${novelId}/comments`);
+      const q = query(commentsRef, orderBy('timestamp', 'asc'));
+      onSnapshot(q, snapshot => {
+        commentsList.innerHTML = '';
+        if (snapshot.empty) {
           commentsList.innerHTML = '<p>No comments yet.</p>';
           return;
         }
 
-        commentsList.innerHTML = '';
-        snap.forEach(docSnap => {
+        snapshot.forEach(docSnap => {
           const c = docSnap.data();
           const div = document.createElement('div');
           div.classList.add('comment');
           div.innerHTML = `
-            <p><strong>${c.userName || 'Anonymous'}:</strong> ${c.text}</p>
+            <div class="comment-header">
+              <img src="${c.photoURL || 'default-avatar.jpg'}" class="comment-avatar">
+              <strong>${c.userName || 'Anonymous'}</strong>
+            </div>
+            <p class="comment-text">${c.text}</p>
+            <button class="reply-btn" data-comment-id="${docSnap.id}">↩ Reply</button>
+            <div class="replies" id="replies-${docSnap.id}"></div>
           `;
           commentsList.appendChild(div);
+
+          // Load replies
+          const repliesContainer = div.querySelector(`#replies-${docSnap.id}`);
+          const repliesRef = collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`);
+          const repliesQuery = query(repliesRef, orderBy('timestamp', 'asc'));
+          onSnapshot(repliesQuery, repliesSnap => {
+            repliesContainer.innerHTML = '';
+            repliesSnap.forEach(replyDoc => {
+              const r = replyDoc.data();
+              const replyDiv = document.createElement('div');
+              replyDiv.classList.add('reply');
+              replyDiv.innerHTML = `
+                <img src="${r.photoURL || 'default-avatar.jpg'}" class="reply-avatar">
+                <strong>${r.userName || 'Anonymous'}:</strong> ${r.text}
+              `;
+              repliesContainer.appendChild(replyDiv);
+            });
+          });
+
+          // Reply button handler
+          div.querySelector('.reply-btn').addEventListener('click', () => {
+            if (div.querySelector('form')) return;
+            const replyForm = document.createElement('form');
+            replyForm.innerHTML = `
+              <textarea placeholder="Write a reply..." required></textarea>
+              <button type="submit">Post Reply</button>
+            `;
+            div.appendChild(replyForm);
+
+            replyForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const replyText = replyForm.querySelector('textarea').value.trim();
+              if (!replyText) return;
+              const currentUser = auth.currentUser;
+              if (!currentUser) {
+                alert('You must be logged in to reply.');
+                return;
+              }
+
+              try {
+                await addDoc(collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`), {
+                  text: replyText,
+                  userId: currentUser.uid,
+                  userName: currentUser.displayName || 'Anonymous',
+                  photoURL: currentUser.photoURL || 'default-avatar.jpg',
+                  timestamp: serverTimestamp()
+                });
+
+                // Notify original commenter
+                if (c.userId && c.userId !== currentUser.uid) {
+                  await addDoc(collection(db, `users/${c.userId}/inbox`), {
+                    type: 'reply',
+                    novelTitle: data.title,
+                    text: replyText,
+                    userName: currentUser.displayName || 'Anonymous',
+                    userId: currentUser.uid,
+                    photoURL: currentUser.photoURL || 'default-avatar.jpg',
+                    timestamp: serverTimestamp()
+                  });
+                }
+
+                replyForm.remove();
+              } catch (err) {
+                console.error('Failed to post reply:', err);
+                alert('Error posting reply.');
+              }
+            });
+          });
         });
-      } catch (err) {
-        console.error('Error loading comments:', err);
-        commentsList.innerHTML = '<p>Failed to load comments.</p>';
-      }
+      });
     }
 
-    loadComments();
+    renderCommentsRealtime();
 
+    // Comment form
     const form = document.createElement('form');
     form.innerHTML = `
       <textarea placeholder="Write a comment..." required></textarea>
@@ -276,14 +350,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!text) return;
 
       try {
-        await addDoc(collection(db, `novels/${novelId}/comments`), {
+        const commentRef = await addDoc(collection(db, `novels/${novelId}/comments`), {
           text,
           userId: user.uid,
           userName: user.displayName || 'Anonymous',
+          photoURL: user.photoURL || 'default-avatar.jpg',
           timestamp: serverTimestamp()
         });
+
         form.reset();
-        loadComments();
+
+        // Notify author
+        const authorUid = data.submittedBy;
+        if (authorUid && authorUid !== user.uid) {
+          await addDoc(collection(db, `users/${authorUid}/inbox`), {
+            type: 'comment',
+            novelTitle: data.title,
+            text,
+            userId: user.uid,
+            userName: user.displayName || 'Anonymous',
+            photoURL: user.photoURL || 'default-avatar.jpg',
+            timestamp: serverTimestamp()
+          });
+        }
       } catch (err) {
         console.error('Failed to post comment:', err);
         alert('Error posting comment.');

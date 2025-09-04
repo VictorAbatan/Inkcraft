@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <p>${verseData.description || ''}</p>
       `;
 
-      // --- Novels in this verse ---
+      // --- Novels in this verse (only approved) ---
       novelsList.innerHTML = '';
       if (!verseData.novels || verseData.novels.length === 0) {
         novelsList.innerHTML = '<p style="text-align:center;">No novels in this verse yet.</p>';
@@ -68,6 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           const novelSnap = await getDoc(novelRef);
           if (novelSnap.exists()) {
             const novel = novelSnap.data();
+
+            // ✅ Only show if approved
+            if (novel.status !== "approved") continue;
+
             const card = document.createElement('div');
             card.classList.add('card');
             card.innerHTML = `

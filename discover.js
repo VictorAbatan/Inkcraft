@@ -5,7 +5,8 @@ import {
   doc,
   getDoc,
   query,
-  orderBy
+  orderBy,
+  where
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,9 +29,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('searchInput');
   let allBooks = [];
 
-  // ✅ Fetch novels (prefer authorName from novel doc itself)
+  // ✅ Fetch novels (only approved, prefer authorName from novel doc itself)
   async function fetchPublishedNovels() {
-    const q = query(collection(db, 'novels'), orderBy('title'));
+    const q = query(
+      collection(db, 'novels'),
+      where("status", "==", "approved"),
+      orderBy('title')
+    );
     const snapshot = await getDocs(q);
 
     allBooks = [];

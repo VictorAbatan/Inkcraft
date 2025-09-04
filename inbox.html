@@ -18,17 +18,23 @@
 
   <main class="inbox-container">
     <!-- ✅ Approval/Status notifications -->
-    <section>
-      <h2>System Notifications</h2>
-      <ul id="notification-list" aria-live="polite">
+    <section class="inbox-section">
+      <button class="dropdown-toggle">
+        System Notifications <span id="sys-badge" class="badge">0</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <ul id="notification-list" class="dropdown-content" aria-live="polite">
         <li>Loading notifications...</li>
       </ul>
     </section>
 
     <!-- ✅ Reader comments -->
-    <section>
-      <h2>Reader Comments</h2>
-      <ul id="comment-notification-list" aria-live="polite">
+    <section class="inbox-section">
+      <button class="dropdown-toggle">
+        Reader Comments <span id="comment-badge" class="badge">0</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <ul id="comment-notification-list" class="dropdown-content" aria-live="polite">
         <li>Loading comments...</li>
       </ul>
     </section>

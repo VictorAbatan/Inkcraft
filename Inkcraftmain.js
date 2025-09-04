@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cards.length > 1) slideTo(currentIndex + 1);
   }, 5000);
 
-  // === 🔹 LOAD NEW BOOKS (latest 2 only, published only) ===
+  // === 🔹 LOAD NEW BOOKS (latest 2 only, approved only) ===
   async function loadNewBooks() {
     const grid = document.querySelector('.new-books .book-grid');
     if (!grid) return;
@@ -148,30 +148,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const q = query(
       collection(db, 'novels'),
-      where('status', '==', 'published'), // ✅ Only published novels
-      orderBy('submittedAt', 'desc'),
+      where('status', '==', 'approved'), // ✅ Only approved novels
+      orderBy('createdAt', 'desc'),
       limit(2)
     );
 
     const snapshot = await getDocs(q);
+    const authorCache = new Map();
 
-    snapshot.forEach(docSnap => {
+    for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
+
+      // ✅ Use authorName from the novel document if it exists
+      let authorName = data.authorName || 'Unknown Author';
+
+      if (!data.authorName && data.authorId) {
+        if (authorCache.has(data.authorId)) {
+          authorName = authorCache.get(data.authorId);
+        } else {
+          const userDoc = await getDoc(doc(db, 'users', data.authorId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            authorName = userData.authorName || userData.penName || 'Unknown Author';
+            authorCache.set(data.authorId, authorName);
+          }
+        }
+      }
+
       const card = document.createElement('a');
       card.href = `novel-details.html?novelId=${docSnap.id}`;
       card.className = 'book-card';
 
       const img = document.createElement('img');
-      img.src = data.coverUrl || 'default-book-cover.jpg';
-      img.alt = data.title;
+      img.src = data.coverUrl || data.cover || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+      img.alt = data.title || 'Untitled';
 
       const span = document.createElement('span');
-      span.textContent = data.title;
+      span.innerHTML = `<strong>${data.title || 'Untitled'}</strong><br><small>by ${authorName}</small>`;
 
       card.appendChild(img);
       card.appendChild(span);
       grid.appendChild(card);
-    });
+    }
   }
 
   loadNewBooks();
@@ -187,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const profileImgEl = document.getElementById('reader-img');
 
       // Set temporary placeholder immediately
-      if (profileImgEl) profileImgEl.src = 'default-profile.jpg';
+      if (profileImgEl) profileImgEl.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
       if (profileNameEl) profileNameEl.textContent = 'Loading...';
 
       try {

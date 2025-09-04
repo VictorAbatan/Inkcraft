@@ -10,74 +10,88 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Load floating menu
-  fetch('author-floating-menu.html')
-    .then(res => res.text())
-    .then(html => {
-      const container = document.getElementById('floating-menu-container');
-      if (container) {
-        container.innerHTML = html;
+document.addEventListener('DOMContentLoaded', async () => {
 
-        const items = container.querySelectorAll('.menu-item');
-        items.forEach((item, index) => {
-          setTimeout(() => item.classList.add('show'), index * 300);
-        });
+  // -----------------------------
+  // 1️⃣ Load floating menu first
+  // -----------------------------
+  const loadFloatingMenu = async () => {
+    const container = document.getElementById('floating-menu-container');
+    if (!container) return;
 
-        const currentPath = window.location.pathname.split('/').pop().toLowerCase();
-        container.querySelectorAll('a').forEach(link => {
-          if (link.getAttribute('href').toLowerCase() === currentPath) {
-            link.classList.add('active');
-          }
-        });
-      }
-    });
+    try {
+      const res = await fetch('author-floating-menu.html');
+      const html = await res.text();
+      container.innerHTML = html;
 
-  // Load notifications if logged in
+      const items = container.querySelectorAll('.menu-item');
+      // Use requestAnimationFrame to animate menu items
+      items.forEach((item, index) => {
+        requestAnimationFrame(() => setTimeout(() => item.classList.add('show'), index * 300));
+      });
+
+      const currentPath = window.location.pathname.split('/').pop().toLowerCase();
+      container.querySelectorAll('a').forEach(link => {
+        if (link.getAttribute('href').toLowerCase() === currentPath) {
+          link.classList.add('active');
+        }
+      });
+    } catch (err) {
+      console.error('Error loading floating menu:', err);
+    }
+  };
+
+  await loadFloatingMenu(); // Ensure menu is fully loaded before inbox
+
+  // -----------------------------
+  // 2️⃣ Load inbox if logged in
+  // -----------------------------
   const auth = getAuth(app);
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      alert("You must be logged in to view your inbox.");
       window.location.href = 'login.html';
       return;
     }
 
     const uid = user.uid;
+
     const sysList = document.getElementById('notification-list');
     const commentList = document.getElementById('comment-notification-list');
-    sysList.innerHTML = '<li>Loading notifications...</li>';
-    commentList.innerHTML = '<li>Loading comments...</li>';
+    const sysBadge = document.getElementById('sys-badge');
+    const commentBadge = document.getElementById('comment-badge');
+
+    sysList.classList.add('mobile-list');
+    commentList.classList.add('mobile-list');
+
+    sysList.textContent = '';
+    commentList.textContent = '';
 
     try {
-      // ✅ Fetch both collections
-      const notifQuery = query(collection(db, `users/${uid}/notifications`), orderBy('timestamp', 'desc'));
-      const inboxQuery = query(collection(db, `users/${uid}/inbox`), orderBy('timestamp', 'desc'));
+      const inboxQuery = query(
+        collection(db, `users/${uid}/inbox`),
+        orderBy('timestamp', 'desc')
+      );
+      const inboxSnap = await getDocs(inboxQuery);
 
-      const [notifSnap, inboxSnap] = await Promise.all([getDocs(notifQuery), getDocs(inboxQuery)]);
+      if (inboxSnap.empty) {
+        const liSys = document.createElement('li');
+        liSys.textContent = 'No notifications yet.';
+        sysList.appendChild(liSys);
 
-      // Merge
-      const allMessages = [];
-      notifSnap.forEach(doc => allMessages.push(doc.data()));
-      inboxSnap.forEach(doc => allMessages.push(doc.data()));
+        const liComment = document.createElement('li');
+        liComment.textContent = 'No comments yet.';
+        commentList.appendChild(liComment);
 
-      if (allMessages.length === 0) {
-        sysList.innerHTML = '<li>No notifications yet.</li>';
-        commentList.innerHTML = '<li>No comments yet.</li>';
+        sysBadge.textContent = 0;
+        commentBadge.textContent = 0;
         return;
       }
 
-      // Sort by timestamp (desc)
-      allMessages.sort((a, b) => {
-        const aTime = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
-        const bTime = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
-        return bTime - aTime;
-      });
+      let sysCount = 0;
+      let commentCount = 0;
 
-      sysList.innerHTML = '';
-      commentList.innerHTML = '';
-
-      allMessages.forEach(notif => {
-        const li = document.createElement('li');
+      inboxSnap.forEach(doc => {
+        const notif = doc.data();
 
         let typeLabel = '';
         switch (notif.type) {
@@ -90,38 +104,73 @@ document.addEventListener('DOMContentLoaded', () => {
           default: typeLabel = notif.type ? notif.type.charAt(0).toUpperCase() + notif.type.slice(1) : 'Notification';
         }
 
-        // Format timestamp
-        const timeStr = notif.timestamp?.toDate ? new Date(notif.timestamp.toDate()).toLocaleString() : '';
+        const timeStr = notif.timestamp?.toDate
+          ? new Date(notif.timestamp.toDate()).toLocaleString()
+          : 'Unknown time';
+
+        // Create <li> dynamically
+        const li = document.createElement('li');
+        li.classList.add('mobile-list');
+
+        const strong = document.createElement('strong');
+        strong.textContent = typeLabel;
+
+        const text = document.createTextNode(` — ${notif.message || ''}`);
+        const br = document.createElement('br');
+        const small = document.createElement('small');
+        small.textContent = timeStr;
 
         if (notif.type === 'comment' || notif.type === 'reply') {
-          // Comments go in Reader Comments section
-          const novelLink = notif.novelId
-            ? `novel-details.html?novelId=${notif.novelId}#commentsTab`
-            : '#';
-          li.innerHTML = `
-            <a href="${novelLink}" class="notif-link">
-              <strong>${typeLabel}</strong> — ${notif.message || 'New activity on your novel'}
-            </a>
-            <br><small>${timeStr}</small>
-          `;
+          const a = document.createElement('a');
+          a.classList.add('notif-link');
+          a.href = notif.novelId ? `novel-details.html?novelId=${notif.novelId}#commentsTab` : '#';
+          a.appendChild(strong);
+          a.appendChild(text);
+
+          li.appendChild(a);
+          li.appendChild(br.cloneNode());
+          li.appendChild(small);
           commentList.appendChild(li);
+          commentCount++;
         } else {
-          // System notifications
-          li.innerHTML = `
-            <strong>${typeLabel}</strong> — ${notif.message || ''}
-            <br><small>${timeStr}</small>
-          `;
+          li.appendChild(strong);
+          li.appendChild(text);
+          li.appendChild(br.cloneNode());
+          li.appendChild(small);
           sysList.appendChild(li);
+          sysCount++;
         }
       });
 
-      if (!sysList.hasChildNodes()) sysList.innerHTML = '<li>No notifications yet.</li>';
-      if (!commentList.hasChildNodes()) commentList.innerHTML = '<li>No comments yet.</li>';
+      // Force repaint to avoid mobile flicker
+      requestAnimationFrame(() => {
+        sysBadge.textContent = sysCount;
+        commentBadge.textContent = commentCount;
+      });
 
     } catch (err) {
-      console.error('Error loading notifications:', err);
-      sysList.innerHTML = '<li>Error loading notifications.</li>';
-      commentList.innerHTML = '<li>Error loading comments.</li>';
+      const liSys = document.createElement('li');
+      liSys.textContent = 'Error loading notifications.';
+      sysList.appendChild(liSys);
+
+      const liComment = document.createElement('li');
+      liComment.textContent = 'Error loading comments.';
+      commentList.appendChild(liComment);
+
+      sysBadge.textContent = 0;
+      commentBadge.textContent = 0;
+    }
+  });
+
+  // -----------------------------
+  // 3️⃣ Dropdown toggle logic
+  // -----------------------------
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('dropdown-toggle')) {
+      const toggle = e.target;
+      const content = toggle.nextElementSibling;
+      toggle.classList.toggle('active');
+      content.classList.toggle('open');
     }
   });
 });

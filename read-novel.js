@@ -6,7 +6,7 @@ import {
 
 const auth = getAuth(app);
 const urlParams = new URLSearchParams(window.location.search);
-const novelId = urlParams.get('novelId');
+let novelId = urlParams.get('novelId') || localStorage.getItem('lastNovelId');
 const chapterIdFromUrl = urlParams.get('chapterId');
 
 let chapters = [];
@@ -14,6 +14,9 @@ let currentChapterIndex = 0;
 let currentPageIndex = 0;
 let scrollMode = true;
 let pageChunks = [];
+
+// Store novelId in localStorage for back button fallback
+if (novelId) localStorage.setItem('lastNovelId', novelId);
 
 document.addEventListener('DOMContentLoaded', () => {
   const novelTitle = document.getElementById('novelTitle');
@@ -34,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontPopup = document.getElementById('fontPopup');
   const sizePopup = document.getElementById('sizePopup');
   const chapterListPopup = document.getElementById('chapterListPopup');
-  const backBtn = document.getElementById('backToDetailsBtn'); // ✅ NEW: back button
+  const backBtn = document.getElementById('backToDetailsBtn'); // ✅ BACK BUTTON
 
   // === Popup & Menu Toggle Logic ===
   function closeAllPopups(except = null) {
@@ -123,13 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // === Back Button Fix ===
   backBtn?.addEventListener('click', () => {
     if (novelId) {
-      // Force full reload of novel-details page
       window.location.href = `novel-details.html?novelId=${novelId}`;
+    } else {
+      window.location.href = 'discover.html';
     }
   });
 
-  // === Load Novel & Author Notes ===
+  // === Load Novel & Chapters ===
   async function loadNovel() {
+    if (!novelId) return alert('Novel ID missing.');
     try {
       const novelRef = doc(db, 'novels', novelId);
       const snap = await getDoc(novelRef);
@@ -137,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const novelData = snap.data();
       novelTitle.textContent = novelData.title || 'Untitled Novel';
-
       authorNotesEl.textContent = novelData.notes || '';
       authorNotesEl.style.display = novelData.notes ? 'block' : 'none';
 
@@ -183,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // === Pagination & Chapters ===
   function calculateWordsPerPage() {
     const screenArea = window.innerWidth * window.innerHeight;
-
     if (screenArea < 400 * 900) return 120;
     if (screenArea < 800 * 1000) return 200;
     if (screenArea < 1200 * 1000) return 300;

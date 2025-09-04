@@ -4,6 +4,43 @@ body {
   margin: 0;
   padding: 0;
   color: #fff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* === Inkcraft Glowing Purple Header === */
+.inkcraft-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(0,0,0,0.5);
+  box-shadow: 0 0 15px rgba(128,0,128,0.8);
+  border-bottom: 2px solid #800080;
+  color: #fff;
+}
+
+.inkcraft-header h1 {
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #d1a3ff;
+  text-shadow:
+    0 0 5px #d1a3ff,
+    0 0 10px #d1a3ff,
+    0 0 20px #a065ff,
+    0 0 30px #8000ff;
+  margin: 0;
+}
+
+/* Footer */
+.inkcraft-footer {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: auto;
+  background: rgba(0,0,0,0.6);
+  border-top: 2px solid #800080;
+  color: #fff;
+  font-size: 0.9rem;
 }
 
 /* Floating Menu Container */
@@ -18,7 +55,7 @@ body {
 /* Series Container */
 .series-container {
   max-width: 1000px;
-  margin: 100px auto;
+  margin: 40px auto;
   padding: 20px;
   background: rgba(0,0,0,0.6);
   border-radius: 12px;
@@ -187,5 +224,39 @@ body {
     font-size: 0.75rem;
     padding: 4px 8px;
     right: 50px;
+  }
+
+  .series-container {
+    margin: 80px 10px 20px 10px;
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  .series-cover {
+    width: 180px;
+    height: 260px;
+  }
+
+  .series-info h1 {
+    font-size: 1.8rem;
+  }
+
+  .series-info p {
+    font-size: 0.9rem;
+    max-width: 100%;
+  }
+
+  .novels-list {
+    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .novel-card img {
+    width: 120px;
+    height: 180px;
+  }
+
+  .series-novels h2 {
+    font-size: 1.2rem;
   }
 }

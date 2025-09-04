@@ -22,14 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // 🔍 Fetch novels created by this author
-      const novelQuery = query(collection(db, 'novels'), where("authorId", "==", user.uid));
+      // 🔍 Fetch only APPROVED novels created by this author
+      const novelQuery = query(
+        collection(db, 'novels'),
+        where("authorId", "==", user.uid),
+        where("status", "==", "approved")
+      );
+
       const novelSnapshot = await getDocs(novelQuery);
 
       novelContainer.innerHTML = '';
 
       if (novelSnapshot.empty) {
-        novelContainer.innerHTML = "<p>You haven't created any novels yet.</p>";
+        novelContainer.innerHTML = "<p>You haven't created any approved novels yet.</p>";
         return;
       }
 

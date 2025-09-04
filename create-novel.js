@@ -196,12 +196,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       // ✅ Wire Pending Notification directly
-      await setDoc(doc(db, `users/${auth.currentUser.uid}/notifications`, novelRef.id), {
-        type: "pending",
-        message: `Your novel "${title}" has been submitted and is pending review.`,
-        novelId: novelRef.id,
-        timestamp: serverTimestamp()
-      });
+  // ✅ Wire Pending Notification directly
+await setDoc(doc(db, `users/${auth.currentUser.uid}/inbox`, novelRef.id), {
+  type: "pending",
+  message: `Your novel "${title}" has been submitted and is pending review.`,
+  novelId: novelRef.id,
+  timestamp: serverTimestamp()
+});
 
       alert("✅ Your novel has been submitted for review!");
       form.reset();

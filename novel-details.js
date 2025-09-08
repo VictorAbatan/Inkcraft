@@ -25,11 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ✅ Inbox logic (status, comment, reply notifications)
   onAuthStateChanged(auth, async (user) => {
+    const inboxContainer = document.getElementById('inboxContainer');
     if (!user) {
-      const inboxContainer = document.getElementById('inboxContainer');
-      if (inboxContainer) {
-        inboxContainer.innerHTML = '<p>Please log in to view your inbox.</p>';
-      }
+      if (inboxContainer) inboxContainer.innerHTML = '<p>Please log in to view your inbox.</p>';
       return;
     }
 
@@ -38,10 +36,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const q = query(inboxRef, orderBy('timestamp', 'desc'));
       const snap = await getDocs(q);
 
-      const inboxContainer = document.getElementById('inboxContainer');
       if (inboxContainer) {
         inboxContainer.innerHTML = '<h2>Inbox</h2>';
-
         if (snap.empty) {
           inboxContainer.innerHTML += '<p>No messages yet.</p>';
           return;
@@ -53,38 +49,35 @@ document.addEventListener('DOMContentLoaded', async () => {
           div.classList.add('inbox-message');
 
           let content = '';
-          if (msg.type === 'status') {
-            content = `<p>📖 <strong>${msg.novelTitle || 'Your novel'}</strong> was <em>${msg.status}</em>.</p>`;
-          } else if (msg.type === 'comment') {
-            content = `<p>💬 New comment on <strong>${msg.novelTitle || 'your novel'}</strong> by ${msg.userName || 'Anonymous'}: "${msg.text}"</p>`;
-          } else if (msg.type === 'reply') {
-            content = `<p>↩️ ${msg.userName || 'Anonymous'} replied to your comment on <strong>${msg.novelTitle || 'your novel'}</strong>: "${msg.text}"</p>`;
-          } else {
-            content = `<p>${msg.text || 'You have a new message.'}</p>`;
+          switch (msg.type) {
+            case 'status':
+              content = `<p>📖 <strong>${msg.novelTitle || 'Your novel'}</strong> was <em>${msg.status}</em>.</p>`;
+              break;
+            case 'comment':
+              content = `<p>💬 New comment on <strong>${msg.novelTitle || 'your novel'}</strong> by ${msg.userName || 'Anonymous'}: "${msg.text}"</p>`;
+              break;
+            case 'reply':
+              content = `<p>↩️ ${msg.userName || 'Anonymous'} replied to your comment on <strong>${msg.novelTitle || 'your novel'}</strong>: "${msg.text}"</p>`;
+              break;
+            default:
+              content = `<p>${msg.text || 'You have a new message.'}</p>`;
           }
 
           const time = msg.timestamp?.toDate
             ? msg.timestamp.toDate().toLocaleString()
             : 'Unknown time';
 
-          div.innerHTML = `
-            ${content}
-            <small>${time}</small>
-          `;
-
+          div.innerHTML = `${content}<small>${time}</small>`;
           inboxContainer.appendChild(div);
         });
       }
     } catch (err) {
       console.error('Error loading inbox:', err);
-      const inboxContainer = document.getElementById('inboxContainer');
-      if (inboxContainer) {
-        inboxContainer.innerHTML = '<p>Failed to load inbox.</p>';
-      }
+      if (inboxContainer) inboxContainer.innerHTML = '<p>Failed to load inbox.</p>';
     }
   });
 
-  // ✅ Novel details logic (only runs if novelId exists)
+  // ✅ Novel details logic
   const urlParams = new URLSearchParams(window.location.search);
   const novelId = urlParams.get('novelId');
   if (!novelId) return;
@@ -101,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('coverImage').src = data.cover || data.coverUrl || 'default-cover.jpg';
   document.getElementById('novelTitle').textContent = data.title || 'Untitled';
 
-  // ✅ Unified author logic
+  // Unified author logic
   let authorName = data.penNameOverride || data.authorName || 'Unknown';
   if ((!data.penNameOverride && !data.authorName) && data.submittedBy) {
     try {
@@ -117,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   document.getElementById('authorName').textContent = authorName;
 
-  // ✅ SAFE genre check
+  // Genre display
   const genre = Array.isArray(data.genre) && data.genre.length > 0
     ? data.genre.join(', ')
     : data.genre || 'Unspecified';
@@ -126,13 +119,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('novelSynopsis').textContent = data.synopsis || 'No synopsis available.';
   const readButton = document.getElementById('readButton');
   readButton.href = `read-novel.html?novelId=${novelId}`;
+  readButton.addEventListener('click', () => localStorage.setItem('lastNovelId', novelId));
 
-  // ✅ Store lastNovelId for robust back button
-  readButton.addEventListener('click', () => {
-    localStorage.setItem('lastNovelId', novelId);
-  });
-
-  // ✅ Real-time Chapters Listener
+  // ✅ Chapters
   const contentsTab = document.getElementById('contentsTab');
   const chapterCountEl = document.getElementById('chapterCount');
 
@@ -147,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const ul = document.createElement('ul');
-    snapshot.forEach((docSnap) => {
+    snapshot.forEach(docSnap => {
       const chapter = docSnap.data();
       const chapterId = docSnap.id;
       const chapterNumber = chapter.number != null ? chapter.number : 1;
@@ -164,22 +153,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const chaptersRef = collection(db, `novels/${novelId}/published_chapters`);
-  const q = query(chaptersRef, orderBy('order'));
-  onSnapshot(q, renderChapters);
+  const chaptersQuery = query(chaptersRef, orderBy('order'));
+  onSnapshot(chaptersQuery, renderChapters);
 
   // Tabs
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-
       tab.classList.add('active');
       const id = tab.dataset.tab;
       document.getElementById(id + 'Tab').style.display = 'block';
     });
   });
 
-  // ✅ Add to Library Feature
+  // ✅ Add to Library
   const addToLibraryBtn = document.getElementById('addToLibraryBtn');
   if (addToLibraryBtn) {
     onAuthStateChanged(auth, async (user) => {
@@ -191,7 +179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const libRef = doc(db, `users/${user.uid}/library/${novelId}`);
       const libSnap = await getDoc(libRef);
-
       if (libSnap.exists()) {
         addToLibraryBtn.textContent = '✔ In Library';
         addToLibraryBtn.disabled = true;
@@ -200,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       addToLibraryBtn.addEventListener('click', async () => {
         try {
           await setDoc(libRef, {
-            novelId: novelId,
+            novelId,
             title: data.title || 'Untitled',
             cover: data.cover || data.coverUrl || '',
             addedAt: new Date()
@@ -215,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ✅ COMMENTS + REPLIES SECTION (Fully Functional)
+  // ✅ COMMENTS + REPLIES
   const commentsTab = document.getElementById('commentsTab');
   if (commentsTab) {
     const commentsList = document.createElement('div');
@@ -350,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!text) return;
 
       try {
-        const commentRef = await addDoc(collection(db, `novels/${novelId}/comments`), {
+        await addDoc(collection(db, `novels/${novelId}/comments`), {
           text,
           userId: user.uid,
           userName: user.displayName || 'Anonymous',

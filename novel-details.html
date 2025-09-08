@@ -65,12 +65,25 @@
       </ul>
     </div>
 
-    <!-- ✅ Updated Comments Section to match novel-details.js -->
+    <!-- ✅ Updated Comments Section -->
     <div class="tab-content" id="commentsTab" style="display: none;">
       <h2>Comments</h2>
-      <!-- toggleBtn is injected by JS -->
-      <div id="commentsList"></div>
-      <!-- comment form is injected by JS -->
+
+      <!-- Toggle Comments Button -->
+      <button id="toggleCommentsBtn" class="toggle-comments-btn">💬 Show Comments</button>
+
+      <!-- Comments List -->
+      <div id="commentsSection" style="display: none;">
+        <ul id="commentsList">
+          <!-- Comments will be dynamically injected here -->
+        </ul>
+
+        <!-- Comment Form -->
+        <form id="commentForm">
+          <textarea id="commentInput" placeholder="Write a comment..." required></textarea>
+          <button type="submit" class="comment-submit">Post</button>
+        </form>
+      </div>
     </div>
   </section>
 

@@ -11,7 +11,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="author-centre.css" />
-  <link rel="stylesheet" href="floating-menu.css" />
+
 </head>
 <body>
   <!-- Floating Menu Placeholder -->
@@ -48,11 +48,14 @@
       <p>Organize your Grand Verse with verses made of novels & series.</p>
     </div>
 
-    <div class="card" onclick="location.href='inbox.html'" style="cursor:pointer;">
-      <i class="fas fa-inbox"></i>
-      <h3>Inbox</h3>
-      <p>View comments, likes, and reader interactions.</p>
-    </div>
+    <!-- 📩 Inbox with Badge -->
+   <div class="card inbox" onclick="location.href='inbox.html'" style="cursor:pointer; position: relative;">
+  <i class="fas fa-inbox"></i>
+  <span class="notification-badge" id="dashboard-inbox-badge">0</span>
+  <h3>Inbox</h3>
+  <p>View comments, likes, and reader interactions.</p>
+</div>
+
 
     <div class="card" onclick="location.href='author-novels.html'" style="cursor:pointer;">
       <i class="fas fa-book"></i>

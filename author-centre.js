@@ -1,6 +1,10 @@
 import { auth, db } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  onAuthStateChanged 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { 
+  doc, getDoc, collection, getDocs, query, where, onSnapshot, writeBatch 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -136,6 +140,41 @@ document.addEventListener('DOMContentLoaded', () => {
           div.innerHTML = `<h3>${verse.title}</h3>`;
           versesContainer.appendChild(div);
         });
+      }
+
+      // --- 🔔 Live notification badge listener ---
+      const notificationsRef = collection(db, "authors", user.uid, "notifications");
+      onSnapshot(notificationsRef, (snapshot) => {
+        let unreadCount = 0;
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (!data.read) unreadCount++;
+        });
+
+        // ✅ Update floating menu inbox badge (by ID)
+        const inboxBadge = document.getElementById('inbox-badge');
+        if (inboxBadge) {
+          inboxBadge.textContent = unreadCount > 0 ? unreadCount : '';
+        }
+
+        // ✅ Update inbox card badge (if dashboard has one)
+        const inboxCardBadge = document.querySelector('.card.inbox .badge');
+        if (inboxCardBadge) {
+          inboxCardBadge.textContent = unreadCount > 0 ? unreadCount : '';
+        }
+      });
+
+      // --- ✅ Reset notifications when on inbox.html ---
+      const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+      if (currentPage === "inbox.html") {
+        const snapshot = await getDocs(notificationsRef);
+        const batch = writeBatch(db);
+        snapshot.forEach(docSnap => {
+          const nRef = doc(db, "authors", user.uid, "notifications", docSnap.id);
+          batch.update(nRef, { read: true });
+        });
+        await batch.commit();
+        console.log("All notifications marked as read.");
       }
 
     } catch (error) {

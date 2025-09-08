@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.displayName) {
       displayNameInput.value = data.displayName;
     } else if (data.username) {
-      displayNameInput.value = data.username; // use username from Firestore if no displayName
+      displayNameInput.value = data.username; // fallback to username if no displayName
     } else {
       displayNameInput.value = user.email; // fallback to email
     }
@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.photoURL) {
       profilePic.src = data.photoURL;
     } else if (data.profileImage) {
-      profilePic.src = data.profileImage; // support field "profileImage"
+      profilePic.src = data.profileImage; // support "profileImage"
     } else {
       profilePic.src = "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"; // 👤 placeholder
     }
@@ -64,9 +64,15 @@ document.addEventListener("DOMContentLoaded", () => {
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // Update Firestore
-      await updateDoc(activeRef, { photoURL: downloadURL }).catch(async () => {
-        await setDoc(activeRef, { photoURL: downloadURL }, { merge: true });
+      // Update Firestore with both fields
+      await updateDoc(activeRef, { 
+        photoURL: downloadURL,
+        profileImage: downloadURL 
+      }).catch(async () => {
+        await setDoc(activeRef, { 
+          photoURL: downloadURL,
+          profileImage: downloadURL 
+        }, { merge: true });
       });
 
       tempPhotoURL = downloadURL; // update preview to final uploaded URL
@@ -80,16 +86,21 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // ✅ Save displayName + username + photoURL + profileImage
       await setDoc(
         activeRef,
         { 
           displayName: name,
-          photoURL: tempPhotoURL || profilePic.src 
+          username: name,  // 👈 keep username in sync
+          photoURL: tempPhotoURL || profilePic.src,
+          profileImage: tempPhotoURL || profilePic.src
         },
         { merge: true }
       );
 
       alert("Profile updated successfully!");
+      // ✅ Redirect back to Inkcraftmain so updates show
+      window.location.href = "Inkcraftmain.html";
     });
   });
 });

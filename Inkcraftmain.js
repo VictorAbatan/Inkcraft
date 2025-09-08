@@ -219,7 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- ✅ Updated profile name logic ---
         if (profileNameEl) {
           profileNameEl.textContent =
-            data.username ||    // 👈 prefer username first
+            data.username ||    // 👈 prefer Firestore username first
+            data.penName ||
             data.displayName ||
             user.displayName ||
             user.email ||
@@ -230,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileImgEl) {
           const img = new Image();
           img.src =
-            data.profileImage ||  // 👈 prefer custom uploaded profileImage first
+            data.profileImage ||  // 👈 prefer uploaded profileImage first
             data.photoURL ||
             user.photoURL ||
             'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';

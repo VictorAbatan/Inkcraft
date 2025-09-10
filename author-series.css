@@ -44,6 +44,9 @@ footer {
   padding: 2rem;
   max-width: 900px;
   margin: auto;
+
+  /* ✅ Fix: let each card grow independently */
+  align-items: start;
 }
 
 .series-card {
@@ -54,11 +57,11 @@ footer {
   transition: transform 0.3s ease;
   max-width: 220px;
   margin: 0 auto;
-  height: auto;
-  min-height: 360px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start; /* not space-between */
+  height: auto; /* dynamic height */
+  min-height: 0;
 }
 
 .series-card:hover {
@@ -67,7 +70,7 @@ footer {
 
 .series-cover {
   width: 100%;
-  height: 180px; /* adjusted to fit */
+  height: 180px;
   object-fit: cover;
   display: block;
   border-top-left-radius: 10px;
@@ -86,22 +89,19 @@ footer {
   font-size: 1.2rem;
 }
 
-/* Description with ellipsis */
-.series-card p {
+/* === Description with toggle === */
+.series-description {
   font-size: 0.95rem;
   line-height: 1.4;
   color: #ccc;
   margin-bottom: 0.5rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* show only 3 lines */
-  -webkit-box-orient: vertical;
+  max-height: 4.2em; /* collapsed height */
   overflow: hidden;
-  text-overflow: ellipsis;
+  transition: max-height 0.4s ease;
 }
 
-.series-card p.expanded {
-  -webkit-line-clamp: unset;
-  overflow: visible;
+.series-description.expanded {
+  max-height: 1000px; /* enough for long text */
 }
 
 /* Read More / Read Less link */

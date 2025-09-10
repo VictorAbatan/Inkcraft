@@ -1,0 +1,28 @@
+/* === Notification Badge (Floating Menu Inbox) === */
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: linear-gradient(135deg, #ff3b3b, #c60000);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  display: none; /* hidden until JS updates */
+  min-width: 18px;
+  height: 18px;
+  text-align: center;
+  line-height: 14px;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  transition: transform 0.2s ease;
+}
+
+.notification-badge.bump {
+  transform: scale(1.2);
+}
+
+/* Show badge when count > 0 */
+.menu-item.inbox-link.has-notifications .notification-badge {
+  display: inline-block;
+}

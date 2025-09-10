@@ -9,6 +9,7 @@ import {
   query,
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { markAsRead, subscribeUnreadCounts } from './notifications.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -25,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.innerHTML = html;
 
       const items = container.querySelectorAll('.menu-item');
-      // Use requestAnimationFrame to animate menu items
       items.forEach((item, index) => {
         requestAnimationFrame(() => setTimeout(() => item.classList.add('show'), index * 300));
       });
@@ -131,21 +131,59 @@ document.addEventListener('DOMContentLoaded', async () => {
           li.appendChild(br.cloneNode());
           li.appendChild(small);
           commentList.appendChild(li);
-          commentCount++;
+          if (!notif.read) commentCount++;
         } else {
           li.appendChild(strong);
           li.appendChild(text);
           li.appendChild(br.cloneNode());
           li.appendChild(small);
           sysList.appendChild(li);
-          sysCount++;
+          if (!notif.read) sysCount++;
         }
       });
 
-      // Force repaint to avoid mobile flicker
+      // ✅ Initial counts
       requestAnimationFrame(() => {
         sysBadge.textContent = sysCount;
         commentBadge.textContent = commentCount;
+      });
+
+      // ✅ Updated: use index instead of IDs + shared markAsRead
+      document.addEventListener('click', async e => {
+        const toggle = e.target.closest('.dropdown-toggle');
+        if (!toggle) return;
+
+        const toggles = [...document.querySelectorAll('.dropdown-toggle')];
+        const index = toggles.indexOf(toggle);
+
+        if (index === 0) {
+          await markAsRead(uid, 'system');
+          sysBadge.textContent = 0;
+        }
+        if (index === 1) {
+          await markAsRead(uid, 'comment');
+          commentBadge.textContent = 0;
+        }
+      });
+
+      // ✅ Subscribe to real-time unread counts (syncs other badges too)
+      const unsubCounts = subscribeUnreadCounts(uid, ({ sysCount, commentCount }) => {
+        if (sysBadge) sysBadge.textContent = sysCount;
+        if (commentBadge) commentBadge.textContent = commentCount;
+
+        const fmSys = document.getElementById('menu-sys-badge');
+        if (fmSys) fmSys.textContent = sysCount;
+        const fmComment = document.getElementById('menu-comment-badge');
+        if (fmComment) fmComment.textContent = commentCount;
+
+        const cardSys = document.getElementById('card-sys-badge');
+        if (cardSys) cardSys.textContent = sysCount;
+        const cardComment = document.getElementById('card-comment-badge');
+        if (cardComment) cardComment.textContent = commentCount;
+      });
+
+      window.addEventListener('beforeunload', () => {
+        if (typeof unsubCounts === 'function') unsubCounts();
       });
 
     } catch (err) {

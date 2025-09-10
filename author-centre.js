@@ -3,8 +3,9 @@ import {
   onAuthStateChanged 
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { 
-  doc, getDoc, collection, getDocs, query, where, onSnapshot, writeBatch 
+  doc, getDoc, collection, getDocs, query, where 
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { initNotificationBadge } from './notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -54,45 +55,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const authorSnap = await getDoc(authorRef);
 
       if (authorSnap.exists()) {
-        console.log("Firestore author doc exists with UID:", user.uid);
         authorData = authorSnap.data();
       } else {
-        console.warn(`No author doc found for UID ${user.uid}. Trying fallback by email...`);
-
-        // ✅ fallback: try query by email for old docs
         const q = query(collection(db, 'authors'), where('email', '==', user.email));
         const querySnap = await getDocs(q);
         if (!querySnap.empty) {
-          const firstDoc = querySnap.docs[0];
-          console.log("Found old author doc by email:", firstDoc.id);
-          authorData = firstDoc.data();
+          authorData = querySnap.docs[0].data();
         }
       }
 
       if (authorData) {
-        console.log("Author data:", authorData);
-
-        if (penNameElement) {
-          penNameElement.textContent = (authorData.penName && authorData.penName.trim() !== "")
-            ? authorData.penName
-            : "Unknown Author";
-        }
-        if (profilePicElement) {
-          profilePicElement.src = (authorData.profilePicURL && authorData.profilePicURL.trim() !== "")
-            ? authorData.profilePicURL
-            : "default-profile.png";
-        }
+        if (penNameElement) penNameElement.textContent = authorData.penName?.trim() || "Unknown Author";
+        if (profilePicElement) profilePicElement.src = authorData.profilePicURL?.trim() || "default-profile.png";
       } else {
-        console.warn("No author profile found for this user at all.");
         if (penNameElement) penNameElement.textContent = 'Unknown Author';
-        if (profilePicElement) profilePicElement.src = 'default-profile.png'; // fallback image
+        if (profilePicElement) profilePicElement.src = 'default-profile.png';
       }
 
-      // --- Load approved novels submitted by this author ---
-      const novelsQuery = query(
-        collection(db, 'novels'),
-        where('submittedBy', '==', user.uid)
-      );
+      // --- Load approved novels ---
+      const novelsQuery = query(collection(db, 'novels'), where('submittedBy', '==', user.uid));
       const novelsSnap = await getDocs(novelsQuery);
       const novelsContainer = document.getElementById('author-novels-container');
       if (novelsContainer) {
@@ -106,11 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // --- Load series created by this author ---
-      const seriesQuery = query(
-        collection(db, 'series'),
-        where('createdBy', '==', user.uid)
-      );
+      // --- Load series ---
+      const seriesQuery = query(collection(db, 'series'), where('createdBy', '==', user.uid));
       const seriesSnap = await getDocs(seriesQuery);
       const seriesContainer = document.getElementById('author-series-container');
       if (seriesContainer) {
@@ -124,11 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // --- Load verses created by this author ---
-      const versesQuery = query(
-        collection(db, 'verses'),
-        where('createdBy', '==', user.uid)
-      );
+      // --- Load verses ---
+      const versesQuery = query(collection(db, 'verses'), where('createdBy', '==', user.uid));
       const versesSnap = await getDocs(versesQuery);
       const versesContainer = document.getElementById('author-verses-container');
       if (versesContainer) {
@@ -142,40 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // --- 🔔 Live notification badge listener ---
-      const notificationsRef = collection(db, "authors", user.uid, "notifications");
-      onSnapshot(notificationsRef, (snapshot) => {
-        let unreadCount = 0;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (!data.read) unreadCount++;
-        });
-
-        // ✅ Update floating menu inbox badge (by ID)
-        const inboxBadge = document.getElementById('inbox-badge');
-        if (inboxBadge) {
-          inboxBadge.textContent = unreadCount > 0 ? unreadCount : '';
-        }
-
-        // ✅ Update inbox card badge (if dashboard has one)
-        const inboxCardBadge = document.querySelector('.card.inbox .badge');
-        if (inboxCardBadge) {
-          inboxCardBadge.textContent = unreadCount > 0 ? unreadCount : '';
-        }
-      });
-
-      // --- ✅ Reset notifications when on inbox.html ---
-      const currentPage = window.location.pathname.split('/').pop().toLowerCase();
-      if (currentPage === "inbox.html") {
-        const snapshot = await getDocs(notificationsRef);
-        const batch = writeBatch(db);
-        snapshot.forEach(docSnap => {
-          const nRef = doc(db, "authors", user.uid, "notifications", docSnap.id);
-          batch.update(nRef, { read: true });
-        });
-        await batch.commit();
-        console.log("All notifications marked as read.");
-      }
+      // --- 🔔 Notifications (reusable) ---
+      initNotificationBadge(user.uid, "dashboard-inbox-badge", ".card.inbox");
 
     } catch (error) {
       console.error('Error loading author data:', error);

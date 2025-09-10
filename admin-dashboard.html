@@ -11,64 +11,110 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div class="dashboard-container">
-    
-    <!-- 🔐 Admin Header -->
-    <header>
-      <h1><i class="fas fa-user-shield"></i> Inkcraft Admin Dashboard</h1>
-      <p>Review and manage novel submissions</p>
+  <div class="admin-container">
 
-      <div class="header-right">
-        <button id="dark-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-          <i class="fas fa-moon"></i>
-        </button>
+    <!-- 🗂 Side Navigation -->
+    <nav class="admin-sidenav">
+      <a href="#" data-section="dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="#" data-section="pending"><i class="fas fa-hourglass-half"></i> Pending Novels</a>
+      <a href="#" data-section="approved"><i class="fas fa-check"></i> Approved Novels</a>
+      <a href="#" data-section="rejected"><i class="fas fa-trash"></i> Rejected Novels</a>
+      <a href="#" data-section="series"><i class="fas fa-book"></i> Series</a>
+      <a href="#" data-section="verse"><i class="fas fa-book-open"></i> Verses</a>
+      <a href="#" data-section="settings"><i class="fas fa-cog"></i> Settings</a>
+    </nav>
 
-        <div id="notification-bell" title="Notifications" aria-label="Notifications">
-          <i class="fas fa-bell"></i>
-          <span class="notif-count" id="notif-count">0</span>
+    <!-- 📝 Main Content Area -->
+    <main class="admin-main">
+
+      <!-- 🔐 Admin Header -->
+      <header>
+        <h1><i class="fas fa-user-shield"></i> Inkcraft Admin Dashboard</h1>
+        <p>Review and manage novel submissions</p>
+
+        <div class="header-right">
+          <button id="dark-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+          </button>
+
+          <div id="notification-bell" title="Notifications" aria-label="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="notif-count" id="notif-count">0</span>
+          </div>
+
+          <button id="logout-btn" aria-label="Logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
         </div>
+      </header>
 
-        <button id="logout-btn" aria-label="Logout">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-      </div>
-    </header>
+      <!-- 📊 Dashboard Stats Section -->
+      <section id="dashboard" class="admin-section">
+        <div id="dashboard-stats">
+          <div class="stat-card">
+            <h2 id="stat-approved">0</h2>
+            <p>Approved ✅</p>
+          </div>
+          <div class="stat-card">
+            <h2 id="stat-rejected">0</h2>
+            <p>Rejected 🗑️</p>
+          </div>
+          <div class="stat-card">
+            <h2 id="stat-pending">0</h2>
+            <p>Pending ⏳</p>
+          </div>
+          <div class="stat-card">
+            <h2 id="stat-series">0</h2>
+            <p>Series 📚</p>
+          </div>
+          <div class="stat-card">
+            <h2 id="stat-verses">0</h2>
+            <p>Verses 📖</p>
+          </div>
+        </div>
+      </section>
 
-    <!-- 📊 Quick Stats -->
-    <section id="dashboard-stats">
-      <div class="stat-card">
-        <h2 id="stat-approved">0</h2>
-        <p>Approved ✅</p>
-      </div>
-      <div class="stat-card">
-        <h2 id="stat-rejected">0</h2>
-        <p>Rejected 🗑️</p>
-      </div>
-      <div class="stat-card">
-        <h2 id="stat-pending">0</h2>
-        <p>Pending ⏳</p>
-      </div>
-      <div class="stat-card">
-        <h2 id="stat-series">0</h2>
-        <p>Series 📚</p>
-      </div>
-      <div class="stat-card">
-        <h2 id="stat-verses">0</h2>
-        <p>Verses 📖</p>
-      </div>
-    </section>
+      <!-- ⏳ Pending Novels Section (Placeholder) -->
+      <section id="pending" class="admin-section" style="display:none;">
+        <h2>Pending Novels</h2>
+        <div id="pending-list">No pending novels loaded yet.</div>
+      </section>
 
-    <!-- 🕵️ Novel Submissions Area -->
-    <main id="submission-list">
-      <p>Loading submissions...</p>
+      <!-- ✅ Approved Novels Section (Placeholder) -->
+      <section id="approved" class="admin-section" style="display:none;">
+        <h2>Approved Novels</h2>
+        <div id="approved-list">No approved novels loaded yet.</div>
+      </section>
+
+      <!-- 🗑 Rejected Novels Section (Placeholder) -->
+      <section id="rejected" class="admin-section" style="display:none;">
+        <h2>Rejected Novels</h2>
+        <div id="rejected-list">No rejected novels loaded yet.</div>
+      </section>
+
+      <!-- 📚 Series Section (Placeholder) -->
+      <section id="series" class="admin-section" style="display:none;">
+        <h2>Series</h2>
+        <div id="series-list">No series loaded yet.</div>
+      </section>
+
+      <!-- 📖 Verses Section (Placeholder) -->
+      <section id="verse" class="admin-section" style="display:none;">
+        <h2>Verses</h2>
+        <div id="verse-list">No verses loaded yet.</div>
+      </section>
+
+      <!-- ⚙ Settings Section -->
+      <section id="settings" class="admin-section" style="display:none;">
+        <h2>Admin Settings</h2>
+        <div id="settings-form">Loading settings...</div>
+      </section>
+
+      <footer>
+        <p>&copy; 2025 Inkcraft Admin Panel</p>
+      </footer>
+
     </main>
-
-    <!-- 📜 Pending Novels Section -->
-    <!-- Removed HTML section; still handled in JS -->
-
-    <footer>
-      <p>&copy; 2025 Inkcraft Admin Panel</p>
-    </footer>
   </div>
 
   <!-- 🔧 Scripts -->

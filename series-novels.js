@@ -1,13 +1,29 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   doc,
-  getDoc,
-  collection,
-  getDocs,
-  query,
-  where
+  getDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {
+  ref,
+  getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
+// --- Fallback ---
+const fallbackNovelCover = 'default-cover.jpg';
+
+// --- Helper to get novel cover using image-handler pattern ---
+async function getNovelCover(novel) {
+  if (novel.coverPath) {
+    try {
+      return await getDownloadURL(ref(storage, novel.coverPath));
+    } catch {
+      // fallback if storage fails
+    }
+  }
+  return novel.coverUrl || novel.cover || fallbackNovelCover;
+}
+
+// --- DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', async () => {
   const seriesId = new URLSearchParams(window.location.search).get('id');
   if (!seriesId) {
@@ -67,15 +83,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     novelsList.innerHTML = ''; // Clear
 
-    novelDocs.forEach(novelDoc => {
-      if (!novelDoc.exists()) return; // Skip missing novels
+    for (const novelDoc of novelDocs) {
+      if (!novelDoc.exists()) continue; // Skip missing novels
       const novel = novelDoc.data();
 
       const card = document.createElement('div');
       card.classList.add('novel-card');
 
+      // ✅ Use image-handler pattern
+      const coverURL = await getNovelCover(novel);
+
       card.innerHTML = `
-        <img src="${novel.coverUrl || 'default-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover" />
+        <img src="${coverURL}" alt="Cover of ${novel.title}" class="novel-cover" />
         <div class="novel-details">
           <h3 class="novel-title">${novel.title || 'Untitled'}</h3>
           <p class="novel-genre">${Array.isArray(novel.genres) ? novel.genres.join(', ') : novel.genre || ''}</p>
@@ -89,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       novelsList.appendChild(card);
-    });
+    }
 
   } catch (error) {
     console.error('Error loading series novels:', error);

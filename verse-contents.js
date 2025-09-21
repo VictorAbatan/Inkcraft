@@ -1,9 +1,42 @@
-import { app, db, auth } from './firebase-config.js';
+import { app, db, auth, storage } from './firebase-config.js';
 import {
   doc,
   getDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+// Fallback images
+const fallbackVerseCover = 'default-verse-cover.jpg';
+const fallbackNovelCover = 'default-novel-cover.jpg';
+const fallbackSeriesCover = 'default-series-cover.jpg';
+
+// ✅ Helper to get Storage URL or fallback
+async function getImageURL(storagePath, fallback) {
+  if (storagePath) {
+    try {
+      return await getDownloadURL(ref(storage, storagePath));
+    } catch {
+      // ignore error, fallback to next
+    }
+  }
+  return fallback;
+}
+
+// Helper to get verse cover
+async function getVerseCover(verse) {
+  return await getImageURL(verse.coverPath, verse.coverURL || fallbackVerseCover);
+}
+
+// Helper to get novel cover
+async function getNovelCover(novel) {
+  return await getImageURL(novel.coverPath, novel.coverUrl || novel.cover || fallbackNovelCover);
+}
+
+// Helper to get series cover
+async function getSeriesCover(series) {
+  return await getImageURL(series.coverImagePath, series.coverImage || fallbackSeriesCover);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   const verseId = new URLSearchParams(window.location.search).get('id');
@@ -52,8 +85,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const verseData = verseSnap.data();
 
       // Verse info
+      const verseCoverURL = await getVerseCover(verseData);
       verseInfoSection.innerHTML = `
-        <img src="${verseData.coverURL || 'default-verse-cover.jpg'}" alt="${verseData.title || 'Verse Cover'}" />
+        <img src="${verseCoverURL}" alt="${verseData.title || 'Verse Cover'}" />
         <h2>${verseData.title || 'Untitled Verse'}</h2>
         <p>${verseData.description || ''}</p>
       `;
@@ -72,17 +106,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             // ✅ Only show if approved
             if (novel.status !== "approved") continue;
 
+            const novelCoverURL = await getNovelCover(novel);
+
             const card = document.createElement('div');
             card.classList.add('card');
             card.innerHTML = `
-              <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="${novel.title}" />
+              <img src="${novelCoverURL}" alt="${novel.title}" />
               <div class="card-details">
                 <h3 class="card-title">${novel.title}</h3>
                 <p class="card-genre">${Array.isArray(novel.genres) ? novel.genres.join(', ') : novel.genre || ''}</p>
                 <p class="card-synopsis">${novel.synopsis ? novel.synopsis.substring(0, 200) + (novel.synopsis.length > 200 ? '...' : '') : 'No synopsis available.'}</p>
               </div>
             `;
-            // ✅ fixed to use novelId param
             card.addEventListener('click', () => {
               window.location.href = `novel-details.html?novelId=${novelSnap.id}`;
             });
@@ -101,17 +136,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           const seriesSnap = await getDoc(seriesRef);
           if (seriesSnap.exists()) {
             const series = seriesSnap.data();
+            const seriesCoverURL = await getSeriesCover(series);
+
             const card = document.createElement('div');
             card.classList.add('card');
             card.innerHTML = `
-              <img src="${series.coverImageURL || 'default-series-cover.jpg'}" alt="${series.title}" />
+              <img src="${seriesCoverURL}" alt="${series.title}" />
               <div class="card-details">
                 <h3 class="card-title">${series.title}</h3>
                 <p class="card-genre">${series.genre || ''}</p>
                 <p class="card-synopsis">${series.description ? series.description.substring(0,200)+(series.description.length>200?'...':'') : 'No description available.'}</p>
               </div>
             `;
-            // ✅ fixed to use series-details.html with "id" param
             card.addEventListener('click', () => {
               window.location.href = `series-details.html?id=${seriesSnap.id}`;
             });

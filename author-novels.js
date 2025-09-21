@@ -9,10 +9,26 @@ import {
   where,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+// --- Fallbacks ---
+const fallbackNovelCover = 'default-novel-cover.jpg';
+
+// --- Helper: load novel cover with image-handler pattern ---
+async function getNovelCover(novel) {
+  if (novel.coverPath) {
+    try {
+      return await getDownloadURL(ref(getStorage(), novel.coverPath));
+    } catch {
+      // Fall back if storage path fails
+    }
+  }
+  return novel.coverUrl || novel.cover || fallbackNovelCover;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
-  const novelContainer = document.getElementById('novels-container'); // ✅ fixed ID
+  const novelContainer = document.getElementById('novels-container');
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -38,15 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      novelSnapshot.forEach(doc => {
-        const novel = doc.data();
-        const id = doc.id;
+      // Use async/await in loop to resolve Storage URLs
+      for (const docSnap of novelSnapshot.docs) {
+        const novel = docSnap.data();
+        const id = docSnap.id;
+
+        const coverURL = await getNovelCover(novel);
 
         const card = document.createElement('div');
         card.className = 'novel-card';
 
         card.innerHTML = `
-          <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="Cover of ${novel.title}" class="novel-cover" />
+          <img src="${coverURL}" alt="Cover of ${novel.title}" class="novel-cover" />
           <div class="novel-details">
             <h3>${novel.title || 'Untitled Novel'}</h3>
             <p><strong>Description:</strong> ${novel.synopsis ? novel.synopsis.substring(0, 150) + (novel.synopsis.length > 150 ? '...' : '') : 'No synopsis available.'}</p>
@@ -68,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         novelContainer.appendChild(card);
-      });
+      }
 
     } catch (error) {
       console.error("Error loading novels:", error);

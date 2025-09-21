@@ -10,6 +10,19 @@ const saveBtn = document.getElementById('save-btn');
 
 let currentUser = null;
 let selectedFile = null;
+const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+
+// --- Helper function to safely get image from Storage or fallback ---
+async function getAuthorImage(data) {
+  if (data.profilePicPath) {
+    try {
+      return await getDownloadURL(ref(storage, data.profilePicPath));
+    } catch {
+      return data.photoURL || data.profileImage || fallbackAuthorAvatar;
+    }
+  }
+  return data.photoURL || data.profileImage || fallbackAuthorAvatar;
+}
 
 // ✅ Preview selected image
 profilePicInput.addEventListener('change', (e) => {
@@ -34,9 +47,9 @@ onAuthStateChanged(auth, async (user) => {
   if (docSnap.exists()) {
     const data = docSnap.data();
     penNameInput.value = data.penName || '';
-    if (data.profilePicURL) {
-      previewPic.src = data.profilePicURL;
-    }
+    previewPic.src = await getAuthorImage(data);
+  } else {
+    previewPic.src = fallbackAuthorAvatar;
   }
 });
 
@@ -55,10 +68,12 @@ saveBtn.addEventListener('click', async () => {
     }
 
     let profilePicURL = null;
+    let profilePicPath = null;
 
     if (selectedFile) {
-      const fileRef = ref(storage, `authorProfiles/${currentUser.uid}/profile-pic`);
-      
+      profilePicPath = `authorProfiles/${currentUser.uid}/profile-pic`;
+      const fileRef = ref(storage, profilePicPath);
+
       try {
         await uploadBytes(fileRef, selectedFile);
         profilePicURL = await getDownloadURL(fileRef);
@@ -68,24 +83,25 @@ saveBtn.addEventListener('click', async () => {
         alert('Upload failed. Check your internet, image format, or Firebase Storage settings.');
         return;
       }
-
     } else {
       // Reuse existing image if available
-      const docRef = doc(db, 'authors', currentUser.uid);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await getDoc(doc(db, 'authors', currentUser.uid));
       if (docSnap.exists()) {
-        profilePicURL = docSnap.data().profilePicURL || null;
+        const data = docSnap.data();
+        profilePicURL = await getAuthorImage(data);
+        profilePicPath = data.profilePicPath || null;
       }
     }
 
-    // ✅ Always save profile under the user's Auth UID (not a random ID)
+    // ✅ Save pen name + profile pic URL + path
     await setDoc(
       doc(db, 'authors', currentUser.uid),
       {
         penName,
-        profilePicURL
+        profilePicURL,
+        profilePicPath
       },
-      { merge: true } // <-- Prevents overwriting future fields
+      { merge: true } // <-- Prevents overwriting other fields
     );
 
     alert('Profile updated successfully!');

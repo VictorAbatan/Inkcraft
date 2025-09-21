@@ -1,4 +1,4 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   getAuth,
   onAuthStateChanged
@@ -9,6 +9,22 @@ import {
   where,
   getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+// --- Fallback image ---
+const fallbackVerseCover = 'default-verse-cover.jpg';
+
+// --- Helper to get verse cover ---
+async function getVerseCover(verse) {
+  if (verse.coverPath) {
+    try {
+      return await getDownloadURL(ref(storage, verse.coverPath));
+    } catch {
+      // fallback if storage fails
+    }
+  }
+  return verse.coverURL || fallbackVerseCover;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
@@ -52,16 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    snapshot.forEach(docSnap => {
+    for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
       const id = docSnap.id;
       const card = document.createElement('div');
       card.className = 'verse-card';
 
-      // ✅ Fixed: match create-verse.js field name
-      const coverImage = data.coverURL
-        ? `<img src="${data.coverURL}" alt="${data.title} cover" class="verse-cover" />`
-        : `<div class="verse-cover placeholder">No Image</div>`;
+      // ✅ Use image-handler pattern for verse cover
+      const coverURL = await getVerseCover(data);
+      const coverImage = `<img src="${coverURL}" alt="${data.title} cover" class="verse-cover" />`;
 
       card.innerHTML = `
         <div class="card-content">
@@ -77,8 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       container.appendChild(card);
-    });
+    }
   });
 });
-
-

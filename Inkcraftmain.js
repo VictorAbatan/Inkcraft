@@ -1,6 +1,7 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, getDocs, query, orderBy, limit, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getDownloadURL, ref } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu dynamically
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (verses.length === 0) return;
 
-    verses.forEach(verse => {
+    for (const verse of verses) {
       const card = document.createElement('div');
       card.classList.add('icon-card');
 
@@ -95,8 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = `verse-details.html?id=${verse.id}`;
 
       const img = document.createElement('img');
-      img.src = verse.coverURL || 'default-verse-cover.jpg';
       img.alt = verse.title;
+
+      // ✅ Always fetch from Storage dynamically
+      if (verse.coverPath) {
+        try {
+          const url = await getDownloadURL(ref(storage, verse.coverPath));
+          img.src = url;
+        } catch (err) {
+          console.error("Verse cover load error:", err);
+          img.src = 'default-verse-cover.jpg';
+        }
+      } else {
+        img.src = 'default-verse-cover.jpg';
+      }
 
       const title = document.createElement('span');
       title.classList.add('icon-label');
@@ -106,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
       link.appendChild(title);
       card.appendChild(link);
       track.appendChild(card);
-    });
+    }
 
     cards = Array.from(track.children);
     cardWidth = cards[0].offsetWidth + parseInt(getComputedStyle(track).gap || 0);
@@ -180,8 +193,20 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'book-card';
 
       const img = document.createElement('img');
-      img.src = data.coverUrl || data.cover || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
       img.alt = data.title || 'Untitled';
+
+      // ✅ Always fetch from Storage dynamically
+      if (data.coverPath) {
+        try {
+          const url = await getDownloadURL(ref(storage, data.coverPath));
+          img.src = url;
+        } catch (err) {
+          console.error("Novel cover load error:", err);
+          img.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+        }
+      } else {
+        img.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+      }
 
       const span = document.createElement('span');
       span.innerHTML = `<strong>${data.title || 'Untitled'}</strong><br><small>by ${authorName}</small>`;
@@ -219,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- ✅ Updated profile name logic ---
         if (profileNameEl) {
           profileNameEl.textContent =
-            data.username ||    // 👈 prefer Firestore username first
+            data.username ||
             data.penName ||
             data.displayName ||
             user.displayName ||
@@ -227,17 +252,24 @@ document.addEventListener('DOMContentLoaded', () => {
             "Anonymous Reader";
         }
 
-        // --- ✅ Updated profile image logic ---
+        // --- ✅ Always fetch profile image dynamically ---
         if (profileImgEl) {
-          const img = new Image();
-          img.src =
-            data.profileImage ||  // 👈 prefer uploaded profileImage first
-            data.photoURL ||
-            user.photoURL ||
-            'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
-          img.onload = () => {
-            profileImgEl.src = img.src;
-          };
+          try {
+            if (data.profilePicPath || data.photoPath || data.profileImagePath) {
+              const path = data.profilePicPath || data.photoPath || data.profileImagePath;
+              const url = await getDownloadURL(ref(storage, path));
+              profileImgEl.src = url;
+            } else {
+              profileImgEl.src =
+                data.profileImage ||
+                data.photoURL ||
+                user.photoURL ||
+                'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+            }
+          } catch (err) {
+            console.error("Profile image load error:", err);
+            profileImgEl.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+          }
         }
       } catch (err) {
         console.error("Error loading reader profile:", err);

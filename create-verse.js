@@ -15,6 +15,21 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+// --- Fallbacks ---
+const fallbackVerseCover = 'https://via.placeholder.com/150x220?text=No+Cover';
+
+// --- Helper: load verse cover with image-handler pattern ---
+async function getVerseCover(coverPath) {
+  if (coverPath) {
+    try {
+      return await getDownloadURL(ref(getStorage(), coverPath));
+    } catch {
+      return fallbackVerseCover;
+    }
+  }
+  return fallbackVerseCover;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const storage = getStorage(app);
@@ -29,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const items = container.querySelectorAll('.menu-item');
         items.forEach((item, index) => {
-          setTimeout(() => item.classList.add('show'), index * 300); // 300ms between items
+          setTimeout(() => item.classList.add('show'), index * 300);
         });
 
         const currentPath = window.location.pathname.split('/').pop().toLowerCase();
@@ -60,8 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       imageInput.addEventListener('change', () => {
         const file = imageInput.files[0];
         if (file) {
-          const url = URL.createObjectURL(file);
-          preview.src = url;
+          preview.src = URL.createObjectURL(file);
           preview.style.display = 'block';
         } else {
           preview.style.display = 'none';
@@ -77,45 +91,47 @@ document.addEventListener('DOMContentLoaded', () => {
       const description = document.getElementById('description').value.trim();
       const file = imageInput.files[0];
 
-      if (!title || !description || !file) {
+      if (!title || !description) {
         alert('Please complete all required fields.');
         return;
       }
 
       try {
-        // ✅ Validate file before upload
-        if (!(file instanceof File)) throw new Error('Invalid file.');
+        let coverPath = null;
+        let coverURL = fallbackVerseCover;
 
-        // Upload cover image
-        const storageRef = ref(storage, `verse-covers/${uid}/${Date.now()}-${file.name}`);
-        await uploadBytes(storageRef, file);
-        const coverURL = await getDownloadURL(storageRef);
+        if (file) {
+          if (!(file instanceof File)) throw new Error('Invalid file.');
 
-        // Save verse to Firestore
+          coverPath = `verse-covers/${uid}/${Date.now()}-${file.name}`;
+          const storageRef = ref(storage, coverPath);
+          await uploadBytes(storageRef, file);
+          coverURL = await getDownloadURL(storageRef);
+        }
+
         const verseData = {
           title,
           description,
-          coverURL,
+          coverPath,      // Store storage path
+          coverURL,       // Firestore URL
           authorId: uid,
           createdBy: uid,
           createdAt: serverTimestamp(),
-          status: 'pending' // optional: can be changed to 'published' if you want auto-approved
+          status: 'pending'
         };
 
-        const docId = `verse_${uid}_${Date.now()}`; 
-        const verseRef = doc(db, "verses", docId);  // ✅ Authors can now freely create
+        const docId = `verse_${uid}_${Date.now()}`;
+        const verseRef = doc(db, "verses", docId);
 
-        // ✅ Ensure we catch Firestore-specific errors
         await setDoc(verseRef, verseData);
 
         alert('Verse created successfully');
         form.reset();
-        preview.style.display = 'none';
+        if (preview) preview.style.display = 'none';
 
       } catch (error) {
         console.error('Error submitting verse:', error);
 
-        // ✅ Provide more context to user
         if (error.code === 'permission-denied') {
           alert('You do not have permission to submit a verse.');
         } else if (error.message.includes('network')) {

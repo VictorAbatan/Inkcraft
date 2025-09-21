@@ -5,7 +5,14 @@ import {
 import { 
   doc, getDoc, collection, getDocs, query, where 
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { initNotificationBadge } from './notifications.js';
+
+const storage = getStorage();
+const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Novel+Cover';
+const fallbackSeriesCover = 'https://via.placeholder.com/300x400?text=No+Series+Cover';
+const fallbackVerseCover = 'https://via.placeholder.com/300x400?text=No+Verse+Cover';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -66,10 +73,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (authorData) {
         if (penNameElement) penNameElement.textContent = authorData.penName?.trim() || "Unknown Author";
-        if (profilePicElement) profilePicElement.src = authorData.profilePicURL?.trim() || "default-profile.png";
+
+        // ✅ Load author profile pic with Storage fallback
+        if (profilePicElement) {
+          let photoURL = fallbackAuthorAvatar;
+          if (authorData.profilePicPath) {
+            try {
+              photoURL = await getDownloadURL(ref(storage, authorData.profilePicPath));
+            } catch {
+              photoURL = authorData.photoURL || authorData.profileImage || fallbackAuthorAvatar;
+            }
+          } else {
+            photoURL = authorData.photoURL || authorData.profileImage || fallbackAuthorAvatar;
+          }
+          profilePicElement.src = photoURL;
+        }
       } else {
         if (penNameElement) penNameElement.textContent = 'Unknown Author';
-        if (profilePicElement) profilePicElement.src = 'default-profile.png';
+        if (profilePicElement) profilePicElement.src = fallbackAuthorAvatar;
       }
 
       // --- Load approved novels ---
@@ -78,13 +99,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const novelsContainer = document.getElementById('author-novels-container');
       if (novelsContainer) {
         novelsContainer.innerHTML = '';
-        novelsSnap.forEach(doc => {
-          const novel = doc.data();
+        for (const docSnap of novelsSnap.docs) {
+          const novel = docSnap.data();
           const div = document.createElement('div');
           div.className = 'author-novel-item';
-          div.innerHTML = `<h3>${novel.title}</h3>`;
+
+          // ✅ Novel cover image with Storage fallback
+          let coverURL = fallbackNovelCover;
+          if (novel.coverPath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, novel.coverPath));
+            } catch {
+              coverURL = novel.cover || novel.coverUrl || fallbackNovelCover;
+            }
+          } else {
+            coverURL = novel.cover || novel.coverUrl || fallbackNovelCover;
+          }
+
+          div.innerHTML = `<img src="${coverURL}" alt="Novel Cover" /><h3>${novel.title}</h3>`;
           novelsContainer.appendChild(div);
-        });
+        }
       }
 
       // --- Load series ---
@@ -93,13 +127,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const seriesContainer = document.getElementById('author-series-container');
       if (seriesContainer) {
         seriesContainer.innerHTML = '';
-        seriesSnap.forEach(doc => {
-          const series = doc.data();
+        for (const docSnap of seriesSnap.docs) {
+          const series = docSnap.data();
           const div = document.createElement('div');
           div.className = 'author-series-item';
-          div.innerHTML = `<h3>${series.title}</h3>`;
+
+          // ✅ Series cover image with Storage fallback
+          let coverURL = fallbackSeriesCover;
+          if (series.coverImagePath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, series.coverImagePath));
+            } catch {
+              coverURL = series.coverImage || fallbackSeriesCover;
+            }
+          } else {
+            coverURL = series.coverImage || fallbackSeriesCover;
+          }
+
+          div.innerHTML = `<img src="${coverURL}" alt="Series Cover" /><h3>${series.title}</h3>`;
           seriesContainer.appendChild(div);
-        });
+        }
       }
 
       // --- Load verses ---
@@ -108,13 +155,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const versesContainer = document.getElementById('author-verses-container');
       if (versesContainer) {
         versesContainer.innerHTML = '';
-        versesSnap.forEach(doc => {
-          const verse = doc.data();
+        for (const docSnap of versesSnap.docs) {
+          const verse = docSnap.data();
           const div = document.createElement('div');
           div.className = 'author-verse-item';
-          div.innerHTML = `<h3>${verse.title}</h3>`;
+
+          // ✅ Verse cover image with Storage fallback
+          let coverURL = fallbackVerseCover;
+          if (verse.coverPath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, verse.coverPath));
+            } catch {
+              coverURL = fallbackVerseCover;
+            }
+          } else {
+            coverURL = fallbackVerseCover;
+          }
+
+          div.innerHTML = `<img src="${coverURL}" alt="Verse Cover" /><h3>${verse.title}</h3>`;
           versesContainer.appendChild(div);
-        });
+        }
       }
 
       // --- 🔔 Notifications (reusable) ---

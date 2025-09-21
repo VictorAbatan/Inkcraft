@@ -1,4 +1,4 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   getAuth,
   onAuthStateChanged
@@ -9,16 +9,30 @@ import {
   updateDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
-  getStorage,
   ref,
   uploadBytes,
   getDownloadURL
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
+// --- Fallback ---
+const fallbackSeriesCover = 'default-series-cover.jpg';
+
+// --- Helper to get series cover with image-handler pattern ---
+async function getSeriesCover(series) {
+  if (series.coverImagePath) {
+    try {
+      return await getDownloadURL(ref(storage, series.coverImagePath));
+    } catch {
+      // fallback if storage fails
+    }
+  }
+  return series.coverImageURL || series.coverImage || fallbackSeriesCover;
+}
+
 // === Wait for DOM ===
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
-  const storage = getStorage(app);
+  const storageRef = storage;
   let currentCoverURL = ''; // store original cover URL
 
   // === Load Floating Menu ===
@@ -28,12 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('floating-menu-container');
       if (container) {
         container.innerHTML = html;
-
         const items = container.querySelectorAll('.menu-item');
-        items.forEach((item, index) => {
-          setTimeout(() => item.classList.add('show'), index * 100);
-        });
-
+        items.forEach((item, index) => setTimeout(() => item.classList.add('show'), index * 100));
         const currentPath = window.location.pathname.split('/').pop().toLowerCase();
         container.querySelectorAll('a').forEach(link => {
           if (link.getAttribute('href').toLowerCase() === currentPath) {
@@ -84,11 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       titleInput.value = series.title || '';
       descInput.value = series.description || '';
-      if (series.coverImageURL) {
-        currentCoverURL = series.coverImageURL;
-        previewImg.src = currentCoverURL;
-        previewImg.style.display = 'block';
-      }
+
+      // ✅ Image-handler pattern
+      currentCoverURL = await getSeriesCover(series);
+      previewImg.src = currentCoverURL;
+      previewImg.style.display = 'block';
+
     } catch (error) {
       console.error('Error loading series:', error);
       alert('Failed to load series data.');
@@ -101,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         previewImg.src = URL.createObjectURL(file);
         previewImg.style.display = 'block';
       } else {
-        // revert to original cover if input cleared
         previewImg.src = currentCoverURL;
       }
     });
@@ -125,15 +135,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newCover) {
           const coverPath = `series_covers/${uid}_${Date.now()}_${newCover.name}`;
-          const storageRef = ref(storage, coverPath);
-          await uploadBytes(storageRef, newCover);
-          const coverURL = await getDownloadURL(storageRef);
+          const storageRefFile = ref(storage, coverPath);
+          await uploadBytes(storageRefFile, newCover);
+          const coverURL = await getDownloadURL(storageRefFile);
           updateData.coverImageURL = coverURL;
+          updateData.coverImagePath = coverPath; // ✅ store path in Firestore
         }
 
         await updateDoc(seriesRef, updateData);
         alert('Series updated successfully!');
-        window.location.href = 'author-series.html'; // redirect after submit
+        window.location.href = 'author-series.html';
       } catch (err) {
         console.error('Error updating series:', err);
         alert('Something went wrong. Please try again.');

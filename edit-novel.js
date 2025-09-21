@@ -14,6 +14,21 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+// --- Fallbacks ---
+const fallbackNovelCover = 'default-novel-cover.jpg';
+
+// --- Helper: get novel cover using image-handler pattern ---
+async function getNovelCover(novel) {
+  if (novel.coverPath) {
+    try {
+      return await getDownloadURL(ref(storage, novel.coverPath));
+    } catch {
+      // fall back if storage fails
+    }
+  }
+  return novel.coverUrl || novel.cover || fallbackNovelCover;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const titleInput = document.getElementById('title');
@@ -25,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('edit-form');
 
   const urlParams = new URLSearchParams(window.location.search);
-  const novelId = urlParams.get('novelId'); // ✅ FIXED
+  const novelId = urlParams.get('novelId');
 
   if (!novelId) {
     alert("No novel ID provided.");
@@ -52,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const novel = docSnap.data();
 
-      // ✅ Updated to check authorId instead of submittedBy
       if (novel.authorId !== user.uid) {
         alert("You are not allowed to edit this novel.");
         window.location.href = 'author-novels.html';
@@ -64,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       genreInput.value = novel.genre;
       tagsInput.value = Array.isArray(novel.tags) ? novel.tags.join(', ') : '';
       synopsisInput.value = novel.synopsis || '';
-      currentCoverUrl = novel.coverUrl;
+      currentCoverUrl = await getNovelCover(novel);
       preview.src = currentCoverUrl;
 
     } catch (error) {
@@ -77,6 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = coverInput.files[0];
     if (file) {
       preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    } else {
+      preview.src = currentCoverUrl || fallbackNovelCover;
     }
   });
 
@@ -91,13 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const synopsis = synopsisInput.value.trim();
 
     let coverUrl = currentCoverUrl;
+    let coverPath = null;
     const file = coverInput.files[0];
 
     if (file) {
-      // ✅ Updated path to match storage rules
-      const fileRef = ref(storage, `novel-covers/${user.uid}/${novelId}-${Date.now()}`);
+      const fileRef = ref(storage, `novel-covers/${user.uid}/${novelId}-${Date.now()}-${file.name}`);
       await uploadBytes(fileRef, file);
       coverUrl = await getDownloadURL(fileRef);
+      coverPath = fileRef.fullPath;
     }
 
     try {
@@ -106,7 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         genre,
         tags,
         synopsis,
-        coverUrl
+        coverUrl,
+        ...(coverPath && { coverPath }) // store path if new file uploaded
       });
       alert("Novel updated successfully!");
       window.location.href = 'author-novels.html';

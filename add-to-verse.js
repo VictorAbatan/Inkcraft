@@ -1,4 +1,4 @@
-import { app, db, auth } from './firebase-config.js';
+import { app, db, auth, storage } from './firebase-config.js';
 import {
   collection,
   getDocs,
@@ -10,9 +10,32 @@ import {
   getDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 function debug(msg) {
   console.log(msg);
+}
+
+const fallbackNovelCover = 'default-novel-cover.jpg';
+const fallbackSeriesCover = 'default-series-cover.jpg';
+
+// --- Helper functions ---
+async function getNovelCover(novel) {
+  if (novel.coverPath) {
+    try {
+      return await getDownloadURL(ref(storage, novel.coverPath));
+    } catch {}
+  }
+  return novel.coverUrl || novel.cover || fallbackNovelCover;
+}
+
+async function getSeriesCover(series) {
+  if (series.coverImagePath) {
+    try {
+      return await getDownloadURL(ref(storage, series.coverImagePath));
+    } catch {}
+  }
+  return series.coverImageURL || series.coverImage || fallbackSeriesCover;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,21 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentVerseId = null;
 
-  // Helper function to create list item with image and correct link
   const createListItem = (title, imageUrl, type, id) => {
     const li = document.createElement('li');
     li.className = 'added-item';
 
     const a = document.createElement('a');
-    if (type === "novel") {
-      a.href = `author-novels.html?novelId=${encodeURIComponent(id)}`;
-    } else if (type === "series") {
-      a.href = `author-series.html?seriesId=${encodeURIComponent(id)}`;
-    }
     a.target = "_blank";
+    if (type === "novel") a.href = `author-novels.html?novelId=${encodeURIComponent(id)}`;
+    else if (type === "series") a.href = `author-series.html?seriesId=${encodeURIComponent(id)}`;
 
     const img = document.createElement('img');
-    img.src = imageUrl || 'placeholder.png';
+    img.src = imageUrl || (type === 'novel' ? fallbackNovelCover : fallbackSeriesCover);
     img.alt = title;
     img.className = 'added-item-img';
 
@@ -81,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const novelSnap = await getDoc(novelRef);
             if (novelSnap.exists()) {
               const data = novelSnap.data();
-              const li = createListItem(data.title, data.coverUrl, "novel", novelId);
+              const cover = await getNovelCover(data);
+              const li = createListItem(data.title, cover, "novel", novelId);
               addedNovelsList.appendChild(li);
             }
           }
@@ -97,7 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const seriesSnap = await getDoc(seriesRef);
             if (seriesSnap.exists()) {
               const data = seriesSnap.data();
-              const li = createListItem(data.title, data.coverImageURL, "series", seriesId);
+              const cover = await getSeriesCover(data);
+              const li = createListItem(data.title, cover, "series", seriesId);
               addedSeriesList.appendChild(li);
             }
           }
@@ -126,33 +147,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Novels dropdown
       const novelsRef = collection(db, "novels");
-      const novelsQ = query(novelsRef, where("authorId", "==", user.uid)); // ✅ fixed from submittedBy → authorId
+      const novelsQ = query(novelsRef, where("authorId", "==", user.uid));
       const novelsSnap = await getDocs(novelsQ);
       novelSelect.innerHTML = `<option value="">-- Select a Novel --</option>`;
-      novelsSnap.forEach(docSnap => {
+      for (const docSnap of novelsSnap.docs) {
         const data = docSnap.data();
         if (data.status && ["approved", "published"].includes(data.status.toLowerCase())) {
           const option = document.createElement("option");
           option.value = docSnap.id;
           option.textContent = data.title;
-          option.dataset.cover = data.coverUrl || '';
+          option.dataset.cover = await getNovelCover(data);
           novelSelect.appendChild(option);
         }
-      });
+      }
 
       // Series dropdown
       const seriesRef = collection(db, "series");
       const seriesQ = query(seriesRef, where("createdBy", "==", user.uid));
       const seriesSnap = await getDocs(seriesQ);
       seriesSelect.innerHTML = `<option value="">-- Select a Series --</option>`;
-      seriesSnap.forEach(docSnap => {
+      for (const docSnap of seriesSnap.docs) {
         const data = docSnap.data();
         const option = document.createElement("option");
         option.value = docSnap.id;
         option.textContent = data.title;
-        option.dataset.cover = data.coverImageURL || '';
+        option.dataset.cover = await getSeriesCover(data);
         seriesSelect.appendChild(option);
-      });
+      }
 
     } catch (error) {
       debug("Error loading novels/series/verse: " + error.message);

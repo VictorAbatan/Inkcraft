@@ -1,4 +1,4 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   getAuth,
   onAuthStateChanged
@@ -9,6 +9,22 @@ import {
   where,
   getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+// --- Fallbacks ---
+const fallbackSeriesCover = 'default-series-cover.jpg';
+
+// --- Helper: get series cover using image-handler pattern ---
+async function getSeriesCover(series) {
+  if (series.coverImagePath) {
+    try {
+      return await getDownloadURL(ref(storage, series.coverImagePath));
+    } catch {
+      // fall back if storage fails
+    }
+  }
+  return series.coverImageURL || series.coverImage || fallbackSeriesCover;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] DOMContentLoaded fired');
@@ -75,7 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      snapshot.forEach(docSnap => {
+      // Render each series
+      for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
         const id = docSnap.id;
         console.log('[DEBUG] Rendering series doc:', id, data);
@@ -83,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'series-card';
 
-        const coverImage = data.coverImageURL
-          ? `<img src="${data.coverImageURL}" alt="Series Cover" class="series-cover" />`
-          : '';
+        // --- Image-handler pattern ---
+        const coverUrl = await getSeriesCover(data);
+        const coverImage = `<img src="${coverUrl}" alt="Series Cover" class="series-cover" />`;
 
         card.innerHTML = `
           ${coverImage}
@@ -102,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         container.appendChild(card);
 
-        // ✅ Scoped Read more / Read less toggle
+        // Scoped Read more / Read less toggle
         const desc = card.querySelector('.series-description');
         const toggle = card.querySelector('.read-more');
 
@@ -114,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[DEBUG] Toggled description for series:', id, 'Expanded:', expanded);
           });
         }
-      });
+      }
     } catch (err) {
       console.error('[ERROR] Firestore query failed:', err);
     }

@@ -1,4 +1,4 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   getAuth,
   onAuthStateChanged,
@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
@@ -37,18 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const target = link.getAttribute('data-section');
 
-      // Remove active class from all links
       sideNavLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
 
-      // Show target section, hide others
       adminSections.forEach(sec => {
         sec.style.display = (sec.id === target) ? 'block' : 'none';
       });
     });
   });
 
-  // ✅ Helper: send notification to BOTH inbox + notifications
   async function sendNotification(authorId, type, message) {
     try {
       const payload = { type, message, timestamp: serverTimestamp(), read: false };
@@ -84,6 +82,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const tokenResult = await user.getIdTokenResult();
     if (!tokenResult.claims.admin) { alert("Access denied. Admins only."); window.location.href = 'login.html'; return; }
 
+    async function getImageURL(storagePath, fallback) {
+      if (storagePath) {
+        try {
+          return await getDownloadURL(ref(storage, storagePath));
+        } catch {}
+      }
+      return fallback;
+    }
+
+    async function getNovelCover(novel) {
+      return await getImageURL(novel.coverPath, novel.coverUrl || novel.cover || 'placeholder.jpg');
+    }
+
+    async function getSeriesCover(series) {
+      return await getImageURL(series.coverImagePath, series.coverImage || 'placeholder.jpg');
+    }
+
+    async function getVerseCover(verse) {
+      return await getImageURL(verse.coverPath, verse.coverURL || 'placeholder.jpg');
+    }
+
+    async function getAuthorAvatar(author) {
+      return await getImageURL(author.profilePicPath, author.photoURL || author.profileImage || 'avatar-placeholder.jpg');
+    }
+
     async function renderAll() {
       try {
         const [novelSnap, seriesSnap, verseSnap, usersSnap] = await Promise.all([
@@ -99,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
           authorMap.set(docSnap.id, userData.penName || 'Unknown Author');
         });
 
-        // Stats
         let approved = 0, rejected = 0, pending = 0, notifications = 0;
         let seriesCount = 0, verseCount = 0;
 
@@ -119,21 +141,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if(statSeries) statSeries.textContent = seriesCount;
         if(statVerses) statVerses.textContent = verseCount;
 
-        // --- Render Novels Sections ---
         const renderNovelSection = async (statusFilter, containerId) => {
           const container = document.getElementById(containerId);
           if(!container) return;
           container.innerHTML = '';
 
-          novelSnap.docs.forEach(docSnap => {
+          for (const docSnap of novelSnap.docs) {
             const novel = docSnap.data();
             const id = docSnap.id;
-            if(statusFilter !== 'all' && novel.status !== statusFilter) return;
+            if(statusFilter !== 'all' && novel.status !== statusFilter) continue;
+
+            const coverURL = await getNovelCover(novel);
 
             const card = document.createElement('div');
             card.className = 'submission-card';
             card.innerHTML = `
-              <img src="${novel.coverUrl || 'placeholder.jpg'}" alt="Cover" />
+              <img src="${coverURL}" alt="Cover" />
               <div class="submission-details">
                 <h3>${novel.title}</h3>
                 <p><strong>Author:</strong> ${resolveAuthorName(novel, authorMap)}</p>
@@ -147,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            // Buttons with notifications
             card.querySelector('.approve-btn')?.addEventListener('click', async () => {
               await updateDoc(doc(db, 'novels', id), { status: 'approved' });
               await sendNotification(novel.authorId, 'approval', `Your novel "${novel.title}" was approved.`);
@@ -170,24 +192,26 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             container.appendChild(card);
-          });
+          }
         };
 
         await renderNovelSection('pending','pending-list');
         await renderNovelSection('approved','approved-list');
         await renderNovelSection('rejected','rejected-list');
 
-        // --- Render Series Section ---
+        // --- Series Section ---
         const seriesContainer = document.getElementById('series-list');
         if(seriesContainer){
           seriesContainer.innerHTML = '';
-          seriesSnap.docs.forEach(docSnap => {
+          for(const docSnap of seriesSnap.docs){
             const series = docSnap.data();
             const id = docSnap.id;
+            const coverURL = await getSeriesCover(series);
+
             const card = document.createElement('div');
             card.className = 'series-card';
             card.innerHTML = `
-              <img src="${series.coverImageURL || 'placeholder.jpg'}" alt="Series Cover"/>
+              <img src="${coverURL}" alt="Series Cover"/>
               <h4>${series.title}</h4>
               <p>${series.description || ''}</p>
               <p><strong>Author:</strong> ${resolveAuthorName(series, authorMap)}</p>
@@ -197,20 +221,22 @@ document.addEventListener('DOMContentLoaded', () => {
               alert(`Series: ${series.title}\nDescription: ${series.description || ''}`);
             });
             seriesContainer.appendChild(card);
-          });
+          }
         }
 
-        // --- Render Verse Section ---
+        // --- Verse Section ---
         const verseContainer = document.getElementById('verse-list');
         if(verseContainer){
           verseContainer.innerHTML = '';
-          verseSnap.docs.forEach(docSnap => {
+          for(const docSnap of verseSnap.docs){
             const verse = docSnap.data();
             const id = docSnap.id;
+            const coverURL = await getVerseCover(verse);
+
             const card = document.createElement('div');
             card.className = 'verse-card';
             card.innerHTML = `
-              <img src="${verse.coverURL || 'placeholder.jpg'}" alt="Verse Cover"/>
+              <img src="${coverURL}" alt="Verse Cover"/>
               <div class="verse-details">
                 <h3>${verse.title}</h3>
                 <p>${verse.description}</p>
@@ -222,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
               alert(`Verse: ${verse.title}\nDescription: ${verse.description || ''}`);
             });
             verseContainer.appendChild(card);
-          });
+          }
         }
 
       } catch(err){
@@ -230,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Initial render
     await renderAll();
   });
 });

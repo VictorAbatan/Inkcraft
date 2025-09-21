@@ -12,22 +12,35 @@ function debug(msg) {
   document.getElementById('debug').textContent = msg;
 }
 
+// Fallback image
+const fallbackVerseCover = 'default-verse-cover.jpg';
+
 // ✅ helper to parse storage path from download URL
 function getPathFromUrl(url) {
   const match = decodeURIComponent(url).match(/o\/(.*?)\?/);
   return match ? match[1] : null;
 }
 
+// ✅ Helper to get verse cover using image-handler pattern
+async function getVerseCover(verse) {
+  if (verse.coverPath) {
+    try {
+      return await getDownloadURL(ref(storage, verse.coverPath));
+    } catch {}
+  }
+  return verse.coverURL || fallbackVerseCover;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const verseTitleInput = document.getElementById('verseTitle');
   const verseDescriptionInput = document.getElementById('verseDescription');
-  const verseImageInput = document.getElementById('newVerseImage'); // ✅ fixed id
+  const verseImageInput = document.getElementById('newVerseImage');
   const currentImage = document.getElementById('currentImage');
   const form = document.getElementById('editVerseForm');
 
   let currentVerseId = null;
   let currentUser = null;
-  let oldCoverURL = null; // ✅ track old cover
+  let oldCoverURL = null;
 
   // ✅ Preview new image before upload
   if (verseImageInput && currentImage) {
@@ -85,9 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
       verseTitleInput.value = data.title || "";
       verseDescriptionInput.value = data.description || "";
 
-      if (data.coverURL) {
-        oldCoverURL = data.coverURL; // ✅ save old image url
-        currentImage.src = data.coverURL;
+      const cover = await getVerseCover(data);
+      oldCoverURL = cover !== fallbackVerseCover ? cover : null;
+
+      if (cover) {
+        currentImage.src = cover;
         currentImage.style.display = "block";
       } else {
         currentImage.style.display = "none";
@@ -132,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const storageRef = ref(storage, `verse-covers/${currentUser.uid}/${currentVerseId}-${Date.now()}`);
         await uploadBytes(storageRef, file);
         const imageUrl = await getDownloadURL(storageRef);
-        updates.coverURL = imageUrl; // ✅ overwrite the same field
+        updates.coverPath = storageRef.fullPath; // save Storage path
+        updates.coverURL = imageUrl; // save download URL
       }
 
       if (Object.keys(updates).length > 0) {

@@ -4,14 +4,15 @@ import {
   setPersistence, 
   browserLocalPersistence 
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZ2DyHyVRmtO1TeYspnW4DBLvCAt1Hvuk",
   authDomain: "inkcraft-6c0f6.firebaseapp.com",
   projectId: "inkcraft-6c0f6",
-  storageBucket: "inkcraft-6c0f6.firebasestorage.app", // ✅ leave as-is
+storageBucket: "inkcraft-6c0f6.firebasestorage.app",
+
   messagingSenderId: "87895920556",
   appId: "1:87895920556:web:ddce4775fcf299788ff409"
 };
@@ -27,13 +28,14 @@ setPersistence(auth, browserLocalPersistence)
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Enable offline persistence for Firestore
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    console.warn("⚠️ Persistence failed — multiple tabs open.");
-  } else if (err.code === 'unimplemented') {
-    console.warn("⚠️ Persistence not supported in this browser.");
-  }
-});
+// ✅ Enable persistent local cache (new FirestoreSettings API)
+try {
+  db._setSettings({
+    cache: { type: 'persistent' }
+  });
+  console.log("✅ Firestore persistence enabled with new cache API");
+} catch (err) {
+  console.warn("⚠️ Could not enable persistence:", err);
+}
 
 export { app };

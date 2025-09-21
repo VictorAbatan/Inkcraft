@@ -15,6 +15,22 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+// --- Fallbacks ---
+const fallbackSeriesCover = 'https://via.placeholder.com/150x220?text=No+Cover';
+const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+
+// --- Helper function for series image ---
+async function getSeriesCover(coverPath, coverImageField) {
+  if (coverPath) {
+    try {
+      return await getDownloadURL(ref(getStorage(), coverPath));
+    } catch {
+      return coverImageField || fallbackSeriesCover;
+    }
+  }
+  return coverImageField || fallbackSeriesCover;
+}
+
 // === Wait for DOM ===
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
@@ -59,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const title = document.getElementById('series-title').value.trim();
         const description = document.getElementById('series-description').value.trim();
-        const coverFile = document.getElementById('series-cover').files[0];
+        const coverFileInput = document.getElementById('series-cover');
+        const coverFile = coverFileInput?.files?.[0];
 
         if (!title || !description) {
           alert('Please fill in all required fields.');
@@ -67,31 +84,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+          let coverPath = null;
           let coverUrl = '';
 
           if (coverFile) {
-            const storageRef = ref(storage, `series_covers/${uid}_${Date.now()}_${coverFile.name}`);
+            coverPath = `series_covers/${uid}_${Date.now()}_${coverFile.name}`;
+            const storageRef = ref(storage, coverPath);
             await uploadBytes(storageRef, coverFile);
             coverUrl = await getDownloadURL(storageRef);
           }
 
+          // Ensure image-handling fallback works
+          coverUrl = coverUrl || fallbackSeriesCover;
+
           const seriesData = {
             title,
             description,
-            authorId: uid, // ✅ Always tie series to Firebase Auth UID
-            createdBy: uid, // (kept for consistency if referenced elsewhere)
-            ownerId: uid,   // ✅ Ensures correct Firestore security ownership
+            authorId: uid,
+            createdBy: uid,
+            ownerId: uid,
             createdAt: serverTimestamp(),
             novels: [],
-            coverImageURL: coverUrl || '' // ✅ updated field name
+            coverImagePath: coverPath || null, // Save storage path
+            coverImage: coverUrl // Firestore URL
           };
 
-          const docId = `series_${uid}_${Date.now()}`; // ✅ clearer unique ID
-          const seriesRef = doc(db, "series", docId); // ✅ corrected collection path
+          const docId = `series_${uid}_${Date.now()}`;
+          const seriesRef = doc(db, "series", docId);
           await setDoc(seriesRef, seriesData);
 
           alert('Series created successfully! You can now add novels to it.');
           form.reset();
+          if (coverFileInput) coverFileInput.value = '';
         } catch (error) {
           console.error('Error creating series:', error);
           alert('Something went wrong. Please try again.');

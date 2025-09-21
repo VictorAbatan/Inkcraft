@@ -1,5 +1,10 @@
-import { db } from './firebase-config.js';
-import { doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { app, db } from './firebase-config.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+const storage = getStorage(app);
+const fallbackSeriesCover = 'https://via.placeholder.com/300x400?text=No+Series+Cover';
+const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Novel+Cover';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Load floating menu
@@ -47,13 +52,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("series-title").textContent = seriesData.title || "Untitled Series";
     document.getElementById("series-genre").textContent = seriesData.genre || "";
     document.getElementById("series-description").textContent = seriesData.description || "";
-    document.getElementById("series-cover").src = seriesData.coverImageURL || "default-series-cover.jpg";
+
+    // ✅ Load series cover from Storage
+    const seriesCoverEl = document.getElementById("series-cover");
+    if (seriesData.coverImagePath) {
+      try {
+        const url = await getDownloadURL(ref(storage, seriesData.coverImagePath));
+        seriesCoverEl.src = url;
+      } catch (err) {
+        console.warn("Failed to load series cover:", err);
+        seriesCoverEl.src = fallbackSeriesCover;
+      }
+    } else {
+      seriesCoverEl.src = fallbackSeriesCover;
+    }
 
     // Fetch novels that belong to this series
     const novelsList = document.getElementById("novels-list");
     novelsList.innerHTML = "";
 
-    // ✅ Use the novels array from seriesData if it exists
     const novelIds = seriesData.novels || [];
 
     if (novelIds.length === 0) {
@@ -64,10 +81,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (novelDoc.exists()) {
           const novel = novelDoc.data();
 
+          let coverURL = fallbackNovelCover;
+          if (novel.coverPath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, novel.coverPath));
+            } catch (err) {
+              console.warn("Failed to load novel cover:", err);
+            }
+          }
+
           const card = document.createElement("div");
           card.className = "novel-card";
           card.innerHTML = `
-            <img src="${novel.coverUrl || 'default-novel-cover.jpg'}" alt="${novel.title}">
+            <img src="${coverURL}" alt="${novel.title}">
             <p>${novel.title}</p>
           `;
           // ✅ Link novels with ?novelId to match novel-details.js

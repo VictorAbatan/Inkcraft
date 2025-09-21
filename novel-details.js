@@ -12,6 +12,7 @@ import {
   onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getImageURL } from './image-helpers.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load floating menu
@@ -91,7 +92,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const data = docSnap.data();
-  document.getElementById('coverImage').src = data.cover || data.coverUrl || 'default-cover.jpg';
+
+  // ✅ Use helper for novel cover
+  const coverImageEl = document.getElementById('coverImage');
+  if (coverImageEl) {
+    coverImageEl.src = await getImageURL(data, "novel");
+    coverImageEl.alt = data.title || 'Novel Cover';
+  }
+
   document.getElementById('novelTitle').textContent = data.title || 'Untitled';
 
   // Unified author logic

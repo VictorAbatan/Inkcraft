@@ -3,6 +3,8 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/f
 import { doc, getDoc, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
+const fallbackAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+
 document.addEventListener("DOMContentLoaded", () => {
   const profilePic = document.getElementById("profile-pic");
   const profilePicInput = document.getElementById("profile-pic-input");
@@ -24,38 +26,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const [userSnap, authorSnap] = await Promise.all([getDoc(userRef), getDoc(authorRef)]);
 
-    // Determine which document to use
     const activeRef = authorSnap.exists() ? authorRef : userRef;
     const data = (authorSnap.exists() ? authorSnap.data() : userSnap.data()) || {};
 
-    // --- ✅ Load initial data with fallbacks ---
+    // --- ✅ Load initial display name ---
     if (data.displayName) {
       displayNameInput.value = data.displayName;
     } else if (data.username) {
-      displayNameInput.value = data.username; // fallback to username if no displayName
+      displayNameInput.value = data.username;
     } else {
-      displayNameInput.value = user.email; // fallback to email
+      displayNameInput.value = user.email;
     }
 
-    if (data.photoURL) {
-      profilePic.src = data.photoURL;
-    } else if (data.profileImage) {
-      profilePic.src = data.profileImage; // support "profileImage"
-    } else {
-      profilePic.src = "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"; // 👤 placeholder
+    // --- ✅ Load profile picture using Storage first ---
+    async function loadProfilePicture() {
+      let url = fallbackAvatar;
+
+      if (data.photoPath) {
+        try {
+          url = await getDownloadURL(ref(storage, data.photoPath));
+        } catch (err) {
+          console.warn("Failed to load photoPath:", err);
+        }
+      } else if (data.profileImagePath) {
+        try {
+          url = await getDownloadURL(ref(storage, data.profileImagePath));
+        } catch (err) {
+          console.warn("Failed to load profileImagePath:", err);
+        }
+      } else if (data.photoURL) {
+        url = data.photoURL;
+      } else if (data.profileImage) {
+        url = data.profileImage;
+      }
+
+      profilePic.src = url;
+      tempPhotoURL = url;
     }
+
+    await loadProfilePicture();
 
     // Handle profile picture preview & upload
     profilePicInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Immediate preview using local URL
+      // Immediate preview
       const localURL = URL.createObjectURL(file);
       profilePic.src = localURL;
-      tempPhotoURL = localURL; // store temporary preview
+      tempPhotoURL = localURL;
 
-      // Upload to Firebase
+      // Upload to Firebase Storage
       const storagePath = activeRef.path.includes("authorProfiles")
         ? `authorProfiles/${user.uid}/profilePic.jpg`
         : `users/${user.uid}/profilePic.jpg`;
@@ -64,18 +85,22 @@ document.addEventListener("DOMContentLoaded", () => {
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // Update Firestore with both fields
+      // Update Firestore
       await updateDoc(activeRef, { 
         photoURL: downloadURL,
-        profileImage: downloadURL 
+        profileImage: downloadURL,
+        photoPath: storagePath,
+        profileImagePath: storagePath
       }).catch(async () => {
         await setDoc(activeRef, { 
           photoURL: downloadURL,
-          profileImage: downloadURL 
+          profileImage: downloadURL,
+          photoPath: storagePath,
+          profileImagePath: storagePath
         }, { merge: true });
       });
 
-      tempPhotoURL = downloadURL; // update preview to final uploaded URL
+      tempPhotoURL = downloadURL; // final URL
     });
 
     // Handle save profile
@@ -86,12 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // ✅ Save displayName + username + photoURL + profileImage
       await setDoc(
         activeRef,
         { 
           displayName: name,
-          username: name,  // 👈 keep username in sync
+          username: name,
           photoURL: tempPhotoURL || profilePic.src,
           profileImage: tempPhotoURL || profilePic.src
         },
@@ -99,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       alert("Profile updated successfully!");
-      // ✅ Redirect back to Inkcraftmain so updates show
       window.location.href = "Inkcraftmain.html";
     });
   });

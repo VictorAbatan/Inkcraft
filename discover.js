@@ -1,13 +1,16 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   collection,
   getDocs,
   doc,
-  getDoc,
   query,
   orderBy,
   where
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {
+  ref,
+  getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load floating menu
@@ -29,7 +32,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('searchInput');
   let allBooks = [];
 
-  // ✅ Fetch novels (only approved, prefer authorName from novel doc itself)
+  // ✅ Helper to fetch image with fallback
+  async function getImageURL(storagePath, fallback) {
+    if (storagePath) {
+      try {
+        const storageRef = ref(storage, storagePath);
+        const url = await getDownloadURL(storageRef);
+        return url;
+      } catch {
+        // Ignore error, fallback will be used
+      }
+    }
+    return fallback;
+  }
+
+  // ✅ Fetch novels (approved only) with cached author names and batch image fetching
   async function fetchPublishedNovels() {
     const q = query(
       collection(db, 'novels'),
@@ -41,34 +58,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     allBooks = [];
     const authorCache = new Map();
 
-    for (const docSnap of snapshot.docs) {
+    const promises = snapshot.docs.map(async docSnap => {
       const data = docSnap.data();
 
-      // ✅ Use authorName from the novel document if it exists
+      // Resolve author name with cache
       let authorName = data.authorName || 'Unknown Author';
-
-      // Optionally, if you also want to cross-check with users/{id}
       if (!data.authorName && data.authorId) {
         if (authorCache.has(data.authorId)) {
           authorName = authorCache.get(data.authorId);
         } else {
-          const userDoc = await getDoc(doc(db, 'users', data.authorId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+          const userDoc = await getDocs(collection(db, 'users'));
+          const user = userDoc.docs.find(d => d.id === data.authorId);
+          if (user) {
+            const userData = user.data();
             authorName = userData.authorName || userData.penName || 'Unknown Author';
             authorCache.set(data.authorId, authorName);
           }
         }
       }
 
-      allBooks.push({
+      // Get cover image with fallback
+      const coverURL = await getImageURL(data.coverPath, data.coverUrl || 'default-cover.jpg');
+
+      return {
         id: docSnap.id,
         title: data.title || 'Untitled',
-        cover: data.cover || data.coverUrl || 'default-cover.jpg',
+        cover: coverURL,
         author: authorName
-      });
-    }
+      };
+    });
 
+    allBooks = await Promise.all(promises);
     renderBooks(allBooks);
   }
 
@@ -77,10 +97,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     list.forEach((book, index) => {
       const bookDiv = document.createElement('div');
       bookDiv.className = 'book-item';
-      bookDiv.style.animationDelay = `${index * 100}ms`;
+      bookDiv.style.animationDelay = `${index * 50}ms`; // slightly faster stagger
 
       bookDiv.innerHTML = `
-        <img src="${book.cover}" alt="${book.title}">
+        <img src="${book.cover}" alt="${book.title}" loading="lazy">
         <div class="book-label">
           <strong>${book.title}</strong><br>
           <small>by ${book.author}</small>
@@ -98,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Search functionality
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase().trim();
-
     if (query === '') {
       renderBooks(allBooks);
     } else {

@@ -46,9 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (verseDescEl) verseDescEl.textContent = verseData.description || '';
   if (verseCoverEl) {
     let coverURL = fallbackCover;
-    if (verseData.coverURL) {
+    if (verseData.coverPath) {
       try {
-        coverURL = await getDownloadURL(ref(storage, verseData.coverURL));
+        coverURL = await getDownloadURL(ref(storage, verseData.coverPath));
       } catch (err) {
         console.warn("Failed to load verse cover:", verseId, err);
       }
@@ -70,8 +70,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (novelDoc.exists()) {
           const novel = novelDoc.data();
           let coverURL = fallbackCover;
-          if (novel.coverUrl) {
-            coverURL = novel.coverUrl; // already a URL in doc
+          if (novel.coverPath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, novel.coverPath));
+            } catch (err) {
+              console.warn("Failed to load novel cover:", novelId, err);
+            }
           }
           const div = document.createElement('div');
           div.className = 'novel-card';
@@ -99,8 +103,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (seriesDoc.exists()) {
           const series = seriesDoc.data();
           let coverURL = fallbackCover;
-          if (series.coverImageURL) {
-            coverURL = series.coverImageURL;
+          if (series.coverImagePath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, series.coverImagePath));
+            } catch (err) {
+              console.warn("Failed to load series cover:", seriesId, err);
+            }
           }
           const div = document.createElement('div');
           div.className = 'series-card';

@@ -1,8 +1,11 @@
 import { app, db } from './firebase-config.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const auth = getAuth(app);
+const storage = getStorage(app);
+const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Novel+Cover';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -64,8 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
           const card = document.createElement('div');
           card.className = 'novel-card';
           card.style.animationDelay = `${index * 100}ms`;
+
+          // ✅ Load cover image using Storage first
+          let coverURL = fallbackNovelCover;
+          if (novel.coverPath) {
+            try {
+              coverURL = await getDownloadURL(ref(storage, novel.coverPath));
+            } catch (err) {
+              console.warn(`Failed to load novel cover from Storage for ${novelId}:`, err);
+              coverURL = novel.cover || novel.coverUrl || fallbackNovelCover;
+            }
+          } else {
+            coverURL = novel.cover || novel.coverUrl || fallbackNovelCover;
+          }
+
           card.innerHTML = `
-            <img src="${novel.cover || novel.coverUrl || 'default-cover.jpg'}" alt="Cover" />
+            <img src="${coverURL}" alt="Cover" />
             <h3>${novel.title || 'Untitled'}</h3>
             <a href="novel-details.html?novelId=${novelId}">View Details</a>
           `;

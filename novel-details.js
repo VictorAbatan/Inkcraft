@@ -396,6 +396,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         form.reset();
 
+        // ✅ Auto-open comments after posting
+        commentsSection.classList.remove('hidden');
+        toggleBtn.textContent = '💬 Hide Comments';
+
         // Notify author
         const authorUid = data.submittedBy;
         if (authorUid && authorUid !== user.uid) {

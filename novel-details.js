@@ -1,4 +1,4 @@
-import { app, db } from './firebase-config.js';
+import { app, db, storage } from './firebase-config.js';
 import {
   doc,
   getDoc,
@@ -12,6 +12,7 @@ import {
   onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getDownloadURL, ref } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { getImageURL } from './image-helpers.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -213,24 +214,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ COMMENTS + REPLIES
   const commentsTab = document.getElementById('commentsTab');
   if (commentsTab) {
-    const commentsList = document.createElement('div');
-    commentsList.id = 'commentsList';
-    commentsTab.appendChild(commentsList);
+    // Wrapper section
+    const commentsSection = document.createElement('div');
+    commentsSection.id = 'commentsSection';
+    commentsSection.classList.add('hidden');
 
+    // Toggle button
     const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'toggleCommentsBtn';
     toggleBtn.textContent = '💬 Show Comments';
-    toggleBtn.style.margin = '1rem 0';
-    commentsTab.insertBefore(toggleBtn, commentsList);
+    commentsTab.appendChild(toggleBtn);
+    commentsTab.appendChild(commentsSection);
 
-    commentsList.style.display = 'none';
+    // List
+    const commentsList = document.createElement('ul');
+    commentsList.id = 'commentsList';
+    commentsSection.appendChild(commentsList);
+
     toggleBtn.addEventListener('click', () => {
-      commentsList.style.display = commentsList.style.display === 'none' ? 'block' : 'none';
-      toggleBtn.textContent = commentsList.style.display === 'none' ? '💬 Show Comments' : '💬 Hide Comments';
+      commentsSection.classList.toggle('hidden');
+      toggleBtn.textContent = commentsSection.classList.contains('hidden')
+        ? '💬 Show Comments'
+        : '💬 Hide Comments';
     });
 
     async function renderCommentsRealtime() {
       const commentsRef = collection(db, `novels/${novelId}/comments`);
-      const q = query(commentsRef, orderBy('timestamp', 'asc'));
+      // 🔹 Sort newest → oldest
+      const q = query(commentsRef, orderBy('timestamp', 'desc'));
       onSnapshot(q, snapshot => {
         commentsList.innerHTML = '';
         if (snapshot.empty) {
@@ -240,21 +251,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         snapshot.forEach(docSnap => {
           const c = docSnap.data();
-          const div = document.createElement('div');
-          div.classList.add('comment');
-          div.innerHTML = `
+          const li = document.createElement('li');
+          li.classList.add('comment');
+          li.innerHTML = `
             <div class="comment-header">
-              <img src="${c.photoURL || 'default-avatar.jpg'}" class="comment-avatar">
-              <strong>${c.userName || 'Anonymous'}</strong>
+              <img src="${c.photoURL || 'assets/images/default-avatar.jpg'}" class="comment-avatar">
+              <span class="comment-author">${c.userName || 'Anonymous'}</span>
+              <span class="comment-date">${c.timestamp?.toDate ? c.timestamp.toDate().toLocaleString() : ''}</span>
             </div>
             <p class="comment-text">${c.text}</p>
             <button class="reply-btn" data-comment-id="${docSnap.id}">↩ Reply</button>
-            <div class="replies" id="replies-${docSnap.id}"></div>
+            <div id="replies-${docSnap.id}"></div>
           `;
-          commentsList.appendChild(div);
+          commentsList.appendChild(li);
 
           // Load replies
-          const repliesContainer = div.querySelector(`#replies-${docSnap.id}`);
+          const repliesContainer = li.querySelector(`#replies-${docSnap.id}`);
           const repliesRef = collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`);
           const repliesQuery = query(repliesRef, orderBy('timestamp', 'asc'));
           onSnapshot(repliesQuery, repliesSnap => {
@@ -264,22 +276,26 @@ document.addEventListener('DOMContentLoaded', async () => {
               const replyDiv = document.createElement('div');
               replyDiv.classList.add('reply');
               replyDiv.innerHTML = `
-                <img src="${r.photoURL || 'default-avatar.jpg'}" class="reply-avatar">
-                <strong>${r.userName || 'Anonymous'}:</strong> ${r.text}
+                <div class="comment-header">
+                  <img src="${r.photoURL || 'assets/images/default-avatar.jpg'}" class="comment-avatar">
+                  <span class="reply-author">${r.userName || 'Anonymous'}</span>
+                  <span class="comment-date">${r.timestamp?.toDate ? r.timestamp.toDate().toLocaleString() : ''}</span>
+                </div>
+                <p class="reply-text">${r.text}</p>
               `;
               repliesContainer.appendChild(replyDiv);
             });
           });
 
           // Reply button handler
-          div.querySelector('.reply-btn').addEventListener('click', () => {
-            if (div.querySelector('form')) return;
+          li.querySelector('.reply-btn').addEventListener('click', () => {
+            if (li.querySelector('form')) return;
             const replyForm = document.createElement('form');
             replyForm.innerHTML = `
               <textarea placeholder="Write a reply..." required></textarea>
-              <button type="submit">Post Reply</button>
+              <button type="submit" class="comment-submit">Post Reply</button>
             `;
-            div.appendChild(replyForm);
+            li.appendChild(replyForm);
 
             replyForm.addEventListener('submit', async (e) => {
               e.preventDefault();
@@ -292,11 +308,23 @@ document.addEventListener('DOMContentLoaded', async () => {
               }
 
               try {
+                // 🔹 Fetch user profile
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                const userData = userDoc.exists() ? userDoc.data() : {};
+
+                let userName = userData.displayName || userData.username || 'Anonymous';
+                let photoURL = 'assets/images/default-avatar.jpg';
+                if (userData.profileImagePath) {
+                  try {
+                    photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
+                  } catch {}
+                }
+
                 await addDoc(collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`), {
                   text: replyText,
                   userId: currentUser.uid,
-                  userName: currentUser.displayName || 'Anonymous',
-                  photoURL: currentUser.photoURL || 'default-avatar.jpg',
+                  userName,
+                  photoURL,
                   timestamp: serverTimestamp()
                 });
 
@@ -306,9 +334,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     type: 'reply',
                     novelTitle: data.title,
                     text: replyText,
-                    userName: currentUser.displayName || 'Anonymous',
                     userId: currentUser.uid,
-                    photoURL: currentUser.photoURL || 'default-avatar.jpg',
+                    userName,
+                    photoURL,
                     timestamp: serverTimestamp()
                   });
                 }
@@ -328,9 +356,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Comment form
     const form = document.createElement('form');
+    form.id = 'commentForm';
     form.innerHTML = `
-      <textarea placeholder="Write a comment..." required></textarea>
-      <button type="submit">Post</button>
+      <textarea id="commentInput" placeholder="Write a comment..." required></textarea>
+      <button type="submit" class="comment-submit">Post</button>
     `;
     commentsTab.appendChild(form);
 
@@ -345,11 +374,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!text) return;
 
       try {
+        // 🔹 Fetch user profile
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
+
+        let userName = userData.displayName || userData.username || 'Anonymous';
+        let photoURL = 'assets/images/default-avatar.jpg';
+        if (userData.profileImagePath) {
+          try {
+            photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
+          } catch {}
+        }
+
         await addDoc(collection(db, `novels/${novelId}/comments`), {
           text,
           userId: user.uid,
-          userName: user.displayName || 'Anonymous',
-          photoURL: user.photoURL || 'default-avatar.jpg',
+          userName,
+          photoURL,
           timestamp: serverTimestamp()
         });
 
@@ -363,8 +404,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             novelTitle: data.title,
             text,
             userId: user.uid,
-            userName: user.displayName || 'Anonymous',
-            photoURL: user.photoURL || 'default-avatar.jpg',
+            userName,
+            photoURL,
             timestamp: serverTimestamp()
           });
         }

@@ -1,0 +1,23 @@
+[
+  {
+    "origin": [
+      "http://localhost:5500",
+      "http://127.0.0.1:5501",
+      "http://localhost:3000",
+      "https://inkcraft-6c0f6.web.app",
+      "https://inkcraft-6c0f6.firebaseapp.com",
+      "https://victorabatan.github.io"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "ETag",
+      "x-goog-resumable",
+      "Access-Control-Allow-Origin",
+      "x-goog-meta-*",
+      "Authorization"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -367,196 +367,194 @@ footer {
     color: #FFEB7F;
   }
 }
-
-/* === COMMENTS SECTION === */
-#commentsTab {
-  margin-top: 2rem;
-  padding: 1rem 0;
-}
-
-#commentsTab h2 {
-  color: #A259FF;
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  text-align: center;
-  text-shadow: 0 0 6px #7D2BFF;
-}
-
-#toggleCommentsBtn {
-  background: linear-gradient(135deg, #7D2BFF, #A259FF);
-  color: #fff;
-  border: none;
-  padding: 0.7rem 1.4rem;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 600;
-  margin: 0 auto 1.2rem;
-  display: block;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-}
-
-#toggleCommentsBtn:hover {
-  background: linear-gradient(135deg, #A259FF, #7D2BFF);
-  box-shadow: 0 0 12px #A259FF;
-}
-
-#commentsSection {
-  background: rgba(20, 20, 20, 0.9);
-  padding: 1.5rem;
-  border-radius: 12px;
-  max-height: 500px;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  transition: max-height 0.4s ease, opacity 0.4s ease;
-}
-
-#commentsSection.hidden {
-  max-height: 0;
-  opacity: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* Comment list */
-#commentsList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#commentsList .comment {
-  background: linear-gradient(145deg, #1c1c1c, #2a1a3c);
-  border-radius: 12px;
+/* === Comments + Replies Base Styling === */
+.comment,
+.reply {
+  background: rgba(20, 20, 30, 0.9);
   padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-  border-left: 4px solid #A259FF;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.3s ease;
+  position: relative;
+  max-width: 100%;              /* ✅ keep inside container */
+  word-wrap: break-word;        /* ✅ prevent overflow */
 }
 
-#commentsList .comment:hover {
-  transform: translateY(-3px);
-  border-left-color: #FFD700;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+.comment {
+  border-left: 3px solid #A259FF;
 }
 
-/* Comment header */
+.reply {
+  margin-left: 2rem; /* ✅ reduced indent */
+  background: linear-gradient(145deg, #3a2852, #4a2d6d);
+  border-left: 3px solid #FFD700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  max-width: calc(100% - 2rem); /* ✅ fit inside parent */
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  #commentsSection {
+    max-width: 100%;   /* ✅ use full width */
+    margin: 0;         /* ✅ no right gap */
+  }
+
+  .reply {
+    margin-left: 1rem;          /* ✅ smaller indent */
+    max-width: calc(100% - 1rem);
+  }
+
+  .comment,
+  .reply {
+    padding: 0.8rem;            /* ✅ tighter padding on small screens */
+  }
+
+  .comment-header {
+    flex-wrap: wrap;            /* ✅ prevents overlap */
+  }
+
+  .comment-text {
+    font-size: 0.9rem;          /* ✅ slightly smaller text */
+  }
+}
+
+}
+
+/* Header (avatar + name + date + menu) */
 .comment-header {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
   margin-bottom: 0.5rem;
 }
 
 .comment-avatar {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 0.8rem;
   border: 2px solid #A259FF;
-  box-shadow: 0 0 6px rgba(162, 89, 255, 0.6);
 }
 
-.comment-author,
-.comment-header strong {
-  font-weight: 700;
+.comment-author {
+  font-weight: 600;
   color: #FFD700;
-  font-size: 1rem;
-  margin-right: 0.5rem;
-  text-shadow: 0 0 3px #FFD700;
 }
 
 .comment-date {
-  font-size: 0.85rem;
-  color: #aaa;
+  font-size: 0.8rem;
+  color: #999;
+  margin-left: auto;
 }
 
-/* Comment body */
+/* Comment text */
 .comment-text {
-  font-size: 1rem;
+  margin: 0.4rem 0 0.6rem;
   color: #eee;
-  line-height: 1.6;
-  margin-top: 0.4rem;
-  padding-left: 0.3rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
-/* === Reply button === */
-.reply-btn {
-  margin-top: 0.6rem;
+/* Actions (Reply/Edit/Delete) */
+.comment-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  position: relative;
+  margin-left: auto;
+}
+
+.comment-actions .action-btn {
   background: transparent;
-  border: 1px solid #A259FF;
+  border: none;
   color: #A259FF;
-  padding: 0.3rem 0.8rem;
-  border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
 }
 
-.reply-btn:hover {
+.comment-actions .action-btn:hover {
+  color: #FFD700;
+}
+
+/* === Comment/Reply Actions Menu === */
+.menu-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.menu-btn:hover {
+  color: #FFD700;
+}
+
+.actions-menu {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  display: none;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 9999; /* ✅ stays on top */
+}
+
+.show-actions > .comment-header .actions-menu {
+  display: flex; /* ✅ only the clicked one opens */
+  animation: fadeIn 0.2s ease;
+}
+
+.actions-menu button {
+  background: none;
+  border: none;
+  color: #eee;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.actions-menu button:hover {
   background: #A259FF;
   color: #fff;
-  box-shadow: 0 0 8px #A259FF;
 }
 
-/* Replies */
-.reply {
-  margin-left: 3rem;
-  background: linear-gradient(145deg, #2a1a3c, #3b1f5c);
-  padding: 0.8rem 1rem;
-  border-radius: 10px;
-  border-left: 3px solid #FFD700;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
+.actions-menu .delete-btn:hover {
+  background: #ff3c3c;
+  color: #fff;
 }
 
-.reply-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #FFD700;
-  box-shadow: 0 0 4px rgba(255, 215, 0, 0.6);
-}
-
-.reply-content {
-  flex: 1;
-}
-
-.reply-author {
-  font-weight: 600;
-  color: #FFFA65;
-  font-size: 0.9rem;
+/* === Reply Menu Button Styling (fix) === */
+.reply .actions-menu .reply-btn {
   display: block;
-  margin-bottom: 0.2rem;
+  background: #000;
+  color: #A259FF;
+  font-weight: 600;
 }
 
-.reply-text {
-  color: #ddd;
-  line-height: 1.4;
-  font-size: 0.95rem;
+.reply .actions-menu .reply-btn:hover {
+  background: #A259FF;
+  color: #fff;
 }
 
-/* === Reply Box (NEW) === */
-.reply-box {
-  margin-left: 3rem;
+/* === Edit Mode === */
+.comment form {
   margin-top: 0.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: rgba(25, 25, 25, 0.85);
-  padding: 0.8rem 1rem;
-  border-radius: 10px;
-  border: 1px solid #333;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
 }
 
-.reply-input {
+.comment form textarea {
   padding: 0.6rem;
   border-radius: 8px;
   border: 1px solid #444;
@@ -565,76 +563,162 @@ footer {
   min-height: 60px;
   resize: vertical;
   font-size: 0.9rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.reply-input:focus {
-  border-color: #FFD700;
-  box-shadow: 0 0 6px #FFD700;
+.comment form textarea:focus {
+  border-color: #A259FF;
+  box-shadow: 0 0 6px #A259FF;
   outline: none;
 }
 
-.reply-submit {
-  align-self: flex-end;
-  padding: 0.4rem 1.2rem;
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  border: none;
+.comment form .edit-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.comment form .edit-save,
+.comment form .edit-cancel {
+  padding: 0.4rem 1rem;
   border-radius: 6px;
-  color: #000;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
+  border: none;
   transition: all 0.3s ease;
 }
 
-.reply-submit:hover {
-  background: linear-gradient(135deg, #FFA500, #FFD700);
-  box-shadow: 0 0 8px #FFD700;
+.comment form .edit-save {
+  background: linear-gradient(135deg, #7D2BFF, #A259FF);
+  color: #fff;
 }
 
-/* Comment Form */
-#commentForm {
+.comment form .edit-save:hover {
+  background: linear-gradient(135deg, #A259FF, #7D2BFF);
+}
+
+.comment form .edit-cancel {
+  background: #333;
+  color: #ccc;
+}
+
+.comment form .edit-cancel:hover {
+  background: #444;
+  color: #fff;
+}
+
+/* === Add Comment Box === */
+.add-comment-box {
+  margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  margin-top: 1.2rem;
+  background: rgba(15, 15, 25, 0.85);
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
-#commentInput {
-  padding: 0.8rem;
-  border-radius: 10px;
+.add-comment-box textarea {
+  padding: 0.9rem;
+  border-radius: 8px;
   border: 1px solid #444;
   background: #111;
   color: #fff;
-  min-height: 100px;
+  min-height: 70px;
   resize: vertical;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.95rem;
 }
 
-#commentInput:focus {
+.add-comment-box textarea:focus {
   border-color: #A259FF;
-  box-shadow: 0 0 8px #A259FF;
+  box-shadow: 0 0 6px #A259FF;
   outline: none;
 }
 
-.comment-submit {
+.add-comment-box button {
   align-self: flex-end;
-  padding: 0.6rem 1.4rem;
-  background: linear-gradient(135deg, #A259FF, #7D2BFF);
-  border: none;
-  border-radius: 8px;
-  color: #fff;
+  padding: 0.6rem 1.3rem;
+  border-radius: 6px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #7D2BFF, #A259FF);
+  color: #fff;
   transition: all 0.3s ease;
 }
 
-.comment-submit:hover {
-  background: linear-gradient(135deg, #7D2BFF, #A259FF);
-  box-shadow: 0 0 10px #A259FF;
+.add-comment-box button:hover {
+  background: linear-gradient(135deg, #A259FF, #7D2BFF);
 }
 
+/* === Toggle Comments Button === */
+.toggle-comments-btn {
+  margin: 1rem auto; /* ✅ centralized */
+  display: block;    /* ✅ ensures centering works */
+  padding: 0.6rem 1.4rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid #A259FF;
+  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  color: #eee;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.toggle-comments-btn:hover {
+  background: #A259FF;
+  color: #fff;
+}
+
+/* === Show/Hide Replies Button === */
+.toggle-replies-btn {
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid #444;
+  background: linear-gradient(135deg, #222, #2e2e2e);
+  color: #bbb;
+  transition: all 0.3s ease;
+}
+
+.toggle-replies-btn:hover {
+  background: #A259FF;
+  color: #fff;
+}
+
+/* === Hide Comments Utility === */
+#commentsSection.hidden {
+  display: none !important; /* ✅ enforce hiding */
+}
+
+/* === Comment Section Sizing (give space from floating menu) === */
+#commentsSection {
+  max-width: 75%;   /* ✅ not full width */
+  margin-right: 5%; /* ✅ gap from floating menu */
+}
+
+/* === Utility Classes === */
+.hidden {
+  display: none !important;
+}
+
+/* === Animations === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* Scrollbar for comments */
 #commentsSection::-webkit-scrollbar {
@@ -642,7 +726,7 @@ footer {
 }
 
 #commentsSection::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
 }
 
@@ -651,12 +735,11 @@ footer {
   border-radius: 8px;
 }
 
-
 /* === INBOX PAGE === */
 .inbox-container {
   flex: 1;
   padding: 2rem;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.75);
   border-radius: 12px;
 }
 

@@ -8,6 +8,8 @@ import {
   orderBy,
   setDoc,
   addDoc,
+  updateDoc,
+  deleteDoc,
   serverTimestamp,
   onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const auth = getAuth(app);
 
-  // ✅ Inbox logic (status, comment, reply notifications)
+  // ✅ Inbox logic
   onAuthStateChanged(auth, async (user) => {
     const inboxContainer = document.getElementById('inboxContainer');
     if (!user) {
@@ -211,26 +213,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ✅ COMMENTS + REPLIES
+  // ✅ COMMENTS + REPLIES with actions
   const commentsTab = document.getElementById('commentsTab');
   if (commentsTab) {
-    // Wrapper section
     const commentsSection = document.createElement('div');
     commentsSection.id = 'commentsSection';
     commentsSection.classList.add('hidden');
 
-    // Toggle button
     const toggleBtn = document.createElement('button');
     toggleBtn.id = 'toggleCommentsBtn';
+    toggleBtn.classList.add('toggle-comments-btn');
     toggleBtn.textContent = '💬 Show Comments';
     commentsTab.appendChild(toggleBtn);
     commentsTab.appendChild(commentsSection);
 
-    // List
     const commentsList = document.createElement('ul');
     commentsList.id = 'commentsList';
     commentsSection.appendChild(commentsList);
 
+    // ✅ Toggle comments show/hide
     toggleBtn.addEventListener('click', () => {
       commentsSection.classList.toggle('hidden');
       toggleBtn.textContent = commentsSection.classList.contains('hidden')
@@ -238,127 +239,186 @@ document.addEventListener('DOMContentLoaded', async () => {
         : '💬 Hide Comments';
     });
 
-    async function renderCommentsRealtime() {
-      const commentsRef = collection(db, `novels/${novelId}/comments`);
-      // 🔹 Sort newest → oldest
-      const q = query(commentsRef, orderBy('timestamp', 'desc'));
+    // 🔹 Recursive renderer for comments + unlimited nested replies
+    async function renderThread(path, container) {
+      const q = query(collection(db, path), orderBy('timestamp', 'asc'));
       onSnapshot(q, snapshot => {
-        commentsList.innerHTML = '';
-        if (snapshot.empty) {
-          commentsList.innerHTML = '<p>No comments yet.</p>';
-          return;
-        }
-
+        container.innerHTML = '';
         snapshot.forEach(docSnap => {
           const c = docSnap.data();
-          const li = document.createElement('li');
-          li.classList.add('comment');
-          li.innerHTML = `
+          const currentUser = auth.currentUser;
+          const isOwner = currentUser && c.userId === currentUser.uid;
+
+          const wrapper = document.createElement('div');
+          wrapper.classList.add(path.includes('replies') ? 'reply' : 'comment');
+          wrapper.innerHTML = `
             <div class="comment-header">
               <img src="${c.photoURL || 'assets/images/default-avatar.jpg'}" class="comment-avatar">
               <span class="comment-author">${c.userName || 'Anonymous'}</span>
               <span class="comment-date">${c.timestamp?.toDate ? c.timestamp.toDate().toLocaleString() : ''}</span>
+              <div class="comment-actions">
+                <button class="menu-btn">⋮</button>
+                <div class="actions-menu">
+                  ${isOwner
+                    ? `<button class="action-btn edit-btn">Edit</button>
+                       <button class="action-btn delete-btn">Delete</button>`
+                    : `<button class="action-btn reply-btn">Reply</button>`
+                  }
+                </div>
+              </div>
             </div>
             <p class="comment-text">${c.text}</p>
-            <button class="reply-btn" data-comment-id="${docSnap.id}">↩ Reply</button>
-            <div id="replies-${docSnap.id}"></div>
+            <div class="replies" id="replies-${docSnap.id}" style="display:none;"></div>
           `;
-          commentsList.appendChild(li);
+          container.appendChild(wrapper);
 
-          // Load replies
-          const repliesContainer = li.querySelector(`#replies-${docSnap.id}`);
-          const repliesRef = collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`);
-          const repliesQuery = query(repliesRef, orderBy('timestamp', 'asc'));
-          onSnapshot(repliesQuery, repliesSnap => {
-            repliesContainer.innerHTML = '';
-            repliesSnap.forEach(replyDoc => {
-              const r = replyDoc.data();
-              const replyDiv = document.createElement('div');
-              replyDiv.classList.add('reply');
-              replyDiv.innerHTML = `
-                <div class="comment-header">
-                  <img src="${r.photoURL || 'assets/images/default-avatar.jpg'}" class="comment-avatar">
-                  <span class="reply-author">${r.userName || 'Anonymous'}</span>
-                  <span class="comment-date">${r.timestamp?.toDate ? r.timestamp.toDate().toLocaleString() : ''}</span>
-                </div>
-                <p class="reply-text">${r.text}</p>
-              `;
-              repliesContainer.appendChild(replyDiv);
-            });
+          // ✅ helper to close menu
+          const closeMenu = () => wrapper.classList.remove('show-actions');
+
+          // 🔹 Toggle actions menu (only one open at a time, scoped)
+          const menuBtn = wrapper.querySelector('.menu-btn');
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.comment.show-actions, .reply.show-actions')
+              .forEach(el => {
+                if (el !== wrapper) el.classList.remove('show-actions');
+              });
+            wrapper.classList.toggle('show-actions');
           });
 
-          // Reply button handler
-          li.querySelector('.reply-btn').addEventListener('click', () => {
-            if (li.querySelector('form')) return;
-            const replyForm = document.createElement('form');
-            replyForm.innerHTML = `
-              <textarea placeholder="Write a reply..." required></textarea>
-              <button type="submit" class="comment-submit">Post Reply</button>
-            `;
-            li.appendChild(replyForm);
+          // ✅ Attach button actions
+          const replyBtn = wrapper.querySelector('.reply-btn');
+          const editBtn = wrapper.querySelector('.edit-btn');
+          const deleteBtn = wrapper.querySelector('.delete-btn');
 
-            replyForm.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const replyText = replyForm.querySelector('textarea').value.trim();
-              if (!replyText) return;
-              const currentUser = auth.currentUser;
-              if (!currentUser) {
-                alert('You must be logged in to reply.');
-                return;
-              }
+          if (replyBtn) {
+            replyBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
 
-              try {
-                // 🔹 Fetch user profile
-                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-                const userData = userDoc.exists() ? userDoc.data() : {};
+              const existingForm = wrapper.querySelector('.inline-reply-form');
+              if (existingForm) return;
 
-                let userName = userData.displayName || userData.username || 'Anonymous';
-                let photoURL = 'assets/images/default-avatar.jpg';
-                if (userData.profileImagePath) {
-                  try {
-                    photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
-                  } catch {}
-                }
+              const form = document.createElement('form');
+              form.classList.add('add-comment-box', 'inline-reply-form');
+              form.innerHTML = `
+                <textarea placeholder="Write a reply..." required></textarea>
+                <button type="submit">Reply</button>
+              `;
+              wrapper.appendChild(form);
 
-                await addDoc(collection(db, `novels/${novelId}/comments/${docSnap.id}/replies`), {
-                  text: replyText,
-                  userId: currentUser.uid,
-                  userName,
-                  photoURL,
-                  timestamp: serverTimestamp()
-                });
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = form.querySelector('textarea').value.trim();
+                if (!text) return;
+                const user = auth.currentUser;
+                if (!user) return alert('Login required to reply.');
 
-                // Notify original commenter
-                if (c.userId && c.userId !== currentUser.uid) {
-                  await addDoc(collection(db, `users/${c.userId}/inbox`), {
-                    type: 'reply',
-                    novelTitle: data.title,
-                    text: replyText,
-                    userId: currentUser.uid,
+                try {
+                  const userDoc = await getDoc(doc(db, "users", user.uid));
+                  const userData = userDoc.exists() ? userDoc.data() : {};
+
+                  let userName = userData.displayName || userData.username || 'Anonymous';
+                  let photoURL = 'assets/images/default-avatar.jpg';
+                  if (userData.profileImagePath) {
+                    try {
+                      photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
+                    } catch {}
+                  }
+
+                  await addDoc(collection(db, `${path}/${docSnap.id}/replies`), {
+                    text,
+                    userId: user.uid,
                     userName,
                     photoURL,
                     timestamp: serverTimestamp()
                   });
+                } catch (err) {
+                  console.error('Failed to post reply:', err);
+                  alert('Error posting reply.');
                 }
 
-                replyForm.remove();
-              } catch (err) {
-                console.error('Failed to post reply:', err);
-                alert('Error posting reply.');
+                form.remove();
+              });
+            });
+          }
+
+          if (editBtn) {
+            editBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
+
+              const existingForm = wrapper.querySelector('.inline-edit-form');
+              if (existingForm) return;
+
+              const currentText = c.text;
+              const textEl = wrapper.querySelector('.comment-text');
+              textEl.style.display = 'none';
+
+              const form = document.createElement('form');
+              form.classList.add('add-comment-box', 'inline-edit-form');
+              form.innerHTML = `
+                <textarea required>${currentText}</textarea>
+                <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                  <button type="submit">Save</button>
+                  <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+              `;
+              wrapper.insertBefore(form, wrapper.querySelector('.replies'));
+
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newText = form.querySelector('textarea').value.trim();
+                if (newText && newText !== currentText) {
+                  await updateDoc(doc(db, path, docSnap.id), { text: newText });
+                }
+                textEl.style.display = 'block';
+                form.remove();
+              });
+
+              form.querySelector('.cancel-btn').addEventListener('click', () => {
+                textEl.style.display = 'block';
+                form.remove();
+              });
+            });
+          }
+
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
+
+              if (confirm('Delete this comment?')) {
+                await deleteDoc(doc(db, path, docSnap.id));
               }
             });
+          }
+
+          // 🔹 Replies toggle button
+          const toggleRepliesBtn = document.createElement('button');
+          toggleRepliesBtn.classList.add('toggle-replies-btn');
+          toggleRepliesBtn.textContent = 'Show Replies';
+          wrapper.appendChild(toggleRepliesBtn);
+
+          toggleRepliesBtn.addEventListener('click', () => {
+            const repliesBox = wrapper.querySelector(`#replies-${docSnap.id}`);
+            const isHidden = repliesBox.style.display === 'none' || !repliesBox.style.display;
+            repliesBox.style.display = isHidden ? 'block' : 'none';
+            toggleRepliesBtn.textContent = isHidden ? 'Hide Replies' : 'Show Replies';
           });
+
+          // 🔹 Render nested replies
+          const repliesContainer = wrapper.querySelector(`#replies-${docSnap.id}`);
+          renderThread(`${path}/${docSnap.id}/replies`, repliesContainer);
         });
       });
     }
 
-    renderCommentsRealtime();
+    renderThread(`novels/${novelId}/comments`, commentsList);
 
     // Comment form
     const form = document.createElement('form');
     form.id = 'commentForm';
+    form.classList.add('add-comment-box');
     form.innerHTML = `
-      <textarea id="commentInput" placeholder="Write a comment..." required></textarea>
+      <textarea id="commentInput" class="comment-input" placeholder="Write a comment..." required></textarea>
       <button type="submit" class="comment-submit">Post</button>
     `;
     commentsTab.appendChild(form);
@@ -374,7 +434,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!text) return;
 
       try {
-        // 🔹 Fetch user profile
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
 
@@ -396,11 +455,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         form.reset();
 
-        // ✅ Auto-open comments after posting
         commentsSection.classList.remove('hidden');
         toggleBtn.textContent = '💬 Hide Comments';
 
-        // Notify author
         const authorUid = data.submittedBy;
         if (authorUid && authorUid !== user.uid) {
           await addDoc(collection(db, `users/${authorUid}/inbox`), {
@@ -419,4 +476,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  // ✅ Global click listener to close open menus
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('menu-btn')) return;
+    document.querySelectorAll('.comment.show-actions, .reply.show-actions')
+      .forEach(el => {
+        if (!el.contains(e.target)) {
+          el.classList.remove('show-actions');
+        }
+      });
+  });
 });

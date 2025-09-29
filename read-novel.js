@@ -171,8 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error loading novel:', err);
     }
-  }
-// === COMMENTS ===
+  }// === COMMENTS ===
 function initComments() {
   if (!toggleCommentsBtn || !closeCommentsBtn || !commentsContainer) return;
 
@@ -216,7 +215,7 @@ function initComments() {
 
   closeCommentsBtn.addEventListener('click', closeComments);
 
-  // close on outside click
+  // ✅ close panel ONLY if click is truly outside panel & toggle button
   document.addEventListener('click', (e) => {
     if (
       commentsContainer.classList.contains('show') &&
@@ -225,6 +224,27 @@ function initComments() {
     ) {
       closeComments();
     }
+  });
+
+  // ✅ helper to close all inline forms
+  function closeAllInlineForms() {
+    const openForms = commentsContainer.querySelectorAll('.edit-form, .reply-form');
+    openForms.forEach((form) => form.remove());
+    const hiddenTexts = commentsContainer.querySelectorAll('.comment-text[style*="display: none"]');
+    hiddenTexts.forEach((txt) => (txt.style.display = 'block'));
+  }
+
+  // ✅ close inline edit/reply forms if clicking anywhere else
+  document.addEventListener('click', (e) => {
+    if (commentsContainer.contains(e.target)) {
+      // click inside comment section → still close open forms
+      if (!e.target.closest('.edit-form') && !e.target.closest('.reply-form')) {
+        closeAllInlineForms();
+      }
+      return;
+    }
+    // click outside comments → close forms too
+    closeAllInlineForms();
   });
 
   async function resolveProfileImage(userData) {
@@ -268,8 +288,9 @@ function initComments() {
     if (auth.currentUser && auth.currentUser.uid === data.userId) {
       const editBtn = document.createElement('button');
       editBtn.textContent = 'Edit';
-      editBtn.onclick = async () => {
-        // inline edit form
+      editBtn.onclick = async (e) => {
+        e.stopPropagation();
+        closeAllInlineForms(); // ✅ auto-close other forms
         const textEl = itemEl.querySelector('.comment-text');
         if (itemEl.querySelector('.edit-form')) return; // avoid duplicates
 
@@ -284,7 +305,7 @@ function initComments() {
         `;
 
         textEl.style.display = 'none';
-        itemEl.insertBefore(editForm, itemEl.querySelector('.replies'));
+        itemEl.insertBefore(editForm, itemEl.querySelector('.replies-wrapper'));
 
         editForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -296,7 +317,8 @@ function initComments() {
           editForm.remove();
         });
 
-        editForm.querySelector('.cancel-btn').addEventListener('click', () => {
+        editForm.querySelector('.cancel-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
           textEl.style.display = 'block';
           editForm.remove();
         });
@@ -304,7 +326,8 @@ function initComments() {
 
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Delete';
-      deleteBtn.onclick = async () => {
+      deleteBtn.onclick = async (e) => {
+        e.stopPropagation();
         if (confirm('Delete this message?')) await deleteDoc(doc(parentRef, docSnap.id));
       };
       actions.appendChild(editBtn);
@@ -314,7 +337,9 @@ function initComments() {
     // Everyone (including owner) can reply
     const replyBtn = document.createElement('button');
     replyBtn.textContent = 'Reply';
-    replyBtn.onclick = async () => {
+    replyBtn.onclick = async (e) => {
+      e.stopPropagation();
+      closeAllInlineForms(); // ✅ auto-close other forms
       if (itemEl.querySelector('.reply-form')) return; // avoid duplicates
 
       const replyForm = document.createElement('form');
@@ -362,15 +387,42 @@ function initComments() {
     itemEl.appendChild(actions);
 
     // Container for nested replies
+    const repliesWrapper = document.createElement('div');
+    repliesWrapper.classList.add('replies-wrapper');
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.classList.add('toggle-replies');
+    toggleBtn.style.display = 'none'; // hidden until replies exist
+    repliesWrapper.appendChild(toggleBtn);
+
     const repliesContainer = document.createElement('div');
-    repliesContainer.classList.add('replies');
-    itemEl.appendChild(repliesContainer);
+    repliesContainer.classList.add('replies', 'hidden'); // hidden by default
+    repliesWrapper.appendChild(repliesContainer);
+
+    itemEl.appendChild(repliesWrapper);
 
     // Realtime listener for nested replies
     const repliesRef = collection(parentRef, `${docSnap.id}/replies`);
     const rq = query(repliesRef, orderBy('createdAt'));
     onSnapshot(rq, (replySnap) => {
       repliesContainer.innerHTML = '';
+      if (replySnap.empty) {
+        toggleBtn.style.display = 'none';
+        return;
+      }
+      toggleBtn.style.display = 'inline-block';
+      toggleBtn.textContent = `Show replies (${replySnap.size})`;
+      let open = false;
+      toggleBtn.onclick = () => {
+        open = !open;
+        if (open) {
+          repliesContainer.classList.remove('hidden');
+          toggleBtn.textContent = `Hide replies`;
+        } else {
+          repliesContainer.classList.add('hidden');
+          toggleBtn.textContent = `Show replies (${replySnap.size})`;
+        }
+      };
       replySnap.forEach((replyDoc) => {
         renderCommentOrReply(repliesRef, replyDoc, repliesContainer, depth + 1);
       });
@@ -455,7 +507,6 @@ function initComments() {
     }
   });
 }
-
 
   // === Chapters ===
   async function loadChaptersRealTime() {

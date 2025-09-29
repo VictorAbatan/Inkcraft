@@ -386,14 +386,16 @@ body.dark-mode .replies li {
 #pageNav button:hover {
   background-color: #0056b3;
 }
+
+
 /* === Sliding Comments Panel === */
 .comments-container {
   position: fixed;
   top: 0;
   right: -100%;
-  width: 50%;
-  max-width: 520px;
-  height: 100vh;             /* ensure full viewport height */
+  width: 90%; /* expanded to cover 90% */
+  max-width: none;
+  height: 100vh;
   background: #fff;
   box-shadow: -4px 0 12px rgba(0,0,0,0.2);
   z-index: 3000;
@@ -402,12 +404,10 @@ body.dark-mode .replies li {
   flex-direction: column;
 }
 
-/* Slide in */
 .comments-container.show {
   right: 0;
 }
 
-/* Close button */
 .comments-container .close-comments-btn {
   background: #007bff;
   color: #fff;
@@ -423,36 +423,33 @@ body.dark-mode .replies li {
   background: #0056b3;
 }
 
-/* Body of comments (scrollable) */
 .comments-container .comments-body {
-  flex: 1 1 auto;       /* take remaining space */
-  overflow-y: auto;     /* enable scroll */
+  flex: 1 1 auto;
+  overflow-y: auto;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 0;        /* required for flexbox scroll */
+  min-height: 0;
 }
 
-/* Ensure comment form stays at bottom */
 .comments-container .comment-form {
   flex-shrink: 0;
   padding: 1rem;
   border-top: 1px solid #ccc;
-  background: #1e1e1e;  /* dark background */
+  background: #1e1e1e;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Textarea & Button adjustments */
 .comments-container .comment-form textarea {
   width: 100%;
   min-height: 80px;
   padding: 10px;
   border-radius: 8px;
-  border: 2px solid purple; /* purple outline */
-  background: #333;          /* dark background */
+  border: 2px solid purple;
+  background: #333;
   color: #fff;
   font-size: 1rem;
   resize: vertical;
@@ -462,7 +459,7 @@ body.dark-mode .replies li {
   align-self: flex-end;
   padding: 8px 16px;
   border: none;
-  background: #6a0dad;   /* purple-ish button */
+  background: #6a0dad;
   color: #fff;
   border-radius: 6px;
   cursor: pointer;
@@ -474,7 +471,7 @@ body.dark-mode .replies li {
   background: #4b0082;
 }
 
-/* Individual comment */
+/* === Comment Styling === */
 .comments-container .comment {
   background: #f1f1f1;
   border-radius: 6px;
@@ -495,21 +492,121 @@ body.dark-mode .replies li {
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  display: block;          /* ensures avatar displays */
+  display: block;
 }
 
 .comments-container .comment-user {
   font-weight: 600;
 }
 
-/* Actions under each comment */
-.comments-container .comment-actions {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 0.85rem;
+.comments-container .comment-text {
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
-/* Dark mode for comments */
+.comments-container .comment-actions {
+  display: flex;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.comments-container .comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #007bff;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.comments-container .comment-actions button:hover {
+  text-decoration: underline;
+}
+
+/* === Inline Forms (Edit & Reply) === */
+.comments-container .edit-form,
+.comments-container .reply-form {
+  margin-top: 0.5rem;
+  margin-right: 1rem; /* reduce popping out */
+  margin-left: 0.5rem; /* keep aligned */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comments-container .edit-form textarea,
+.comments-container .reply-form textarea {
+  width: 95%; /* prevent overflow to the right */
+  min-height: 60px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 2px solid purple;
+  font-size: 0.9rem;
+  resize: vertical;
+  background: #333;
+  color: #fff;
+}
+
+.comments-container .edit-form button,
+.comments-container .reply-form button {
+  align-self: flex-end;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  background: #6a0dad;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.comments-container .edit-form button:hover,
+.comments-container .reply-form button:hover {
+  background: #4b0082;
+}
+
+/* === Replies Wrapper === */
+.comments-container .replies-wrapper {
+  margin-left: 2.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.comments-container .toggle-replies {
+  background: none;
+  border: none;
+  color: #6a0dad;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.comments-container .toggle-replies:hover {
+  text-decoration: underline;
+}
+
+.comments-container .replies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.comments-container .replies.hidden {
+  display: none;
+}
+
+.comments-container .reply {
+  background: #eaeaea;
+  border-radius: 6px;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+}
+
+/* === Dark Mode for Comments & Replies === */
 body.dark-mode .comments-container {
   background: #1e1e1e;
   color: #f1f1f1;
@@ -531,4 +628,12 @@ body.dark-mode .comments-container .comment-form textarea {
   background: #333;
   color: #fff;
   border-color: purple;
+}
+
+body.dark-mode .comments-container .reply {
+  background: #2a2a2a;
+}
+
+body.dark-mode .comments-container .toggle-replies {
+  color: #bb86fc;
 }

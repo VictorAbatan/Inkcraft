@@ -6,8 +6,13 @@ import {
   doc, getDoc, collection, query, orderBy, onSnapshot,
   addDoc, updateDoc, deleteDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  getStorage, ref, getDownloadURL 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const auth = getAuth(app);
+const storage = getStorage(app);
+
 const urlParams = new URLSearchParams(window.location.search);
 let novelId = urlParams.get('novelId') || localStorage.getItem('lastNovelId');
 const chapterIdFromUrl = urlParams.get('chapterId');
@@ -167,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading novel:', err);
     }
   }
-
 // === COMMENTS ===
 function initComments() {
   if (!toggleCommentsBtn || !closeCommentsBtn || !commentsContainer) return;
@@ -199,27 +203,196 @@ function initComments() {
 
   let currentChapterCollection = null;
 
+  // ✅ unified close
+  function closeComments() {
+    commentsContainer.classList.remove('show');
+    document.body.classList.remove('no-scroll');
+  }
+
   toggleCommentsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     commentsContainer.classList.add('show');
   });
 
-  closeCommentsBtn.addEventListener('click', () => {
-    commentsContainer.classList.remove('show');
+  closeCommentsBtn.addEventListener('click', closeComments);
+
+  // close on outside click
+  document.addEventListener('click', (e) => {
+    if (
+      commentsContainer.classList.contains('show') &&
+      !commentsContainer.contains(e.target) &&
+      !toggleCommentsBtn.contains(e.target)
+    ) {
+      closeComments();
+    }
   });
+
+  async function resolveProfileImage(userData) {
+    let profileImageUrl = 'assets/images/default-avatar.jpg';
+    const path = userData?.profileImagePath || userData?.photoPath;
+    if (path) {
+      if (path.startsWith('http')) {
+        profileImageUrl = path;
+      } else {
+        try {
+          profileImageUrl = await getDownloadURL(ref(storage, path));
+        } catch (err) {
+          console.warn('Could not fetch profile image, using default:', err);
+        }
+      }
+    }
+    return profileImageUrl;
+  }
+
+  // === Recursive rendering for comments & replies ===
+  async function renderCommentOrReply(parentRef, docSnap, container, depth = 0) {
+    const data = docSnap.data();
+    const itemEl = document.createElement('div');
+    itemEl.classList.add(depth === 0 ? 'comment' : 'reply');
+
+    const userProfileUrl =
+      data.photoPath || data.profileImagePath || 'assets/images/default-avatar.jpg';
+
+    itemEl.innerHTML = `
+      <div class="comment-header">
+        <img src="${userProfileUrl}" alt="user" class="comment-avatar" />
+        <span class="comment-user">${data.displayName || data.username || 'Anonymous'}</span>
+      </div>
+      <p class="comment-text">${data.text}</p>
+    `;
+
+    const actions = document.createElement('div');
+    actions.classList.add('comment-actions');
+
+    // Only owner can edit/delete
+    if (auth.currentUser && auth.currentUser.uid === data.userId) {
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Edit';
+      editBtn.onclick = async () => {
+        // inline edit form
+        const textEl = itemEl.querySelector('.comment-text');
+        if (itemEl.querySelector('.edit-form')) return; // avoid duplicates
+
+        const editForm = document.createElement('form');
+        editForm.classList.add('edit-form');
+        editForm.innerHTML = `
+          <textarea required>${data.text}</textarea>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <button type="submit">Save</button>
+            <button type="button" class="cancel-btn">Cancel</button>
+          </div>
+        `;
+
+        textEl.style.display = 'none';
+        itemEl.insertBefore(editForm, itemEl.querySelector('.replies'));
+
+        editForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const newText = editForm.querySelector('textarea').value.trim();
+          if (newText && newText !== data.text) {
+            await updateDoc(doc(parentRef, docSnap.id), { text: newText });
+          }
+          textEl.style.display = 'block';
+          editForm.remove();
+        });
+
+        editForm.querySelector('.cancel-btn').addEventListener('click', () => {
+          textEl.style.display = 'block';
+          editForm.remove();
+        });
+      };
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.onclick = async () => {
+        if (confirm('Delete this message?')) await deleteDoc(doc(parentRef, docSnap.id));
+      };
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+    }
+
+    // Everyone (including owner) can reply
+    const replyBtn = document.createElement('button');
+    replyBtn.textContent = 'Reply';
+    replyBtn.onclick = async () => {
+      if (itemEl.querySelector('.reply-form')) return; // avoid duplicates
+
+      const replyForm = document.createElement('form');
+      replyForm.classList.add('reply-form');
+      replyForm.innerHTML = `
+        <textarea placeholder="Write a reply..." required></textarea>
+        <button type="submit">Reply</button>
+      `;
+
+      itemEl.appendChild(replyForm);
+
+      replyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = replyForm.querySelector('textarea').value.trim();
+        if (!text) return;
+
+        const user = auth.currentUser;
+        if (!user) return alert('Please log in to reply.');
+
+        let userData = {};
+        try {
+          const userDocSnap = await getDoc(doc(db, 'users', user.uid));
+          if (userDocSnap.exists()) userData = userDocSnap.data();
+        } catch (err) {
+          console.error('Error fetching user data:', err);
+        }
+
+        const profileImageUrl = await resolveProfileImage(userData);
+
+        await addDoc(collection(parentRef, `${docSnap.id}/replies`), {
+          text,
+          userId: user.uid,
+          displayName: userData.displayName || 'Anonymous',
+          username: userData.username || user.email.split('@')[0],
+          photoPath: profileImageUrl,
+          profileImagePath: profileImageUrl,
+          createdAt: serverTimestamp()
+        });
+
+        replyForm.remove();
+      });
+    };
+    actions.appendChild(replyBtn);
+
+    itemEl.appendChild(actions);
+
+    // Container for nested replies
+    const repliesContainer = document.createElement('div');
+    repliesContainer.classList.add('replies');
+    itemEl.appendChild(repliesContainer);
+
+    // Realtime listener for nested replies
+    const repliesRef = collection(parentRef, `${docSnap.id}/replies`);
+    const rq = query(repliesRef, orderBy('createdAt'));
+    onSnapshot(rq, (replySnap) => {
+      repliesContainer.innerHTML = '';
+      replySnap.forEach((replyDoc) => {
+        renderCommentOrReply(repliesRef, replyDoc, repliesContainer, depth + 1);
+      });
+    });
+
+    container.appendChild(itemEl);
+  }
 
   async function loadChapterComments(chapterId) {
     if (!chapterId) return;
-    currentChapterCollection = collection(db, `novels/${novelId}/published_chapters/${chapterId}/comments`);
+    currentChapterCollection = collection(
+      db,
+      `novels/${novelId}/published_chapters/${chapterId}/comments`
+    );
     const q = query(currentChapterCollection, orderBy('createdAt'));
 
     if (window.chapterCommentsUnsub) {
-      window.chapterCommentsUnsub(); 
+      window.chapterCommentsUnsub();
       window.chapterCommentsUnsub = null;
     }
 
     window.chapterCommentsUnsub = onSnapshot(q, (snapshot) => {
-      // Clear only previous comments, keep form at bottom
       commentsBody.innerHTML = '';
 
       if (snapshot.empty) {
@@ -227,47 +400,10 @@ function initComments() {
         return;
       }
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const commentEl = document.createElement('div');
-        commentEl.classList.add('comment');
-        commentEl.innerHTML = `
-          <div class="comment-header">
-            <img src="${data.photoPath || data.profileImagePath || 'default-avatar.png'}" alt="user" class="comment-avatar" />
-            <span class="comment-user">${data.displayName || data.username || 'Anonymous'}</span>
-          </div>
-          <p>${data.text}</p>
-        `;
-
-        const actions = document.createElement('div');
-        actions.classList.add('comment-actions');
-
-        if (auth.currentUser && auth.currentUser.uid === data.uid) {
-          const editBtn = document.createElement('button');
-          editBtn.textContent = 'Edit';
-          editBtn.onclick = async () => {
-            const newText = prompt('Edit your comment:', data.text);
-            if (newText) await updateDoc(doc(currentChapterCollection, docSnap.id), { text: newText });
-          };
-          const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = 'Delete';
-          deleteBtn.onclick = async () => {
-            if (confirm('Delete this comment?')) await deleteDoc(doc(currentChapterCollection, docSnap.id));
-          };
-          actions.appendChild(editBtn);
-          actions.appendChild(deleteBtn);
-        } else {
-          const replyBtn = document.createElement('button');
-          replyBtn.textContent = 'Reply';
-          replyBtn.onclick = () => alert('Replies under replies supported in extended version.');
-          actions.appendChild(replyBtn);
-        }
-
-        commentEl.appendChild(actions);
-        commentsBody.appendChild(commentEl);
+      snapshot.forEach((docSnap) => {
+        renderCommentOrReply(currentChapterCollection, docSnap, commentsBody, 0);
       });
 
-      // Scroll to bottom on update
       commentsBody.scrollTop = commentsBody.scrollHeight;
     });
   }
@@ -279,7 +415,6 @@ function initComments() {
     const text = newCommentInput.value.trim();
     if (!text) return;
 
-    // Fetch user record from Firestore
     let userData = {};
     try {
       const userDocSnap = await getDoc(doc(db, 'users', user.uid));
@@ -288,13 +423,15 @@ function initComments() {
       console.error('Error fetching user data:', err);
     }
 
+    const profileImageUrl = await resolveProfileImage(userData);
+
     await addDoc(currentChapterCollection, {
       text,
-      uid: user.uid,
+      userId: user.uid,
       displayName: userData.displayName || 'Anonymous',
       username: userData.username || user.email.split('@')[0],
-      photoPath: userData.profileImagePath || 'default-avatar.png',
-      profileImagePath: userData.profileImagePath || 'default-avatar.png',
+      photoPath: profileImageUrl,
+      profileImagePath: profileImageUrl,
       createdAt: serverTimestamp()
     });
 
@@ -311,14 +448,13 @@ function initComments() {
 
   chapterSelect.addEventListener('change', () => {
     const selectedId = chapterSelect.value;
-    const idx = chapters.findIndex(c => c.id === selectedId);
+    const idx = chapters.findIndex((c) => c.id === selectedId);
     if (idx >= 0) {
       currentChapterIndex = idx;
       updateCommentsForChapter();
     }
   });
 }
-
 
 
   // === Chapters ===

@@ -36,6 +36,12 @@ header {
   z-index: 2000;
 }
 
+/* === Back Button Adjustment === */
+#closeCommentsBtn,
+#backToDetailsBtn {
+  margin-top: 2.5rem; /* pushes below scroll progress bar */
+}
+
 /* === Reading Area === */
 .reading-main {
   display: flex;
@@ -46,7 +52,6 @@ header {
 .reading-frame {
   max-width: 800px;
   width: 100%;
-  background: transparent;
 }
 
 #chapterContent > section {
@@ -64,8 +69,8 @@ header {
 /* === Paragraph Spacing Update === */
 #chapterContent p {
   white-space: pre-line;
-  line-height: 1.8; /* slightly more readable spacing */
-  margin: 1.2rem 0; /* increased margin for better separation */
+  line-height: 1.8;
+  margin: 1.2rem 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -86,7 +91,7 @@ header {
   font-style: italic;
   color: #333;
   border-radius: 6px;
-  line-height: 1.6; /* slightly increased for readability */
+  line-height: 1.6;
 }
 
 body.dark-mode .author-notes {
@@ -203,95 +208,40 @@ body.dark-mode .author-notes {
   padding: 0.4rem;
 }
 
-/* === Comments Popup Panel === */
-.comments-popup {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.comments-popup h3 {
-  margin-top: 0;
-}
-
-.comments-popup ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem;
-}
-
-.comments-popup ul li {
-  background: #f9f9f9;
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-}
-
-.comments-popup textarea {
-  width: 100%;
-  height: 80px;
-  resize: vertical;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-.comments-popup button {
-  float: right;
-  margin-top: 0.5rem;
-  padding: 6px 12px;
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.comments-popup button:hover {
-  background: #0056b3;
-}
-
-/* === 👤 Avatar and Reply Styles === */
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 8px;
-}
-
-.reply-header {
+/* === Comments Form Styling === */
+.comment-form {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 0.3rem;
+  flex-direction: column;
+  gap: 10px;
+  padding: 1rem;
+  border-top: 1px solid #ccc;
+  background: #f9f9f9;
 }
 
-.reply-btn {
-  background: none;
+.comment-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.comment-form button {
+  align-self: flex-end;
+  padding: 8px 16px;
   border: none;
-  color: #007bff;
-  font-size: 0.9rem;
+  background: #333;
+  color: #fff;
+  border-radius: 6px;
   cursor: pointer;
-  margin-top: 0.4rem;
+  font-size: 0.95rem;
+  transition: background 0.2s;
 }
 
-.reply-btn:hover {
-  text-decoration: underline;
-}
-
-.replies {
-  list-style: none;
-  padding-left: 1.2rem;
-  margin-top: 0.5rem;
-}
-
-.replies li {
-  background: #efefef;
-  padding: 0.4rem;
-  border-radius: 4px;
-  margin-bottom: 0.3rem;
-  font-size: 0.9rem;
+.comment-form button:hover {
+  background: #555;
 }
 
 /* === Page Mode Layout (Updated) === */
@@ -310,7 +260,7 @@ body.page-mode #chapterContent > section {
   width: 100%;
   height: auto;
   padding: 2rem 1rem;
-  background: transparent; /* ✅ no box */
+  background: transparent;
   border: none;
   box-shadow: none;
   line-height: 1.8;
@@ -435,4 +385,150 @@ body.dark-mode .replies li {
 
 #pageNav button:hover {
   background-color: #0056b3;
+}
+/* === Sliding Comments Panel === */
+.comments-container {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 50%;
+  max-width: 520px;
+  height: 100vh;             /* ensure full viewport height */
+  background: #fff;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+  z-index: 3000;
+  transition: right 0.4s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Slide in */
+.comments-container.show {
+  right: 0;
+}
+
+/* Close button */
+.comments-container .close-comments-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.comments-container .close-comments-btn:hover {
+  background: #0056b3;
+}
+
+/* Body of comments (scrollable) */
+.comments-container .comments-body {
+  flex: 1 1 auto;       /* take remaining space */
+  overflow-y: auto;     /* enable scroll */
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;        /* required for flexbox scroll */
+}
+
+/* Ensure comment form stays at bottom */
+.comments-container .comment-form {
+  flex-shrink: 0;
+  padding: 1rem;
+  border-top: 1px solid #ccc;
+  background: #1e1e1e;  /* dark background */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Textarea & Button adjustments */
+.comments-container .comment-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid purple; /* purple outline */
+  background: #333;          /* dark background */
+  color: #fff;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.comments-container .comment-form button {
+  align-self: flex-end;
+  padding: 8px 16px;
+  border: none;
+  background: #6a0dad;   /* purple-ish button */
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+
+.comments-container .comment-form button:hover {
+  background: #4b0082;
+}
+
+/* Individual comment */
+.comments-container .comment {
+  background: #f1f1f1;
+  border-radius: 6px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comments-container .comment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.comments-container .comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;          /* ensures avatar displays */
+}
+
+.comments-container .comment-user {
+  font-weight: 600;
+}
+
+/* Actions under each comment */
+.comments-container .comment-actions {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Dark mode for comments */
+body.dark-mode .comments-container {
+  background: #1e1e1e;
+  color: #f1f1f1;
+}
+
+body.dark-mode .comments-container .close-comments-btn {
+  background: #1e90ff;
+}
+
+body.dark-mode .comments-container .comment {
+  background: #2a2a2a;
+}
+
+body.dark-mode .comments-container .comment-form {
+  background: #1e1e1e;
+}
+
+body.dark-mode .comments-container .comment-form textarea {
+  background: #333;
+  color: #fff;
+  border-color: purple;
 }

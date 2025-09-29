@@ -1,7 +1,10 @@
 import { app, db } from './firebase-config.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { 
+  getAuth, onAuthStateChanged 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
-  doc, getDoc, collection, query, orderBy, onSnapshot
+  doc, getDoc, collection, query, orderBy, onSnapshot,
+  addDoc, updateDoc, deleteDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const auth = getAuth(app);
@@ -17,6 +20,10 @@ let pageChunks = [];
 
 // Store novelId in localStorage for back button fallback
 if (novelId) localStorage.setItem('lastNovelId', novelId);
+
+// === Persistent unsub functions to avoid multiple snapshots ===
+window.publishedChaptersUnsub = null;
+window.chapterCommentsUnsub = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const novelTitle = document.getElementById('novelTitle');
@@ -37,7 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontPopup = document.getElementById('fontPopup');
   const sizePopup = document.getElementById('sizePopup');
   const chapterListPopup = document.getElementById('chapterListPopup');
-  const backBtn = document.getElementById('backToDetailsBtn'); // ✅ BACK BUTTON
+  const backBtn = document.getElementById('backToDetailsBtn');
+
+  // ✅ Comments Elements
+  const toggleCommentsBtn = document.getElementById('toggleCommentsBtn');
+  const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+  const commentsContainer = document.getElementById('commentsContainer');
 
   // === Popup & Menu Toggle Logic ===
   function closeAllPopups(except = null) {
@@ -123,8 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('scroll', updateScrollProgress);
 
-  // === Back Button Fix ===
+  // === Back Button ===
   backBtn?.addEventListener('click', () => {
+    if (commentsContainer?.classList.contains('show')) {
+      commentsContainer.classList.remove('show');
+      return;
+    }
     if (novelId) {
       window.location.href = `novel-details.html?novelId=${novelId}`;
     } else {
@@ -132,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // === Load Novel & Chapters ===
+  // === Load Novel ===
   async function loadNovel() {
     if (!novelId) return alert('Novel ID missing.');
     try {
@@ -145,46 +161,209 @@ document.addEventListener('DOMContentLoaded', () => {
       authorNotesEl.textContent = novelData.notes || '';
       authorNotesEl.style.display = novelData.notes ? 'block' : 'none';
 
-      loadChaptersRealTime();
+      await loadChaptersRealTime();
+      initComments();
     } catch (err) {
       console.error('Error loading novel:', err);
     }
   }
 
-  function loadChaptersRealTime() {
+// === COMMENTS ===
+function initComments() {
+  if (!toggleCommentsBtn || !closeCommentsBtn || !commentsContainer) return;
+
+  // Only create form once
+  let form = commentsContainer.querySelector('.comment-form');
+  if (!form) {
+    form = document.createElement('div');
+    form.classList.add('comment-form');
+    form.innerHTML = `
+      <textarea id="newComment" placeholder="Add a comment..."></textarea>
+      <button id="postCommentBtn">Post</button>
+    `;
+    commentsContainer.appendChild(form);
+  }
+
+  const postBtn = document.getElementById('postCommentBtn');
+  const newCommentInput = document.getElementById('newComment');
+
+  // Scrollable body for comments
+  let commentsBody = commentsContainer.querySelector('.comments-body');
+  if (!commentsBody) {
+    commentsBody = document.createElement('div');
+    commentsBody.classList.add('comments-body');
+    commentsContainer.insertBefore(commentsBody, form);
+  }
+
+  commentsBody.innerHTML = '<p class="loading-comments">Loading comments…</p>';
+
+  let currentChapterCollection = null;
+
+  toggleCommentsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    commentsContainer.classList.add('show');
+  });
+
+  closeCommentsBtn.addEventListener('click', () => {
+    commentsContainer.classList.remove('show');
+  });
+
+  async function loadChapterComments(chapterId) {
+    if (!chapterId) return;
+    currentChapterCollection = collection(db, `novels/${novelId}/published_chapters/${chapterId}/comments`);
+    const q = query(currentChapterCollection, orderBy('createdAt'));
+
+    if (window.chapterCommentsUnsub) {
+      window.chapterCommentsUnsub(); 
+      window.chapterCommentsUnsub = null;
+    }
+
+    window.chapterCommentsUnsub = onSnapshot(q, (snapshot) => {
+      // Clear only previous comments, keep form at bottom
+      commentsBody.innerHTML = '';
+
+      if (snapshot.empty) {
+        commentsBody.innerHTML = '<p class="no-comments">No comments yet.</p>';
+        return;
+      }
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const commentEl = document.createElement('div');
+        commentEl.classList.add('comment');
+        commentEl.innerHTML = `
+          <div class="comment-header">
+            <img src="${data.photoPath || data.profileImagePath || 'default-avatar.png'}" alt="user" class="comment-avatar" />
+            <span class="comment-user">${data.displayName || data.username || 'Anonymous'}</span>
+          </div>
+          <p>${data.text}</p>
+        `;
+
+        const actions = document.createElement('div');
+        actions.classList.add('comment-actions');
+
+        if (auth.currentUser && auth.currentUser.uid === data.uid) {
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Edit';
+          editBtn.onclick = async () => {
+            const newText = prompt('Edit your comment:', data.text);
+            if (newText) await updateDoc(doc(currentChapterCollection, docSnap.id), { text: newText });
+          };
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.onclick = async () => {
+            if (confirm('Delete this comment?')) await deleteDoc(doc(currentChapterCollection, docSnap.id));
+          };
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+        } else {
+          const replyBtn = document.createElement('button');
+          replyBtn.textContent = 'Reply';
+          replyBtn.onclick = () => alert('Replies under replies supported in extended version.');
+          actions.appendChild(replyBtn);
+        }
+
+        commentEl.appendChild(actions);
+        commentsBody.appendChild(commentEl);
+      });
+
+      // Scroll to bottom on update
+      commentsBody.scrollTop = commentsBody.scrollHeight;
+    });
+  }
+
+  postBtn.onclick = async () => {
+    if (!currentChapterCollection) return alert('Please select a chapter first.');
+    const user = auth.currentUser;
+    if (!user) return alert('Please log in to comment.');
+    const text = newCommentInput.value.trim();
+    if (!text) return;
+
+    // Fetch user record from Firestore
+    let userData = {};
+    try {
+      const userDocSnap = await getDoc(doc(db, 'users', user.uid));
+      if (userDocSnap.exists()) userData = userDocSnap.data();
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+    }
+
+    await addDoc(currentChapterCollection, {
+      text,
+      uid: user.uid,
+      displayName: userData.displayName || 'Anonymous',
+      username: userData.username || user.email.split('@')[0],
+      photoPath: userData.profileImagePath || 'default-avatar.png',
+      profileImagePath: userData.profileImagePath || 'default-avatar.png',
+      createdAt: serverTimestamp()
+    });
+
+    newCommentInput.value = '';
+    commentsBody.scrollTop = commentsBody.scrollHeight;
+  };
+
+  function updateCommentsForChapter() {
+    const chapter = chapters[currentChapterIndex];
+    if (chapter) loadChapterComments(chapter.id);
+  }
+
+  updateCommentsForChapter();
+
+  chapterSelect.addEventListener('change', () => {
+    const selectedId = chapterSelect.value;
+    const idx = chapters.findIndex(c => c.id === selectedId);
+    if (idx >= 0) {
+      currentChapterIndex = idx;
+      updateCommentsForChapter();
+    }
+  });
+}
+
+
+
+  // === Chapters ===
+  async function loadChaptersRealTime() {
     const q = query(
       collection(db, `novels/${novelId}/published_chapters`),
       orderBy('number')
     );
 
-    onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        chapters = [];
-        chapterSelect.innerHTML = '<option>No chapters</option>';
-        chapterContent.innerHTML = '';
-        return;
-      }
+    if (window.publishedChaptersUnsub) {
+      window.publishedChaptersUnsub();
+      window.publishedChaptersUnsub = null;
+    }
 
-      chapters = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      chapterSelect.innerHTML = '';
-      chapters.forEach((ch) => {
-        const opt = document.createElement('option');
-        opt.value = ch.id;
-        opt.textContent = `Chapter ${ch.number}: ${ch.title || 'Untitled'}`;
-        chapterSelect.appendChild(opt);
+    return new Promise(resolve => {
+      window.publishedChaptersUnsub = onSnapshot(q, (snapshot) => {
+        if (snapshot.empty) {
+          chapters = [];
+          chapterSelect.innerHTML = '<option>No chapters</option>';
+          chapterContent.innerHTML = '';
+          resolve();
+          return;
+        }
+
+        chapters = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        chapterSelect.innerHTML = '';
+        chapters.forEach((ch) => {
+          const opt = document.createElement('option');
+          opt.value = ch.id;
+          opt.textContent = `Chapter ${ch.number}: ${ch.title || 'Untitled'}`;
+          chapterSelect.appendChild(opt);
+        });
+
+        let index = chapterIdFromUrl
+          ? chapters.findIndex(c => c.id === chapterIdFromUrl)
+          : 0;
+
+        if (index < 0) index = 0;
+        scrollToChapter(index);
+        resolve();
       });
-
-      let index = chapterIdFromUrl
-        ? chapters.findIndex(c => c.id === chapterIdFromUrl)
-        : 0;
-
-      if (index < 0) index = 0;
-
-      scrollToChapter(index);
     });
   }
 
-  // === Pagination & Chapters ===
+  // === Pagination & Page Display ===
   function calculateWordsPerPage() {
     const screenArea = window.innerWidth * window.innerHeight;
     if (screenArea < 400 * 900) return 120;
@@ -259,6 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
     applyFontSettings();
     updateScrollProgress();
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (commentsContainer && typeof updateCommentsForChapter === 'function') {
+      updateCommentsForChapter();
+    }
   }
 
   function showPage(index, direction = 'next') {
@@ -336,4 +519,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadNovel();
+});
+
+// ✅ Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  if (window.publishedChaptersUnsub) window.publishedChaptersUnsub();
+  if (window.chapterCommentsUnsub) window.chapterCommentsUnsub();
 });

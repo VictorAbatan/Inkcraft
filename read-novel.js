@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontSlider = document.getElementById('fontSizeRange');
   const scrollToggleDock = document.getElementById('scrollToggleDock');
   const themeToggleDock = document.getElementById('themeToggleDock');
+  const lineSpacingDock = document.getElementById('lineSpacingDock');
   const menuBtn = document.getElementById('menuButton');
   const menuPopup = document.getElementById('menuPopup');
   const toggleFontBtn = document.getElementById('toggleFontBtn');
@@ -49,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontPopup = document.getElementById('fontPopup');
   const sizePopup = document.getElementById('sizePopup');
   const chapterListPopup = document.getElementById('chapterListPopup');
+  const themePopup = document.getElementById('themePopup');
+  const lineSpacingPopup = document.getElementById('lineSpacingPopup');
   const backBtn = document.getElementById('backToDetailsBtn');
 
   // ✅ Comments Elements
@@ -61,6 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (except !== 'font') fontPopup.classList.remove('active');
     if (except !== 'size') sizePopup.classList.remove('active');
     if (except !== 'chapter') chapterListPopup.classList.remove('active');
+    if (except !== 'theme') themePopup.classList.remove('active');
+    if (except !== 'spacing') lineSpacingPopup.classList.remove('active');
     if (except !== 'menu') menuPopup.classList.remove('show');
   }
 
@@ -85,6 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isActive) chapterListPopup.classList.add('active');
   });
 
+  // === NEW: Theme popup toggle (same pattern) ===
+  themeToggleDock?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isActive = themePopup.classList.contains('active');
+    closeAllPopups('theme');
+    if (!isActive) themePopup.classList.add('active');
+  });
+
+  // === NEW: Line spacing popup toggle ===
+  lineSpacingDock?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isActive = lineSpacingPopup.classList.contains('active');
+    closeAllPopups('spacing');
+    if (!isActive) lineSpacingPopup.classList.add('active');
+  });
+
   menuBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     const isShown = menuPopup.classList.contains('show');
@@ -97,10 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
       !fontPopup.contains(e.target) &&
       !sizePopup.contains(e.target) &&
       !chapterListPopup.contains(e.target) &&
+      !themePopup.contains(e.target) &&
+      !lineSpacingPopup.contains(e.target) &&
       !menuPopup.contains(e.target) &&
       e.target !== toggleFontBtn &&
       e.target !== toggleSizeBtn &&
       e.target !== toggleChapterListBtn &&
+      e.target !== themeToggleDock &&
+      e.target !== lineSpacingDock &&
       e.target !== menuBtn
     ) {
       closeAllPopups();
@@ -122,8 +147,41 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToChapter(currentChapterIndex);
   });
 
-  themeToggleDock.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
+  // === THEME & SPACING HANDLERS ===
+  function clearThemeClasses() {
+    document.body.classList.remove(
+      'theme-dark',
+      'theme-oled',
+      'theme-burlywood',
+      'theme-light',
+      'theme-sepia'
+    );
+  }
+
+  function clearSpacingClasses() {
+    document.body.classList.remove(
+      'spacing-compact',
+      'spacing-normal',
+      'spacing-wide'
+    );
+  }
+
+  // ✅ Theme buttons inside menu popup
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearThemeClasses();
+      const theme = btn.dataset.theme;
+      document.body.classList.add(`theme-${theme}`);
+    });
+  });
+
+  // ✅ Spacing buttons inside menu popup
+  document.querySelectorAll('.spacing-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearSpacingClasses();
+      const spacing = btn.dataset.spacing;
+      document.body.classList.add(`spacing-${spacing}`);
+    });
   });
 
   function updateScrollProgress() {

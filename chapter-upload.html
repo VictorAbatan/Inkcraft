@@ -29,7 +29,12 @@
         </label>
         <label>
           Chapter Body
-          <textarea id="chapterBody" placeholder="Write the chapter content..." rows="10" required></textarea>
+          <!-- ✅ Toolbar now has only Italic -->
+          <div class="editor-toolbar">
+            <button type="button" class="format-btn" data-format="italic" title="Italic"><i>I</i></button>
+          </div>
+          <!-- ✅ Replaced textarea with contenteditable div -->
+          <div id="chapterBody" class="editor" contenteditable="true" placeholder="Write the chapter content..." required></div>
         </label>
         <label>
           Optional Notes

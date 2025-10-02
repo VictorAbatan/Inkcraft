@@ -8,12 +8,9 @@ import {
   getDoc,
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
   updateDoc,
   serverTimestamp,
-  query,
-  orderBy,
   setDoc,
   onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -31,7 +28,7 @@ const form = document.getElementById('chapterForm');
 const list = document.getElementById('chapterList');
 const numberInput = document.getElementById('chapterNumber');
 const titleInput = document.getElementById('chapterTitle');
-const bodyInput = document.getElementById('chapterBody');
+const bodyInput = document.getElementById('chapterBody'); // contenteditable div
 const notesInput = document.getElementById('chapterNotes');
 const saveBtn = document.getElementById('saveBtn');
 const previewBtn = document.getElementById('previewBtn');
@@ -41,17 +38,67 @@ const previewArea = document.getElementById('previewArea');
 let chapters = [];
 let editingChapterId = null;
 
-// === TEXT FORMATTING ===
+/* === Markdown helper (for Notes only, NOT chapter body) === */
 function formatTextToParagraphs(text) {
   if (!text) return '';
   text = text.trim();
+
+  // 🔹 Only keep italics parsing for notes (so *note* works there)
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
   const paragraphs = text.split(/\n\s*\n/);
   return paragraphs
     .map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`)
     .join('');
 }
 
-// AUTH & INITIALIZATION
+/* === TOOLBAR: only Italic === */
+const formatButtons = document.querySelectorAll('.format-btn');
+
+function updateToolbarState() {
+  formatButtons.forEach(btn => {
+    const cmd = btn.dataset.format; // only "italic" exists now
+    try {
+      const state = document.queryCommandState(cmd);
+      if (state) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+      }
+    } catch {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
+    }
+  });
+}
+
+formatButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const cmd = btn.dataset.format; // italic
+    try {
+      document.execCommand(cmd, false, null);
+    } catch (err) {
+      console.warn('Formatting not supported:', cmd, err);
+    }
+    updateToolbarState();
+    bodyInput.focus();
+  });
+});
+
+document.addEventListener('selectionchange', () => {
+  if (document.activeElement === bodyInput) {
+    updateToolbarState();
+  }
+});
+bodyInput.addEventListener('keyup', updateToolbarState);
+bodyInput.addEventListener('mouseup', updateToolbarState);
+bodyInput.addEventListener('focus', updateToolbarState);
+bodyInput.addEventListener('blur', updateToolbarState);
+
+/* === AUTH & INITIALIZATION === */
 onAuthStateChanged(auth, async user => {
   if (!user) {
     alert("Please log in to upload chapters.");
@@ -67,7 +114,6 @@ onAuthStateChanged(auth, async user => {
   }
 
   const novel = novelSnap.data();
-
   const authorField = novel.authorId || novel.submittedBy || null;
   if (authorField !== user.uid) {
     alert("Unauthorized.");
@@ -75,7 +121,7 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
-  // Real-time listener for chapter changes (updates novel-details/read-novel automatically)
+  // Real-time listener for chapter changes
   const chaptersCol = collection(db, `novels/${novelId}/chapters`);
   onSnapshot(chaptersCol, (snapshot) => {
     chapters = [];
@@ -84,7 +130,6 @@ onAuthStateChanged(auth, async user => {
       chapters.push({ ...c, id: docSnap.id });
     });
     renderChapterList();
-    // Optionally trigger events to update read-novel and novel-details UIs
     const event = new CustomEvent('chaptersUpdated', { detail: chapters });
     window.dispatchEvent(event);
   });
@@ -98,7 +143,7 @@ onAuthStateChanged(auth, async user => {
   previewBtn.addEventListener('click', () => {
     const number = numberInput.value;
     const title = titleInput.value;
-    const body = bodyInput.value;
+    const body = bodyInput.innerHTML; // 🔹 Use editor HTML directly
     const notes = notesInput.value;
 
     previewArea.innerHTML = `
@@ -106,9 +151,11 @@ onAuthStateChanged(auth, async user => {
       <h3>Preview - Chapter ${number}${title ? `: ${title}` : ''}</h3>
       ${notes ? `<div class="author-notes">${formatTextToParagraphs(notes)}</div>` : ''}
       <div class="chapter-body">
-        ${formatTextToParagraphs(body)}
+        ${body}
       </div>
     `;
+
+    updateToolbarState();
   });
 
   publishBtn.addEventListener('click', async () => {
@@ -127,12 +174,15 @@ onAuthStateChanged(auth, async user => {
       await setDoc(publishedRef, {
         ...chapterData,
         publishedAt: serverTimestamp(),
-        order: chapterData.order || 0
+        order: chapterData.number || 0
       });
 
       alert("Chapter published successfully.");
       form.reset();
+      bodyInput.innerHTML = "";
       editingChapterId = null;
+      previewArea.innerHTML = '';
+      updateToolbarState();
     } catch (err) {
       console.error("Publish failed:", err);
       alert("Failed to publish chapter.");
@@ -140,11 +190,11 @@ onAuthStateChanged(auth, async user => {
   });
 });
 
-// SAVE FUNCTION
+/* === SAVE === */
 async function saveChapter(silent = false) {
   const number = numberInput.value;
   const title = titleInput.value.trim();
-  const body = bodyInput.value.trim();
+  const body = bodyInput.innerHTML.trim(); // 🔹 Preserve editor HTML
   const notes = notesInput.value.trim();
 
   if (!number || !body) {
@@ -152,47 +202,50 @@ async function saveChapter(silent = false) {
     return;
   }
 
-  const formattedBody = formatTextToParagraphs(body);
-  const formattedNotes = notes ? formatTextToParagraphs(notes) : '';
-
   try {
     if (editingChapterId) {
       await updateDoc(doc(db, `novels/${novelId}/chapters/${editingChapterId}`), {
         number: parseInt(number),
         title,
-        body: formattedBody,
-        notes: formattedNotes
+        body,
+        notes
       });
       if (!silent) alert("Chapter updated.");
     } else {
-      const newOrder = chapters.length + 1;
       const docRef = await addDoc(collection(db, `novels/${novelId}/chapters`), {
         number: parseInt(number),
         title,
-        body: formattedBody,
-        notes: formattedNotes,
-        createdAt: serverTimestamp(),
-        order: newOrder
+        body,
+        notes,
+        createdAt: serverTimestamp()
       });
       editingChapterId = docRef.id;
       if (!silent) alert("Chapter saved.");
     }
 
-    if (!silent) form.reset();
+    if (!silent) {
+      form.reset();
+      bodyInput.innerHTML = "";
+      previewArea.innerHTML = '';
+      updateToolbarState();
+    }
   } catch (err) {
     console.error("Save failed:", err);
     if (!silent) alert("Failed to save chapter.");
   }
 }
 
-// RENDER CHAPTER LIST
+/* === RENDER CHAPTER LIST === */
 function renderChapterList() {
   list.innerHTML = '';
   if (chapters.length === 0) {
     list.innerHTML = '<li>No chapters yet.</li>';
     return;
   }
-  chapters.forEach((c, index) => {
+
+  const sorted = [...chapters].sort((a, b) => a.number - b.number);
+
+  sorted.forEach((c, index) => {
     const li = document.createElement('li');
     li.innerHTML = `
       <strong>Chapter ${c.number}:</strong> ${c.title}
@@ -207,17 +260,19 @@ function renderChapterList() {
   });
 }
 
-// CHAPTER ACTIONS
+/* === EDIT / DELETE / MOVE === */
 window.editChapter = function (chapterId) {
   const chapter = chapters.find(c => c.id === chapterId);
   if (!chapter) return;
 
   numberInput.value = chapter.number;
   titleInput.value = chapter.title;
-  bodyInput.value = chapter.body.replace(/<br>/g, '\n').replace(/<\/?p>/g, '\n\n').trim();
-  notesInput.value = chapter.notes ? chapter.notes.replace(/<br>/g, '\n').replace(/<\/?p>/g, '\n\n').trim() : '';
+  bodyInput.innerHTML = chapter.body || ''; // 🔹 Restore HTML directly
+  notesInput.value = chapter.notes || '';
   editingChapterId = chapterId;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  updateToolbarState();
 };
 
 window.deleteChapter = async function (chapterId) {
@@ -232,7 +287,6 @@ window.deleteChapter = async function (chapterId) {
     if (pubSnap.exists()) await deleteDoc(pubRef);
 
     alert("Chapter deleted.");
-    // The onSnapshot listener automatically updates the UI and triggers 'chaptersUpdated'
   } catch (error) {
     console.error("Delete failed:", error);
     alert("Failed to delete chapter.");
@@ -240,17 +294,20 @@ window.deleteChapter = async function (chapterId) {
 };
 
 window.moveChapter = async function (index, direction) {
+  const sorted = [...chapters].sort((a, b) => a.number - b.number);
   const targetIndex = index + direction;
-  if (targetIndex < 0 || targetIndex >= chapters.length) return;
+  if (targetIndex < 0 || targetIndex >= sorted.length) return;
 
-  const chapterA = chapters[index];
-  const chapterB = chapters[targetIndex];
+  const temp = sorted[index];
+  sorted[index] = sorted[targetIndex];
+  sorted[targetIndex] = temp;
 
   try {
-    await Promise.all([
-      updateDoc(doc(db, `novels/${novelId}/chapters/${chapterA.id}`), { order: chapterB.order }),
-      updateDoc(doc(db, `novels/${novelId}/chapters/${chapterB.id}`), { order: chapterA.order })
-    ]);
+    await Promise.all(
+      sorted.map((chapter, i) =>
+        updateDoc(doc(db, `novels/${novelId}/chapters/${chapter.id}`), { number: i + 1 })
+      )
+    );
   } catch (error) {
     console.error("Reorder failed:", error);
     alert("Failed to reorder chapters.");

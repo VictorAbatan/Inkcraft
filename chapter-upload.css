@@ -125,16 +125,17 @@ form button:hover {
 /* ✅ Editor styling (contenteditable div) */
 .editor {
   width: 100%;
-  min-height: 200px;
+  min-height: 250px;       /* fixed min height */
+  max-height: 400px;       /* ✅ cap size */
   padding: 0.7rem;
   border-radius: 5px;
   font-size: 1rem;
   font-family: inherit;
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: #fff !important;  /* ✅ force white text */
   outline: none;
-  white-space: pre-wrap; /* preserve line breaks */
-  overflow-y: auto;
+  white-space: pre-wrap;   /* preserve line breaks */
+  overflow-y: auto;        /* ✅ scroll instead of expand */
   position: relative;
 }
 
@@ -163,6 +164,15 @@ form button:hover {
 
 .editor.italic-mode .italic-indicator {
   opacity: 1;
+}
+
+/* ✅ Preview styling fix */
+#previewArea {
+  color: #fff !important;  /* ✅ force white text */
+  max-height: 400px;       /* ✅ cap size */
+  overflow-y: auto;        /* ✅ scroll if long */
+  line-height: 1.6;
+  white-space: pre-wrap;   /* ✅ preserve formatting */
 }
 
 footer {

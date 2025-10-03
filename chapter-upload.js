@@ -98,6 +98,43 @@ bodyInput.addEventListener('mouseup', updateToolbarState);
 bodyInput.addEventListener('focus', updateToolbarState);
 bodyInput.addEventListener('blur', updateToolbarState);
 
+/* === 🔹 Paste handler: keep italics/bold/spacing, strip colors === */
+bodyInput.addEventListener('paste', (e) => {
+  e.preventDefault();
+
+  let html = (e.clipboardData || window.clipboardData).getData('text/html');
+  let text = (e.clipboardData || window.clipboardData).getData('text/plain');
+
+  if (!html) {
+    html = text.replace(/\n/g, '<br>');
+  }
+
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+
+  temp.querySelectorAll('*').forEach(el => {
+    // Remove all inline style attributes
+    el.removeAttribute('style');
+    el.removeAttribute('color');
+    el.removeAttribute('face'); // Word sometimes injects font face
+  });
+
+  // No forced color here! Only semantic tags remain
+
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+
+  range.deleteContents();
+  const frag = document.createRange().createContextualFragment(temp.innerHTML);
+  range.insertNode(frag);
+
+  // Place cursor at end
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+});
+
 /* === AUTH & INITIALIZATION === */
 onAuthStateChanged(auth, async user => {
   if (!user) {

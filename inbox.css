@@ -45,7 +45,7 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
-  box-sizing: border-box; /* ✅ ensure padding/margin inside box */
+  box-sizing: border-box;
 }
 
 /* === Dropdown toggle button === */
@@ -99,7 +99,7 @@ header {
   transition: max-height 0.5s ease, padding 0.3s ease;
   padding: 0 1rem;
   flex: 1;
-  box-sizing: border-box; /* ✅ ensure proper sizing */
+  box-sizing: border-box;
 }
 
 .dropdown-content::-webkit-scrollbar {
@@ -131,7 +131,7 @@ header {
   line-height: 1.4;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   padding-bottom: 6px;
-  box-sizing: border-box; /* ✅ ensures padding does not break layout */
+  box-sizing: border-box;
 }
 
 /* === System Notifications === */
@@ -294,7 +294,7 @@ header {
 
   body .inbox-section {
     min-width: 100% !important;
-    max-width: 100% !important; /* full width under menu */
+    max-width: 100% !important;
     padding: 0.5rem !important;
     margin-left: 0 !important;
     box-sizing: border-box !important;
@@ -305,7 +305,6 @@ header {
     padding: 0.4rem 0.5rem !important;
   }
 
-  /* 🟢 Arrow & badge closer together on mobile */
   body .dropdown-toggle i {
     margin-left: 0.1rem !important;
   }
@@ -316,7 +315,6 @@ header {
     margin-left: 0.1rem !important;
   }
 
-  /* ✅ Fix for dynamically added <li> with mobile-list class */
   body #notification-list li,
   body #comment-notification-list li,
   body .mobile-list {
@@ -326,7 +324,13 @@ header {
     box-sizing: border-box !important;
   }
 
-  /* ⚡ Ensure floating menu does not overlap inbox */
+  /* ⚡ Ensure floating menu moves above inbox and notifications on mobile */
+  body #floating-menu-container {
+    position: static !important;
+    margin-bottom: 1rem !important;
+    width: 100% !important;
+  }
+
   body .floating-menu {
     position: static !important;
     transform: none !important;
@@ -335,7 +339,6 @@ header {
     padding: 0.5rem 0 !important;
     gap: 0.5rem !important;
     width: 100% !important;
-    margin-bottom: 1rem !important;
   }
 
   body .menu-item {
@@ -346,6 +349,6 @@ header {
   }
 
   body .menu-item .label {
-    display: none !important; /* hide labels on mobile */
+    display: none !important;
   }
 }

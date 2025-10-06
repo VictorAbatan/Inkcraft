@@ -12,7 +12,7 @@ body {
   min-height: 100vh;
 }
 
-h1{
+h1 {
   text-align: center;
 }
 
@@ -142,7 +142,7 @@ h1{
 /* Grid layout */
 #libraryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* smaller cards */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 2rem;
   padding: 1rem;
   justify-items: center;
@@ -151,7 +151,7 @@ h1{
 /* Novel card */
 .novel-card {
   width: 100%;
-  max-width: 180px; /* smaller card */
+  max-width: 180px;
   background-color: rgba(0, 0, 0, 0.6);
   border-radius: 10px;
   overflow: hidden;
@@ -170,7 +170,7 @@ h1{
 
 .novel-card img {
   width: 100%;
-  height: 160px; /* smaller image */
+  height: 160px;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 0.5rem;
@@ -193,6 +193,68 @@ h1{
 
 .novel-card a:hover {
   color: #fff;
+}
+
+/* ✅ Remove from Library Button */
+.remove-library-btn {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.8rem;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.remove-library-btn:hover {
+  background: #e74c3c;
+  transform: scale(1.05);
+}
+
+/* ✅ “Removed!” feedback animation */
+.remove-library-btn.removed {
+  background: #28a745 !important;
+  animation: fadeOutRemoved 1s ease forwards;
+}
+
+@keyframes fadeOutRemoved {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Adapt to light/sepia/burlywood themes */
+body.light .remove-library-btn {
+  background: #b22222;
+  color: #fff;
+}
+
+body.light .remove-library-btn:hover {
+  background: #d83434;
+}
+
+body.sepia .remove-library-btn,
+body.burlywood .remove-library-btn {
+  background: #8b2e2e;
+  color: #fff;
+}
+
+body.sepia .remove-library-btn:hover,
+body.burlywood .remove-library-btn:hover {
+  background: #a63c3c;
 }
 
 /* Animations */
@@ -248,7 +310,6 @@ h1{
   }
 }
 
-
 /* Footer */
 footer {
   text-align: center;
@@ -262,7 +323,6 @@ footer {
   margin-top: auto;
 }
 
-/* Optional glowing text effect */
 footer span {
   color: #A259FF;
   text-shadow:
@@ -271,7 +331,6 @@ footer span {
     0 0 20px #7D2BFF;
 }
 
-/* Mobile responsiveness */
 @media (max-width: 600px) {
   footer {
     font-size: 0.8rem;

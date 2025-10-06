@@ -1,11 +1,24 @@
 import { app, db } from './firebase-config.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { doc, getDoc, collection, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const auth = getAuth(app);
 const storage = getStorage(app);
 const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Novel+Cover';
+
+// ✅ Custom centered alert
+function showCenteredAlert(message) {
+  const alertBox = document.createElement('div');
+  alertBox.className = 'centered-alert';
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  setTimeout(() => {
+    alertBox.classList.add('fade-out');
+    setTimeout(() => alertBox.remove(), 500);
+  }, 1500);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   // Load floating menu
@@ -81,11 +94,35 @@ document.addEventListener('DOMContentLoaded', () => {
             coverURL = novel.cover || novel.coverUrl || fallbackNovelCover;
           }
 
+          // ✅ Build novel card
           card.innerHTML = `
             <img src="${coverURL}" alt="Cover" />
             <h3>${novel.title || 'Untitled'}</h3>
             <a href="novel-details.html?novelId=${novelId}">View Details</a>
+            <button class="remove-library-btn" data-id="${novelId}">Remove from Library</button>
           `;
+
+          // ✅ Attach remove button event
+          const removeBtn = card.querySelector('.remove-library-btn');
+          removeBtn.addEventListener('click', async () => {
+            if (confirm(`Remove "${novel.title}" from your library?`)) {
+              try {
+                await deleteDoc(doc(db, 'users', user.uid, 'library', novelId));
+                card.classList.add('removed');
+                showCenteredAlert('Removed from Library');
+                setTimeout(() => {
+                  card.remove();
+                  if (grid.children.length === 0) {
+                    emptyMessage.style.display = 'block';
+                  }
+                }, 500);
+              } catch (err) {
+                console.error('Error removing novel:', err);
+                alert('Failed to remove this novel. Please try again.');
+              }
+            }
+          });
+
           grid.appendChild(card);
           index++;
         }

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const auth = getAuth(app);
 
-  // ✅ Inbox logic
+  // ✅ Inbox logic — switched to real-time listener (onSnapshot)
   onAuthStateChanged(auth, async (user) => {
     const inboxContainer = document.getElementById('inboxContainer');
     if (!user) {
@@ -38,15 +38,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const inboxRef = collection(db, `users/${user.uid}/inbox`);
       const q = query(inboxRef, orderBy('timestamp', 'desc'));
-      const snap = await getDocs(q);
 
-      if (inboxContainer) {
+      // Real-time updates so authors see incoming notifications immediately
+      onSnapshot(q, (snap) => {
+        if (!inboxContainer) return;
         inboxContainer.innerHTML = '<h2>Inbox</h2>';
         if (snap.empty) {
           inboxContainer.innerHTML += '<p>No messages yet.</p>';
           return;
         }
 
+        // Clear previous contents then re-render
         snap.forEach(docSnap => {
           const msg = docSnap.data();
           const div = document.createElement('div');
@@ -69,12 +71,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const time = msg.timestamp?.toDate
             ? msg.timestamp.toDate().toLocaleString()
-            : 'Unknown time';
+            : (msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'Unknown time');
 
           div.innerHTML = `${content}<small>${time}</small>`;
           inboxContainer.appendChild(div);
         });
-      }
+      }, (err) => {
+        console.error('Inbox listener error:', err);
+        if (inboxContainer) inboxContainer.innerHTML = '<p>Failed to load inbox.</p>';
+      });
+
     } catch (err) {
       console.error('Error loading inbox:', err);
       if (inboxContainer) inboxContainer.innerHTML = '<p>Failed to load inbox.</p>';
@@ -107,9 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Unified author logic
   let authorName = data.penNameOverride || data.authorName || 'Unknown';
-  if ((!data.penNameOverride && !data.authorName) && data.submittedBy) {
+  if ((!data.penNameOverride && !data.authorName) && data.authorId) {
     try {
-      const authorRef = doc(db, 'authors', data.submittedBy);
+      const authorRef = doc(db, 'authors', data.authorId);
       const authorSnap = await getDoc(authorRef);
       if (authorSnap.exists()) {
         const authorData = authorSnap.data();
@@ -178,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // ✅ Add to Library (toggle)
+  // ✅ Add to Library
   const addToLibraryBtn = document.getElementById('addToLibraryBtn');
   if (addToLibraryBtn) {
     onAuthStateChanged(auth, async (user) => {
@@ -190,35 +196,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const libRef = doc(db, `users/${user.uid}/library/${novelId}`);
       const libSnap = await getDoc(libRef);
-
       if (libSnap.exists()) {
         addToLibraryBtn.textContent = '✔ In Library';
-        addToLibraryBtn.title = 'Tap to remove from library';
-      } else {
-        addToLibraryBtn.textContent = 'Add to Library';
-        addToLibraryBtn.title = '';
+        addToLibraryBtn.disabled = true;
       }
 
       addToLibraryBtn.addEventListener('click', async () => {
         try {
-          const currentText = addToLibraryBtn.textContent;
-          if (currentText.includes('In Library')) {
-            await deleteDoc(libRef);
-            addToLibraryBtn.textContent = 'Add to Library';
-            addToLibraryBtn.title = '';
-          } else {
-            await setDoc(libRef, {
-              novelId,
-              title: data.title || 'Untitled',
-              cover: data.cover || data.coverUrl || '',
-              addedAt: new Date()
-            });
-            addToLibraryBtn.textContent = '✔ In Library';
-            addToLibraryBtn.title = 'Tap to remove from library';
-          }
+          await setDoc(libRef, {
+            novelId,
+            title: data.title || 'Untitled',
+            cover: data.cover || data.coverUrl || '',
+            addedAt: new Date()
+          });
+          addToLibraryBtn.textContent = '✔ Added';
+          addToLibraryBtn.disabled = true;
         } catch (err) {
-          console.error('Failed to toggle library:', err);
-          alert('Error updating library.');
+          console.error('Failed to add to library:', err);
+          alert('Error saving novel to library.');
         }
       });
     });
@@ -250,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         : '💬 Hide Comments';
     });
 
-    // 🔹 Recursive renderer for comments
+    // 🔹 Recursive renderer for comments + unlimited nested replies
     async function renderThread(path, container) {
       const q = query(collection(db, path), orderBy('timestamp', 'asc'));
       onSnapshot(q, snapshot => {
@@ -283,9 +278,139 @@ document.addEventListener('DOMContentLoaded', async () => {
           `;
           container.appendChild(wrapper);
 
-          // ✅ Attach actions...
-          // (unchanged for brevity)
-          // renderThread for nested replies...
+          // ✅ helper to close menu
+          const closeMenu = () => wrapper.classList.remove('show-actions');
+
+          // 🔹 Toggle actions menu (only one open at a time, scoped)
+          const menuBtn = wrapper.querySelector('.menu-btn');
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.comment.show-actions, .reply.show-actions')
+              .forEach(el => {
+                if (el !== wrapper) el.classList.remove('show-actions');
+              });
+            wrapper.classList.toggle('show-actions');
+          });
+
+          // ✅ Attach button actions
+          const replyBtn = wrapper.querySelector('.reply-btn');
+          const editBtn = wrapper.querySelector('.edit-btn');
+          const deleteBtn = wrapper.querySelector('.delete-btn');
+
+          if (replyBtn) {
+            replyBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
+
+              const existingForm = wrapper.querySelector('.inline-reply-form');
+              if (existingForm) return;
+
+              const form = document.createElement('form');
+              form.classList.add('add-comment-box', 'inline-reply-form');
+              form.innerHTML = `
+                <textarea placeholder="Write a reply..." required></textarea>
+                <button type="submit">Reply</button>
+              `;
+              wrapper.appendChild(form);
+
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = form.querySelector('textarea').value.trim();
+                if (!text) return;
+                const user = auth.currentUser;
+                if (!user) return alert('Login required to reply.');
+
+                try {
+                  const userDoc = await getDoc(doc(db, 'users', user.uid));
+                  const userData = userDoc.exists() ? userDoc.data() : {};
+
+                  let userName = userData.displayName || userData.username || 'Anonymous';
+                  let photoURL = 'assets/images/default-avatar.jpg';
+                  if (userData.profileImagePath) {
+                    try {
+                      photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
+                    } catch {}
+                  }
+
+                  await addDoc(collection(db, `${path}/${docSnap.id}/replies`), {
+                    text,
+                    userId: user.uid,
+                    userName,
+                    photoURL,
+                    timestamp: serverTimestamp()
+                  });
+                } catch (err) {
+                  console.error('Failed to post reply:', err);
+                  alert('Error posting reply.');
+                }
+
+                form.remove();
+              });
+            });
+          }
+
+          if (editBtn) {
+            editBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
+
+              const existingForm = wrapper.querySelector('.inline-edit-form');
+              if (existingForm) return;
+
+              const currentText = c.text;
+              const textEl = wrapper.querySelector('.comment-text');
+              textEl.style.display = 'none';
+
+              const form = document.createElement('form');
+              form.classList.add('add-comment-box', 'inline-edit-form');
+              form.innerHTML = `
+                <textarea required>${currentText}</textarea>
+                <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                  <button type="submit">Save</button>
+                  <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+              `;
+              wrapper.insertBefore(form, wrapper.querySelector('.replies'));
+
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newText = form.querySelector('textarea').value.trim();
+                if (newText && newText !== currentText) {
+                  await updateDoc(doc(db, path, docSnap.id), { text: newText });
+                }
+                textEl.style.display = 'block';
+                form.remove();
+              });
+
+              form.querySelector('.cancel-btn').addEventListener('click', () => {
+                textEl.style.display = 'block';
+                form.remove();
+              });
+            });
+          }
+
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+              closeMenu(); // ✅ close instantly
+
+              if (confirm('Delete this comment?')) {
+                await deleteDoc(doc(db, path, docSnap.id));
+              }
+            });
+          }
+
+          // 🔹 Replies toggle button
+          const toggleRepliesBtn = document.createElement('button');
+          toggleRepliesBtn.classList.add('toggle-replies-btn');
+          toggleRepliesBtn.textContent = 'Show Replies';
+          wrapper.appendChild(toggleRepliesBtn);
+
+          toggleRepliesBtn.addEventListener('click', () => {
+            const repliesBox = wrapper.querySelector(`#replies-${docSnap.id}`);
+            const isHidden = repliesBox.style.display === 'none' || !repliesBox.style.display;
+            repliesBox.style.display = isHidden ? 'block' : 'none';
+            toggleRepliesBtn.textContent = isHidden ? 'Hide Replies' : 'Show Replies';
+          });
+
+          // 🔹 Render nested replies
           const repliesContainer = wrapper.querySelector(`#replies-${docSnap.id}`);
           renderThread(`${path}/${docSnap.id}/replies`, repliesContainer);
         });
@@ -326,7 +451,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           } catch {}
         }
 
-        await addDoc(collection(db, `novels/${novelId}/comments`), {
+        // Add the comment to the chapter's comments collection
+        // CAPTURE the commentRef so we can include commentId in the notification
+        const commentRef = await addDoc(collection(db, `novels/${novelId}/comments`), {
           text,
           userId: user.uid,
           userName,
@@ -339,32 +466,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         commentsSection.classList.remove('hidden');
         toggleBtn.textContent = '💬 Hide Comments';
 
-        const authorUid = data.submittedBy;
-        if (authorUid && authorUid !== user.uid) {
-          // 🔔 Send to inbox
-          await addDoc(collection(db, `users/${authorUid}/inbox`), {
-            type: 'comment',
-            novelTitle: data.title,
-            text,
-            userId: user.uid,
-            userName,
-            photoURL,
-            timestamp: serverTimestamp()
-          });
+        // ====== Robust author UID resolution & inbox push ======
+        let resolvedAuthorUid = null;
 
-          // 🔔 Send to notifications
-          await addDoc(collection(db, `users/${authorUid}/notifications`), {
-            type: 'comment',
-            novelId,
-            novelTitle: data.title,
-            text,
-            userId: user.uid,
-            userName,
-            photoURL,
-            createdAt: serverTimestamp(),
-            read: false
-          });
+        // 1) Trust direct authorId/submittedBy/author fields on the novel if present
+        if (data.authorId) {
+          resolvedAuthorUid = data.authorId;
+        } else if (data.submittedBy) {
+          resolvedAuthorUid = data.submittedBy;
+        } else if (data.author) {
+          resolvedAuthorUid = data.author;
+        } else {
+          // 2) fallback: try to look up in authors collection (rare)
+          try {
+            const authorRef = doc(db, 'authors', novelId);
+            const authorSnap = await getDoc(authorRef);
+            if (authorSnap.exists()) {
+              const aData = authorSnap.data();
+              resolvedAuthorUid = aData.userUid || aData.uid || aData.userId || aData.firebaseUid || null;
+            }
+          } catch (err) {
+            console.warn('authors lookup failed while resolving author UID:', err);
+          }
         }
+
+        console.log('Final resolved author UID for inbox:', resolvedAuthorUid, 'novelId:', novelId, 'commentId:', commentRef.id);
+
+        // Prepare a notification object that inbox.js expects (includes novelId & message)
+        const notification = {
+          type: 'comment',
+          novelTitle: data.title || '',
+          novelId: novelId,
+          commentId: commentRef.id, // include link to the comment
+          message: `${userName} commented: "${text}"`,
+          text: text,
+          userId: user.uid,
+          userName,
+          photoURL,
+          timestamp: serverTimestamp(),
+          createdAt: Date.now(), // client-side fallback for immediate ordering/debug
+          read: false
+        };
+
+        // Only skip if no UID or author is the commenter
+        if (resolvedAuthorUid && resolvedAuthorUid !== user.uid) {
+          try {
+            const inboxWrite = await addDoc(collection(db, `users/${resolvedAuthorUid}/inbox`), notification);
+            console.log('📩 Inbox notification added for author:', resolvedAuthorUid, 'docId:', inboxWrite.id);
+          } catch (err) {
+            console.error('❌ Failed to add notification to author inbox:', err);
+          }
+        } else {
+          console.warn('⚠ Could not resolve valid author UID or author is commenter — inbox notification not sent. resolvedAuthorUid:', resolvedAuthorUid, 'commenter:', user.uid);
+        }
+
       } catch (err) {
         console.error('Failed to post comment:', err);
         alert('Error posting comment.');
@@ -372,7 +527,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ✅ Global click listener
+  // ✅ Global click listener to close open menus
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('menu-btn')) return;
     document.querySelectorAll('.comment.show-actions, .reply.show-actions')

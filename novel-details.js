@@ -450,91 +450,104 @@ document.addEventListener('DOMContentLoaded', async () => {
             photoURL = await getDownloadURL(ref(storage, userData.profileImagePath));
           } catch {}
         }
+// Add the comment to the chapter's comments collection
+// CAPTURE the commentRef so we can include commentId in the notification
+const commentRef = await addDoc(collection(db, `novels/${novelId}/comments`), {
+  text,
+  userId: user.uid,
+  userName,
+  photoURL,
+  timestamp: serverTimestamp()
+});
 
-        // Add the comment to the chapter's comments collection
-        // CAPTURE the commentRef so we can include commentId in the notification
-        const commentRef = await addDoc(collection(db, `novels/${novelId}/comments`), {
-          text,
-          userId: user.uid,
-          userName,
-          photoURL,
-          timestamp: serverTimestamp()
-        });
+form.reset();
 
-        form.reset();
+commentsSection.classList.remove('hidden');
+toggleBtn.textContent = '💬 Hide Comments';
 
-        commentsSection.classList.remove('hidden');
-        toggleBtn.textContent = '💬 Hide Comments';
+// ====== Fetch novel document to access authorId ======
+let data = {};
+try {
+  const novelDoc = await getDoc(doc(db, "novels", novelId));
+  if (novelDoc.exists()) {
+    data = novelDoc.data();
+  } else {
+    console.warn("⚠ Novel document not found for ID:", novelId);
+  }
+} catch (err) {
+  console.error("❌ Failed to fetch novel data:", err);
+}
 
-        // ====== Robust author UID resolution & inbox push ======
-        let resolvedAuthorUid = null;
+// ====== Robust author UID resolution & inbox push ======
+let resolvedAuthorUid = null;
 
-        // 1) Trust direct authorId/submittedBy/author fields on the novel if present
-        if (data.authorId) {
-          resolvedAuthorUid = data.authorId;
-        } else if (data.submittedBy) {
-          resolvedAuthorUid = data.submittedBy;
-        } else if (data.author) {
-          resolvedAuthorUid = data.author;
-        } else {
-          // 2) fallback: try to look up in authors collection (rare)
-          try {
-            const authorRef = doc(db, 'authors', novelId);
-            const authorSnap = await getDoc(authorRef);
-            if (authorSnap.exists()) {
-              const aData = authorSnap.data();
-              resolvedAuthorUid = aData.userUid || aData.uid || aData.userId || aData.firebaseUid || null;
-            }
-          } catch (err) {
-            console.warn('authors lookup failed while resolving author UID:', err);
-          }
-        }
+// 1) Trust direct authorId/submittedBy/author fields on the novel if present
+if (data.authorId) {
+  resolvedAuthorUid = data.authorId;
+} else if (data.submittedBy) {
+  resolvedAuthorUid = data.submittedBy;
+} else if (data.author) {
+  resolvedAuthorUid = data.author;
+} else {
+  // 2) fallback: try to look up in authors collection (rare)
+  try {
+    const authorRef = doc(db, 'authors', novelId);
+    const authorSnap = await getDoc(authorRef);
+    if (authorSnap.exists()) {
+      const aData = authorSnap.data();
+      resolvedAuthorUid = aData.userUid || aData.uid || aData.userId || aData.firebaseUid || null;
+    }
+  } catch (err) {
+    console.warn('authors lookup failed while resolving author UID:', err);
+  }
+}
 
-        console.log('Final resolved author UID for inbox:', resolvedAuthorUid, 'novelId:', novelId, 'commentId:', commentRef.id);
+console.log('Final resolved author UID for inbox:', resolvedAuthorUid, 'novelId:', novelId, 'commentId:', commentRef.id);
 
-        // Prepare a notification object that inbox.js expects (includes novelId & message)
-        const notification = {
-          type: 'comment',
-          novelTitle: data.title || '',
-          novelId: novelId,
-          commentId: commentRef.id, // include link to the comment
-          message: `${userName} commented: "${text}"`,
-          text: text,
-          userId: user.uid,
-          userName,
-          photoURL,
-          timestamp: serverTimestamp(),
-          createdAt: Date.now(), // client-side fallback for immediate ordering/debug
-          read: false
-        };
+// Prepare a notification object that inbox.js expects (includes novelId & message)
+const notification = {
+  type: 'comment',
+  novelTitle: data.title || '',
+  novelId: novelId,
+  commentId: commentRef.id, // include link to the comment
+  message: `${userName} commented: "${text}"`,
+  text: text,
+  userId: user.uid,
+  userName,
+  photoURL,
+  timestamp: serverTimestamp(),
+  createdAt: Date.now(), // client-side fallback for immediate ordering/debug
+  read: false
+};
 
-        // Only skip if no UID or author is the commenter
-        if (resolvedAuthorUid && resolvedAuthorUid !== user.uid) {
-          try {
-            const inboxWrite = await addDoc(collection(db, `users/${resolvedAuthorUid}/inbox`), notification);
-            console.log('📩 Inbox notification added for author:', resolvedAuthorUid, 'docId:', inboxWrite.id);
-          } catch (err) {
-            console.error('❌ Failed to add notification to author inbox:', err);
-          }
-        } else {
-          console.warn('⚠ Could not resolve valid author UID or author is commenter — inbox notification not sent. resolvedAuthorUid:', resolvedAuthorUid, 'commenter:', user.uid);
-        }
+// Only skip if no UID or author is the commenter
+if (resolvedAuthorUid && resolvedAuthorUid !== user.uid) {
+  try {
+    const inboxWrite = await addDoc(collection(db, `users/${resolvedAuthorUid}/inbox`), notification);
+    console.log('📩 Inbox notification added for author:', resolvedAuthorUid, 'docId:', inboxWrite.id);
+  } catch (err) {
+    console.error('❌ Failed to add notification to author inbox:', err);
+  }
+} else {
+  console.warn('⚠ Could not resolve valid author UID or author is commenter — inbox notification not sent. resolvedAuthorUid:', resolvedAuthorUid, 'commenter:', user.uid);
+}
 
-      } catch (err) {
-        console.error('Failed to post comment:', err);
-        alert('Error posting comment.');
+} catch (err) {
+  console.error('Failed to post comment:', err);
+  alert('Error posting comment.');
+}
+});
+
+}
+
+// ✅ Global click listener to close open menus
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('menu-btn')) return;
+  document.querySelectorAll('.comment.show-actions, .reply.show-actions')
+    .forEach(el => {
+      if (!el.contains(e.target)) {
+        el.classList.remove('show-actions');
       }
     });
-  }
-
-  // ✅ Global click listener to close open menus
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('menu-btn')) return;
-    document.querySelectorAll('.comment.show-actions, .reply.show-actions')
-      .forEach(el => {
-        if (!el.contains(e.target)) {
-          el.classList.remove('show-actions');
-        }
-      });
-  });
+});
 });

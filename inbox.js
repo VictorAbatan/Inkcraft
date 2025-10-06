@@ -5,9 +5,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection,
-  getDocs,
   query,
-  orderBy
+  orderBy,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { markAsRead, subscribeUnreadCounts } from './notifications.js';
 
@@ -71,79 +71,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         collection(db, `users/${uid}/inbox`),
         orderBy('timestamp', 'desc')
       );
-      const inboxSnap = await getDocs(inboxQuery);
 
-      if (inboxSnap.empty) {
-        const liSys = document.createElement('li');
-        liSys.textContent = 'No notifications yet.';
-        sysList.appendChild(liSys);
+      // ✅ Real-time snapshot listener (replaces getDocs)
+      onSnapshot(inboxQuery, (inboxSnap) => {
+        sysList.textContent = '';
+        commentList.textContent = '';
 
-        const liComment = document.createElement('li');
-        liComment.textContent = 'No comments yet.';
-        commentList.appendChild(liComment);
+        if (inboxSnap.empty) {
+          const liSys = document.createElement('li');
+          liSys.textContent = 'No notifications yet.';
+          sysList.appendChild(liSys);
 
-        sysBadge.textContent = 0;
-        commentBadge.textContent = 0;
-        return;
-      }
+          const liComment = document.createElement('li');
+          liComment.textContent = 'No comments yet.';
+          commentList.appendChild(liComment);
 
-      let sysCount = 0;
-      let commentCount = 0;
-
-      inboxSnap.forEach(doc => {
-        const notif = doc.data();
-
-        let typeLabel = '';
-        switch (notif.type) {
-          case 'comment': typeLabel = 'New Comment'; break;
-          case 'reply': typeLabel = 'New Reply'; break;
-          case 'approval': typeLabel = 'Book Approved'; break;
-          case 'rejection': typeLabel = 'Book Rejected'; break;
-          case 'pending': typeLabel = 'Submission Pending'; break;
-          case 'rollback': typeLabel = 'Submission Rolled Back'; break;
-          default: typeLabel = notif.type ? notif.type.charAt(0).toUpperCase() + notif.type.slice(1) : 'Notification';
+          sysBadge.textContent = 0;
+          commentBadge.textContent = 0;
+          return;
         }
 
-        const timeStr = notif.timestamp?.toDate
-          ? new Date(notif.timestamp.toDate()).toLocaleString()
-          : 'Unknown time';
+        let sysCount = 0;
+        let commentCount = 0;
 
-        // Create <li> dynamically
-        const li = document.createElement('li');
-        li.classList.add('mobile-list');
+        inboxSnap.forEach(doc => {
+          const notif = doc.data();
 
-        const strong = document.createElement('strong');
-        strong.textContent = typeLabel;
+          let typeLabel = '';
+          switch (notif.type) {
+            case 'comment': typeLabel = 'New Comment'; break;
+            case 'reply': typeLabel = 'New Reply'; break;
+            case 'approval': typeLabel = 'Book Approved'; break;
+            case 'rejection': typeLabel = 'Book Rejected'; break;
+            case 'pending': typeLabel = 'Submission Pending'; break;
+            case 'rollback': typeLabel = 'Submission Rolled Back'; break;
+            default: typeLabel = notif.type ? notif.type.charAt(0).toUpperCase() + notif.type.slice(1) : 'Notification';
+          }
 
-        const text = document.createTextNode(` — ${notif.message || ''}`);
-        const br = document.createElement('br');
-        const small = document.createElement('small');
-        small.textContent = timeStr;
+          const timeStr = notif.timestamp?.toDate
+            ? new Date(notif.timestamp.toDate()).toLocaleString()
+            : 'Unknown time';
 
-        if (notif.type === 'comment' || notif.type === 'reply') {
-          const a = document.createElement('a');
-          a.classList.add('notif-link');
-          a.href = notif.novelId ? `novel-details.html?novelId=${notif.novelId}#commentsTab` : '#';
-          a.appendChild(strong);
-          a.appendChild(text);
+          // Create <li> dynamically
+          const li = document.createElement('li');
+          li.classList.add('mobile-list');
 
-          li.appendChild(a);
-          li.appendChild(br.cloneNode());
-          li.appendChild(small);
-          commentList.appendChild(li);
-          if (!notif.read) commentCount++;
-        } else {
-          li.appendChild(strong);
-          li.appendChild(text);
-          li.appendChild(br.cloneNode());
-          li.appendChild(small);
-          sysList.appendChild(li);
-          if (!notif.read) sysCount++;
-        }
-      });
+          const strong = document.createElement('strong');
+          strong.textContent = typeLabel;
 
-      // ✅ Initial counts
-      requestAnimationFrame(() => {
+          const text = document.createTextNode(` — ${notif.message || ''}`);
+          const br = document.createElement('br');
+          const small = document.createElement('small');
+          small.textContent = timeStr;
+
+          if (notif.type === 'comment' || notif.type === 'reply') {
+            const a = document.createElement('a');
+            a.classList.add('notif-link');
+            a.href = notif.novelId ? `novel-details.html?novelId=${notif.novelId}#commentsTab` : '#';
+            a.appendChild(strong);
+            a.appendChild(text);
+
+            li.appendChild(a);
+            li.appendChild(br.cloneNode());
+            li.appendChild(small);
+            commentList.appendChild(li);
+            if (!notif.read) commentCount++;
+          } else {
+            li.appendChild(strong);
+            li.appendChild(text);
+            li.appendChild(br.cloneNode());
+            li.appendChild(small);
+            sysList.appendChild(li);
+            if (!notif.read) sysCount++;
+          }
+        });
+
+        // ✅ Live badge updates
         sysBadge.textContent = sysCount;
         commentBadge.textContent = commentCount;
       });
@@ -212,3 +215,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+  

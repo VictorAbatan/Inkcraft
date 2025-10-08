@@ -352,3 +352,93 @@ header {
     display: none !important;
   }
 }
+/* === Dim read notifications === */
+#notification-list li.read,
+#comment-notification-list li.read {
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.3); /* slightly darker/lighter to indicate read */
+  pointer-events: none; /* optional: prevent clicks if already read */
+}
+
+/* === Delete mode styling === */
+.delete-toggle {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  transition: background 0.3s ease;
+}
+
+.delete-toggle:hover {
+  background: #b52b2b;
+}
+
+.delete-selected {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  display: none; /* hidden until delete mode is activated */
+  transition: background 0.3s ease;
+}
+
+.delete-selected:hover {
+  background: #0056b3;
+}
+
+li.delete-mode {
+  border: 2px dashed #dc3545;
+  position: relative;
+  opacity: 0.9;
+}
+
+.delete-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+
+/* Make each notification position a reference point */
+#notification-list li,
+#comment-notification-list li {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Force checkbox above all content */
+.delete-checkbox {
+  position: absolute !important;
+  top: 10px;
+  left: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* Prevent overlaying links from blocking clicks */
+#notification-list li a,
+#comment-notification-list li a {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* In delete mode, we want checkboxes clickable even if li is faded */
+.delete-mode li {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}

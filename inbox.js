@@ -7,7 +7,10 @@ import {
   collection,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { markAsRead, subscribeUnreadCounts } from './notifications.js';
 
@@ -66,13 +69,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     sysList.textContent = '';
     commentList.textContent = '';
 
+    // Add delete mode buttons
+    const sysDeleteBtn = document.createElement('button');
+    sysDeleteBtn.textContent = 'Delete';
+    sysDeleteBtn.classList.add('delete-toggle');
+    sysList.parentElement.prepend(sysDeleteBtn);
+
+    const commentDeleteBtn = document.createElement('button');
+    commentDeleteBtn.textContent = 'Delete';
+    commentDeleteBtn.classList.add('delete-toggle');
+    commentList.parentElement.prepend(commentDeleteBtn);
+
+    const sysDeleteSelected = document.createElement('button');
+    sysDeleteSelected.textContent = 'Delete Selected';
+    sysDeleteSelected.style.display = 'none';
+    sysDeleteSelected.classList.add('delete-selected');
+    sysList.parentElement.prepend(sysDeleteSelected);
+
+    const commentDeleteSelected = document.createElement('button');
+    commentDeleteSelected.textContent = 'Delete Selected';
+    commentDeleteSelected.style.display = 'none';
+    commentDeleteSelected.classList.add('delete-selected');
+    commentList.parentElement.prepend(commentDeleteSelected);
+
     try {
       const inboxQuery = query(
         collection(db, `users/${uid}/inbox`),
         orderBy('timestamp', 'desc')
       );
 
-      // ✅ Real-time snapshot listener (replaces getDocs)
       onSnapshot(inboxQuery, (inboxSnap) => {
         sysList.textContent = '';
         commentList.textContent = '';
@@ -94,35 +119,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         let sysCount = 0;
         let commentCount = 0;
 
-        inboxSnap.forEach(doc => {
-          const notif = doc.data();
-
-          let typeLabel = '';
-          switch (notif.type) {
-            case 'comment': typeLabel = 'New Comment'; break;
-            case 'reply': typeLabel = 'New Reply'; break;
-            case 'approval': typeLabel = 'Book Approved'; break;
-            case 'rejection': typeLabel = 'Book Rejected'; break;
-            case 'pending': typeLabel = 'Submission Pending'; break;
-            case 'rollback': typeLabel = 'Submission Rolled Back'; break;
-            default: typeLabel = notif.type ? notif.type.charAt(0).toUpperCase() + notif.type.slice(1) : 'Notification';
-          }
-
-          const timeStr = notif.timestamp?.toDate
-            ? new Date(notif.timestamp.toDate()).toLocaleString()
-            : 'Unknown time';
-
-          // Create <li> dynamically
+        inboxSnap.forEach(docSnap => {
+          const notif = docSnap.data();
           const li = document.createElement('li');
           li.classList.add('mobile-list');
+          li.dataset.docId = docSnap.id; // ✅ consistent data-doc-id
+
+          if (notif.read) li.classList.add('read'); // dim read notifications
 
           const strong = document.createElement('strong');
+          const typeLabel = notif.type
+            ? notif.type.charAt(0).toUpperCase() + notif.type.slice(1)
+            : 'Notification';
           strong.textContent = typeLabel;
 
           const text = document.createTextNode(` — ${notif.message || ''}`);
           const br = document.createElement('br');
           const small = document.createElement('small');
-          small.textContent = timeStr;
+          small.textContent = notif.timestamp?.toDate
+            ? new Date(notif.timestamp.toDate()).toLocaleString()
+            : 'Unknown time';
 
           if (notif.type === 'comment' || notif.type === 'reply') {
             const a = document.createElement('a');
@@ -146,12 +162,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         });
 
-        // ✅ Live badge updates
         sysBadge.textContent = sysCount;
         commentBadge.textContent = commentCount;
       });
 
-      // ✅ Updated: use index instead of IDs + shared markAsRead
+      // -------------------------
+      // Mark notifications as read
+      // -------------------------
       document.addEventListener('click', async e => {
         const toggle = e.target.closest('.dropdown-toggle');
         if (!toggle) return;
@@ -161,28 +178,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (index === 0) {
           await markAsRead(uid, 'system');
+          document.querySelectorAll('#notification-list li').forEach(li => li.classList.add('read'));
           sysBadge.textContent = 0;
         }
         if (index === 1) {
           await markAsRead(uid, 'comment');
+          document.querySelectorAll('#comment-notification-list li').forEach(li => li.classList.add('read'));
           commentBadge.textContent = 0;
         }
       });
 
-      // ✅ Subscribe to real-time unread counts (syncs other badges too)
+      // -------------------------
+      // Delete mode toggle
+      // -------------------------
+      const setupDeleteMode = (listEl, toggleBtn, selectedBtn) => {
+        toggleBtn.addEventListener('click', () => {
+          listEl.querySelectorAll('li').forEach(li => {
+            li.classList.toggle('delete-mode');
+            if (li.classList.contains('delete-mode') && !li.querySelector('.delete-checkbox')) {
+              const cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.classList.add('delete-checkbox');
+              li.prepend(cb);
+            } else {
+              const cb = li.querySelector('.delete-checkbox');
+              if (cb) cb.remove();
+            }
+          });
+          selectedBtn.style.display = selectedBtn.style.display === 'block' ? 'none' : 'block';
+        });
+
+        selectedBtn.addEventListener('click', async () => {
+          const checked = listEl.querySelectorAll('.delete-checkbox:checked');
+          for (const cb of checked) {
+            const li = cb.closest('li');
+            const docId = li.dataset.docId;
+            li.remove();
+            if (docId) await deleteDoc(doc(db, `users/${uid}/inbox`, docId));
+          }
+        });
+      };
+
+      setupDeleteMode(sysList, sysDeleteBtn, sysDeleteSelected);
+      setupDeleteMode(commentList, commentDeleteBtn, commentDeleteSelected);
+
+      // -------------------------
+      // Real-time unread counts
+      // -------------------------
       const unsubCounts = subscribeUnreadCounts(uid, ({ sysCount, commentCount }) => {
         if (sysBadge) sysBadge.textContent = sysCount;
         if (commentBadge) commentBadge.textContent = commentCount;
-
-        const fmSys = document.getElementById('menu-sys-badge');
-        if (fmSys) fmSys.textContent = sysCount;
-        const fmComment = document.getElementById('menu-comment-badge');
-        if (fmComment) fmComment.textContent = commentCount;
-
-        const cardSys = document.getElementById('card-sys-badge');
-        if (cardSys) cardSys.textContent = sysCount;
-        const cardComment = document.getElementById('card-comment-badge');
-        if (cardComment) cardComment.textContent = commentCount;
       });
 
       window.addEventListener('beforeunload', () => {
@@ -215,4 +260,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
-  

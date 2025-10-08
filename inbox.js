@@ -69,28 +69,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     sysList.textContent = '';
     commentList.textContent = '';
 
-    // Add delete mode buttons
-    const sysDeleteBtn = document.createElement('button');
-    sysDeleteBtn.textContent = 'Delete';
-    sysDeleteBtn.classList.add('delete-toggle');
-    sysList.parentElement.prepend(sysDeleteBtn);
+    // -------------------------
+    // Delete buttons (with icon)
+    // -------------------------
+    const createDeleteControls = (list) => {
+      // Create the trash icon button
+      const iconBtn = document.createElement('button');
+      iconBtn.classList.add('delete-toggle');
+      iconBtn.innerHTML = '<i class="fas fa-trash"></i>'; // Font Awesome trash icon
 
-    const commentDeleteBtn = document.createElement('button');
-    commentDeleteBtn.textContent = 'Delete';
-    commentDeleteBtn.classList.add('delete-toggle');
-    commentList.parentElement.prepend(commentDeleteBtn);
+      // Create the "Delete Selected" label (hidden initially)
+      const label = document.createElement('span');
+      label.textContent = ' Delete Selected';
+      label.style.display = 'none';
+      label.classList.add('delete-label');
 
-    const sysDeleteSelected = document.createElement('button');
-    sysDeleteSelected.textContent = 'Delete Selected';
-    sysDeleteSelected.style.display = 'none';
-    sysDeleteSelected.classList.add('delete-selected');
-    sysList.parentElement.prepend(sysDeleteSelected);
+      // Wrap both together
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('delete-wrapper');
+      wrapper.appendChild(iconBtn);
+      wrapper.appendChild(label);
 
-    const commentDeleteSelected = document.createElement('button');
-    commentDeleteSelected.textContent = 'Delete Selected';
-    commentDeleteSelected.style.display = 'none';
-    commentDeleteSelected.classList.add('delete-selected');
-    commentList.parentElement.prepend(commentDeleteSelected);
+      list.parentElement.prepend(wrapper);
+      return { iconBtn, label };
+    };
+
+    const sysControls = createDeleteControls(sysList);
+    const commentControls = createDeleteControls(commentList);
 
     try {
       const inboxQuery = query(
@@ -123,9 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           const notif = docSnap.data();
           const li = document.createElement('li');
           li.classList.add('mobile-list');
-          li.dataset.docId = docSnap.id; // ✅ consistent data-doc-id
+          li.dataset.docId = docSnap.id;
 
-          if (notif.read) li.classList.add('read'); // dim read notifications
+          if (notif.read) li.classList.add('read');
 
           const strong = document.createElement('strong');
           const typeLabel = notif.type
@@ -189,38 +194,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       // -------------------------
-      // Delete mode toggle
+      // Enhanced Delete Mode Logic
       // -------------------------
-      const setupDeleteMode = (listEl, toggleBtn, selectedBtn) => {
-        toggleBtn.addEventListener('click', () => {
+      const setupDeleteMode = (listEl, iconBtn, labelEl) => {
+        let deleteMode = false;
+
+        iconBtn.addEventListener('click', async () => {
+          const checked = listEl.querySelectorAll('.delete-checkbox:checked');
+
+          // If already in delete mode and boxes are selected → perform deletion
+          if (deleteMode && checked.length > 0) {
+            for (const cb of checked) {
+              const li = cb.closest('li');
+              const docId = li.dataset.docId;
+              li.remove();
+              if (docId) await deleteDoc(doc(db, `users/${uid}/inbox`, docId));
+            }
+            deleteMode = false;
+            labelEl.style.display = 'none';
+            listEl.querySelectorAll('.delete-checkbox').forEach(cb => cb.remove());
+            listEl.querySelectorAll('li').forEach(li => li.classList.remove('delete-mode'));
+            return;
+          }
+
+          // Toggle delete mode (first click)
+          deleteMode = !deleteMode;
+          labelEl.style.display = deleteMode ? 'inline-block' : 'none';
+
           listEl.querySelectorAll('li').forEach(li => {
-            li.classList.toggle('delete-mode');
-            if (li.classList.contains('delete-mode') && !li.querySelector('.delete-checkbox')) {
+            li.classList.toggle('delete-mode', deleteMode);
+            if (deleteMode && !li.querySelector('.delete-checkbox')) {
               const cb = document.createElement('input');
               cb.type = 'checkbox';
               cb.classList.add('delete-checkbox');
               li.prepend(cb);
-            } else {
+            } else if (!deleteMode) {
               const cb = li.querySelector('.delete-checkbox');
               if (cb) cb.remove();
             }
           });
-          selectedBtn.style.display = selectedBtn.style.display === 'block' ? 'none' : 'block';
-        });
-
-        selectedBtn.addEventListener('click', async () => {
-          const checked = listEl.querySelectorAll('.delete-checkbox:checked');
-          for (const cb of checked) {
-            const li = cb.closest('li');
-            const docId = li.dataset.docId;
-            li.remove();
-            if (docId) await deleteDoc(doc(db, `users/${uid}/inbox`, docId));
-          }
         });
       };
 
-      setupDeleteMode(sysList, sysDeleteBtn, sysDeleteSelected);
-      setupDeleteMode(commentList, commentDeleteBtn, commentDeleteSelected);
+      setupDeleteMode(sysList, sysControls.iconBtn, sysControls.label);
+      setupDeleteMode(commentList, commentControls.iconBtn, commentControls.label);
 
       // -------------------------
       // Real-time unread counts

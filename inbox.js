@@ -145,10 +145,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? new Date(notif.timestamp.toDate()).toLocaleString()
             : 'Unknown time';
 
+          // -------------------------
+          // ✅ UPDATED COMMENT HANDLER
+          // -------------------------
           if (notif.type === 'comment' || notif.type === 'reply') {
             const a = document.createElement('a');
             a.classList.add('notif-link');
-            a.href = notif.novelId ? `novel-details.html?novelId=${notif.novelId}#commentsTab` : '#';
+
+            // Jump directly to the chapter comments section
+            if (notif.novelId && notif.chapterId) {
+              a.href = `read-novel.html?novelId=${notif.novelId}&chapterId=${notif.chapterId}#comments`;
+            } else if (notif.novelId) {
+              a.href = `read-novel.html?novelId=${notif.novelId}`;
+            } else {
+              a.href = '#';
+            }
+
             a.appendChild(strong);
             a.appendChild(text);
 

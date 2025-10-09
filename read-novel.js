@@ -210,26 +210,55 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'discover.html';
     }
   });
+// === Load Novel ===
+async function loadNovel() {
+  if (!novelId) return alert('Novel ID missing.');
+  try {
+    const novelRef = doc(db, 'novels', novelId);
+    const snap = await getDoc(novelRef);
+    if (!snap.exists()) return alert('Novel not found.');
 
-  // === Load Novel ===
-  async function loadNovel() {
-    if (!novelId) return alert('Novel ID missing.');
-    try {
-      const novelRef = doc(db, 'novels', novelId);
-      const snap = await getDoc(novelRef);
-      if (!snap.exists()) return alert('Novel not found.');
+    const novelData = snap.data();
+    novelTitle.textContent = novelData.title || 'Untitled Novel';
+    authorNotesEl.textContent = novelData.notes || '';
+    authorNotesEl.style.display = novelData.notes ? 'block' : 'none';
 
-      const novelData = snap.data();
-      novelTitle.textContent = novelData.title || 'Untitled Novel';
-      authorNotesEl.textContent = novelData.notes || '';
-      authorNotesEl.style.display = novelData.notes ? 'block' : 'none';
+    await loadChaptersRealTime();
 
-      await loadChaptersRealTime();
-      initComments();
-    } catch (err) {
-      console.error('Error loading novel:', err);
+    // ✅ If a specific chapterId is in the URL, scroll to its comments automatically
+    if (chapterIdFromUrl) {
+      const checkChapter = setInterval(() => {
+        if (chapters.length > 0) {
+          clearInterval(checkChapter);
+          const targetIndex = chapters.findIndex(c => c.id === chapterIdFromUrl);
+          if (targetIndex >= 0) {
+            scrollToChapter(targetIndex);
+
+            // Wait for chapter to render fully
+            setTimeout(() => {
+              const commentsBtn = document.getElementById('toggleCommentsBtn');
+              if (commentsBtn) {
+                commentsBtn.click(); // open comments panel
+                setTimeout(() => {
+                  const commentsSection = document.getElementById('commentsContainer');
+                  if (commentsSection) {
+                    commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 400);
+              }
+            }, 800);
+          }
+        }
+      }, 300);
     }
-  }// === COMMENTS ===
+
+    initComments();
+  } catch (err) {
+    console.error('Error loading novel:', err);
+  }
+}
+
+// === COMMENTS ===
 function initComments() {
   if (!toggleCommentsBtn || !closeCommentsBtn || !commentsContainer) return;
 
@@ -434,7 +463,8 @@ function initComments() {
           username: userData.username || user.email.split('@')[0],
           photoPath: profileImageUrl,
           profileImagePath: profileImageUrl,
-          createdAt: serverTimestamp()
+       timestamp: serverTimestamp()
+
         });
 
         replyForm.remove();
@@ -535,7 +565,8 @@ function initComments() {
 
     const profileImageUrl = await resolveProfileImage(userData);
 
-    await addDoc(currentChapterCollection, {
+    // ✅ Add comment to Firestore
+    const commentRef = await addDoc(currentChapterCollection, {
       text,
       userId: user.uid,
       displayName: userData.displayName || 'Anonymous',
@@ -544,27 +575,70 @@ function initComments() {
       profileImagePath: profileImageUrl,
       createdAt: serverTimestamp()
     });
+// ✅ INBOX NOTIFICATION FOR AUTHOR
+try {
+  const novelDocRef = doc(db, 'novels', novelId);
+  const novelSnap = await getDoc(novelDocRef);
+  if (novelSnap.exists()) {
+    const novelData = novelSnap.data();
+    const authorId = novelData.authorId;
+    const authorName = novelData.authorName || 'Author';
+    const novelTitle = novelData.title || 'Untitled Novel';
 
-    newCommentInput.value = '';
-    commentsBody.scrollTop = commentsBody.scrollHeight;
-  };
+    if (authorId && authorId !== user.uid) {
+      const notification = {
+        type: 'comment',
+        novelTitle,
+        novelId,
+        chapterId: chapterSelect.value,
+        commentId: commentRef.id,
+        message: `${userData.displayName || userData.username || 'Someone'} commented on your chapter: "${text}"`,
+        senderName: userData.displayName || userData.username || 'Someone',
+        senderId: user.uid,
+        read: false,
+        // 🔄 Match inbox.js structure:
+        timestamp: serverTimestamp()
+      };
 
-  function updateCommentsForChapter() {
-    const chapter = chapters[currentChapterIndex];
-    if (chapter) loadChapterComments(chapter.id);
-  }
+      // ✅ Write to author's inbox (same collection inbox.js listens to)
+      await addDoc(collection(db, `users/${authorId}/inbox`), notification);
 
-  updateCommentsForChapter();
-
-  chapterSelect.addEventListener('change', () => {
-    const selectedId = chapterSelect.value;
-    const idx = chapters.findIndex((c) => c.id === selectedId);
-    if (idx >= 0) {
-      currentChapterIndex = idx;
-      updateCommentsForChapter();
+      console.log('📬 Inbox notification sent to author:', authorId, 'for novel:', novelId);
+    } else {
+      console.warn(
+        '⚠ Could not resolve valid author UID or author is commenter — inbox notification not sent. resolvedAuthorUid:',
+        authorId,
+        'commenter:',
+        user.uid
+      );
     }
-  });
+  }
+} catch (err) {
+  console.error('❌ Error sending inbox notification:', err);
 }
+
+newCommentInput.value = '';
+commentsBody.scrollTop = commentsBody.scrollHeight;
+};
+
+function updateCommentsForChapter() {
+  const chapter = chapters[currentChapterIndex];
+  if (chapter) loadChapterComments(chapter.id);
+}
+
+updateCommentsForChapter();
+
+chapterSelect.addEventListener('change', () => {
+  const selectedId = chapterSelect.value;
+  const idx = chapters.findIndex((c) => c.id === selectedId);
+  if (idx >= 0) {
+    currentChapterIndex = idx;
+    updateCommentsForChapter();
+  }
+});
+}
+
+
 
   // === Chapters ===
   async function loadChaptersRealTime() {

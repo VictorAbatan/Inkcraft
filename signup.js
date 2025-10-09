@@ -1,7 +1,8 @@
 import { app } from './firebase-config.js';
 import { 
   getAuth, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword, 
+  sendEmailVerification 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
   getFirestore, 
@@ -49,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.addEventListener('click', () => {
         if (input.type === "password") {
           input.type = "text";
-          toggleBtn.textContent = "🙉"; // monkey with hands over ears
+          toggleBtn.textContent = "🙉";
         } else {
           input.type = "password";
-          toggleBtn.textContent = "🙈"; // monkey with hands over eyes
+          toggleBtn.textContent = "🙈";
         }
       });
     }
@@ -83,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Create user account
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
@@ -91,14 +93,21 @@ document.addEventListener('DOMContentLoaded', () => {
           username,
           email,
           createdAt: new Date().toISOString(),
-          profileImage: null // placeholder for now
+          profileImage: null
         });
 
-        alert("Sign-up successful!");
         console.log("User signed up and profile created:", user);
 
-        // Redirect to login or dashboard
+        // ✅ Send welcome email using Firebase email verification template
+        await sendEmailVerification(user, {
+          url: window.location.origin + '/login.html', // Redirect after verification
+          handleCodeInApp: false
+        });
+        alert("Sign-up successful! A welcome email has been sent to " + email);
+
+        // Redirect to login page
         window.location.href = "login.html";
+
       } catch (error) {
         console.error("Signup error:", error.message);
         alert("Signup failed: " + error.message);

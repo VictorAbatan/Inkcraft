@@ -72,22 +72,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Forgot Password Link ===
-    const forgotLink = document.getElementById('forgot-password');
+    const forgotLink = document.getElementById('forgot-password-link');
     if (forgotLink) {
       forgotLink.addEventListener('click', async e => {
         e.preventDefault();
-        const emailVal = emailInput.value.trim();
-        if (!emailVal) {
-          alert('Please enter your email first.');
+
+        if (!emailInput) {
+          alert("Email input not found!");
           return;
         }
+
+        const emailVal = emailInput.value.trim();
+        if (!emailVal) {
+          alert("Please enter your email first to reset your password.");
+          return;
+        }
+
         try {
           const auth = getAuth(app);
+          console.log("Attempting password reset for:", emailVal);
           await sendPasswordResetEmail(auth, emailVal);
-          alert("Password reset email sent!");
+          alert("Password reset email has been sent! Check your inbox or spam folder.");
         } catch (err) {
-          console.error("Reset error:", err.message);
-          alert("Failed to send reset email: " + err.message);
+          console.error("Password reset error:", err);
+          if (err.code === 'auth/user-not-found') {
+            alert("No account found with this email.");
+          } else if (err.code === 'auth/invalid-email') {
+            alert("Invalid email address.");
+          } else {
+            alert("Failed to send reset email: " + err.message);
+          }
         }
       });
     }

@@ -91,7 +91,7 @@ header {
   margin-left: 0.3rem;
 }
 
-/* === Dropdown content (hidden by default) === */
+/* === Dropdown content === */
 .dropdown-content {
   max-height: 0;
   overflow: hidden;
@@ -105,18 +105,15 @@ header {
 .dropdown-content::-webkit-scrollbar {
   width: 8px;
 }
-
 .dropdown-content::-webkit-scrollbar-track {
   background: rgba(0,0,0,0.3);
   border-radius: 4px;
 }
-
 .dropdown-content::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.2);
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,0.1);
 }
-
 .dropdown-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.4);
 }
@@ -134,91 +131,106 @@ header {
   box-sizing: border-box;
 }
 
-/* === System Notifications === */
-#notification-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#notification-list li {
-  background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-  border-left: 4px solid transparent;
-  box-sizing: border-box;
-}
-
-#notification-list li strong {
-  display: block;
-  font-size: 1.1rem;
-  margin-bottom: 0.4rem;
-}
-
-#notification-list li small {
-  display: block;
-  font-size: 0.8rem;
-  color: #ccc;
-  margin-top: 0.5rem;
-}
-
-#notification-list li:has(strong:contains("Approved")) {
-  border-left-color: #198754;
-}
-
-#notification-list li:has(strong:contains("Rejected")) {
-  border-left-color: #dc3545;
-}
-
-#notification-list li:has(strong:contains("Pending")) {
-  border-left-color: #ffc107;
-}
-
-/* === Reader Comments === */
+/* === Base notification styles === */
+#notification-list,
 #comment-notification-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+#notification-list li,
 #comment-notification-list li {
-  background: rgba(0, 0, 0, 0.6);
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-  border-left: 4px solid #0d6efd;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  margin: 10px 0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  transition: background 0.28s ease, opacity 0.28s ease, transform 0.18s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: visible;
   box-sizing: border-box;
+  pointer-events: auto;
 }
 
+/* === CLEAR VISUAL DISTINCTION === */
+
+/* UNREAD – bright, pops out */
+#notification-list li.unread,
+#comment-notification-list li.unread {
+  background: linear-gradient(145deg, rgba(255, 215, 0, 0.25), rgba(255, 255, 255, 0.1));
+  border-left: 4px solid #ffd700;
+  color: #fff;
+  font-weight: 600;
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3), 0 0 25px rgba(255, 215, 0, 0.15);
+}
+
+/* COMMENT UNREAD – blue highlight */
+#comment-notification-list li.unread {
+  background: linear-gradient(145deg, rgba(0, 191, 255, 0.25), rgba(255, 255, 255, 0.1));
+  border-left: 4px solid #00bfff;
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.3), 0 0 25px rgba(0, 191, 255, 0.15);
+}
+
+/* READ – dimmed and subtle */
+#notification-list li.read,
+#comment-notification-list li.read {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid transparent;
+  color: #aaa;
+  opacity: 0.5;
+  font-weight: 400;
+  transform: scale(1);
+  box-shadow: none;
+}
+
+/* === Hover effect === */
+#notification-list li:hover,
+#comment-notification-list li:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-2px) scale(1.01);
+  cursor: pointer;
+}
+
+
+/* === Animation for new unread === */
+@keyframes popIn {
+  0% { transform: scale(0.96) translateY(4px); opacity: 0; }
+  40% { transform: scale(1.03) translateY(-4px); opacity: 1; }
+  100% { transform: translateY(-2px) scale(1.02); opacity: 1; }
+}
+
+@keyframes flashNew {
+  0% { background: rgba(241,196,15,0.65); }
+  50% { background: rgba(241,196,15,0.3); }
+  100% { background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08)); }
+}
+
+#notification-list li.unread.new,
+#comment-notification-list li.unread.new {
+  animation: popIn 360ms cubic-bezier(.2,.9,.2,1), flashNew 900ms ease-out;
+}
+
+/* === Text formatting === */
+#notification-list li strong,
 #comment-notification-list li strong {
   display: block;
-  font-size: 1.1rem;
-  margin-bottom: 0.4rem;
-  color: #0d6efd;
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
 }
 
-#comment-notification-list li small {
-  display: block;
-  font-size: 0.8rem;
-  color: #bbb;
-  margin-top: 0.5rem;
+#comment-notification-list li strong { color: #0dcaf0; }
+#comment-notification-list li small,
+#notification-list li small {
+  display:block;
+  font-size:0.8rem;
+  color:#ccc;
+  margin-top:0.5rem;
 }
 
-#comment-notification-list li a {
-  color: #fff;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-#comment-notification-list li a:hover {
-  color: #0d6efd;
-  text-decoration: underline;
-}
-
-/* ✅ Floating menu styles */
+/* === Floating menu (unchanged) === */
 .floating-menu {
   position: fixed;
   top: 50%;
@@ -285,7 +297,7 @@ header {
   }
 }
 
-/* === Mobile Responsive (version-proof) === */
+/* === Mobile responsive === */
 @media (max-width: 768px) {
   body .inbox-container {
     flex-direction: column !important;
@@ -296,39 +308,12 @@ header {
     min-width: 100% !important;
     max-width: 100% !important;
     padding: 0.5rem !important;
-    margin-left: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  body .dropdown-toggle {
-    font-size: 0.95rem !important;
-    padding: 0.4rem 0.5rem !important;
-  }
-
-  body .dropdown-toggle i {
-    margin-left: 0.1rem !important;
-  }
-
-  body .badge {
-    font-size: 0.65rem !important;
-    padding: 0.1rem 0.25rem !important;
-    margin-left: 0.1rem !important;
   }
 
   body #notification-list li,
-  body #comment-notification-list li,
-  body .mobile-list {
+  body #comment-notification-list li {
     font-size: 0.8rem !important;
     padding: 0.4rem 0.6rem !important;
-    margin-left: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  /* ⚡ Ensure floating menu moves above inbox and notifications on mobile */
-  body #floating-menu-container {
-    position: static !important;
-    margin-bottom: 1rem !important;
-    width: 100% !important;
   }
 
   body .floating-menu {
@@ -336,9 +321,6 @@ header {
     transform: none !important;
     flex-direction: row !important;
     justify-content: center !important;
-    padding: 0.5rem 0 !important;
-    gap: 0.5rem !important;
-    width: 100% !important;
   }
 
   body .menu-item {
@@ -353,15 +335,7 @@ header {
   }
 }
 
-/* === Dim read notifications === */
-#notification-list li.read,
-#comment-notification-list li.read {
-  opacity: 0.5;
-  background: rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-}
-
-/* === Delete mode styling === */
+/* === Delete mode styling (unchanged) === */
 .delete-toggle {
   background: #dc3545;
   color: #fff;
@@ -381,40 +355,10 @@ header {
   background: #b52b2b;
 }
 
-.delete-toggle i {
-  font-size: 1rem;
-}
-
-.delete-selected {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  display: none;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.3s ease;
-}
-
-.delete-selected:hover {
-  background: #0056b3;
-}
-
 li.delete-mode {
   border: 2px dashed #dc3545;
   position: relative;
   opacity: 0.9;
-}
-
-/* Checkbox positioning + visibility */
-#notification-list li,
-#comment-notification-list li {
-  position: relative !important;
-  overflow: visible !important;
 }
 
 .delete-checkbox {
@@ -438,4 +382,52 @@ li.delete-mode {
 .delete-mode li {
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+/* === FINAL FIX: unread vs read visual priority === */
+#notification-list li.unread,
+#comment-notification-list li.unread {
+  background: linear-gradient(145deg, rgba(255, 215, 0, 0.35), rgba(255, 255, 255, 0.12)) !important;
+  border-left: 4px solid #ffd700 !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4), 0 0 25px rgba(255, 215, 0, 0.2) !important;
+}
+
+#comment-notification-list li.unread {
+  background: linear-gradient(145deg, rgba(0, 191, 255, 0.35), rgba(255, 255, 255, 0.12)) !important;
+  border-left: 4px solid #00bfff !important;
+  box-shadow: 0 0 12px rgba(0, 191, 255, 0.4), 0 0 25px rgba(0, 191, 255, 0.2) !important;
+}
+
+#notification-list li.read,
+#comment-notification-list li.read {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-left: 4px solid transparent !important;
+  color: #999 !important;
+  opacity: 0.55 !important;
+  font-weight: 400 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+/* === Click-to-Mark Hint === */
+#notification-list li.unread::after,
+#comment-notification-list li.unread::after {
+  content: "Click/Tap to mark as read";
+  display: block;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 6px;
+  text-align: right;
+  letter-spacing: 0.3px;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+#notification-list li.unread:hover::after,
+#comment-notification-list li.unread:hover::after {
+  opacity: 1;
+  color: #ffd700;
 }

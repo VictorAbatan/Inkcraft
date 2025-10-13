@@ -12,7 +12,7 @@ import {
   doc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { markAsRead, subscribeUnreadCounts } from './notifications.js';
+import { subscribeUnreadCounts } from './notifications.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  await loadFloatingMenu(); // Ensure menu is fully loaded before inbox
+  await loadFloatingMenu();
 
   // -----------------------------
   // 2️⃣ Load inbox if logged in
@@ -73,18 +73,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Delete buttons (with icon)
     // -------------------------
     const createDeleteControls = (list) => {
-      // Create the trash icon button
       const iconBtn = document.createElement('button');
       iconBtn.classList.add('delete-toggle');
-      iconBtn.innerHTML = '<i class="fas fa-trash"></i>'; // Font Awesome trash icon
+      iconBtn.innerHTML = '<i class="fas fa-trash"></i>';
 
-      // Create the "Delete Selected" label (hidden initially)
       const label = document.createElement('span');
       label.textContent = ' Delete Selected';
       label.style.display = 'none';
       label.classList.add('delete-label');
 
-      // Wrap both together
       const wrapper = document.createElement('div');
       wrapper.classList.add('delete-wrapper');
       wrapper.appendChild(iconBtn);
@@ -130,7 +127,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           li.classList.add('mobile-list');
           li.dataset.docId = docSnap.id;
 
-          if (notif.read) li.classList.add('read');
+          // ✅ Distinguish unread vs read
+          if (notif.read) {
+            li.classList.add('read');
+            li.classList.remove('unread', 'new');
+          } else {
+            li.classList.add('unread', 'new');
+            li.classList.remove('read');
+            setTimeout(() => li.classList.remove('new'), 1200);
+
+            // Add subtle hint text for unread notifications
+            const hint = document.createElement('small');
+            hint.classList.add('mark-hint');
+            hint.textContent = 'Click/tap to mark as read';
+            li.appendChild(hint);
+          }
 
           const strong = document.createElement('strong');
           const typeLabel = notif.type
@@ -145,14 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? new Date(notif.timestamp.toDate()).toLocaleString()
             : 'Unknown time';
 
-          // -------------------------
-          // ✅ UPDATED COMMENT HANDLER
-          // -------------------------
+          // ✅ Comment handler
           if (notif.type === 'comment' || notif.type === 'reply') {
             const a = document.createElement('a');
             a.classList.add('notif-link');
 
-            // Jump directly to the chapter comments section
             if (notif.novelId && notif.chapterId) {
               a.href = `read-novel.html?novelId=${notif.novelId}&chapterId=${notif.chapterId}#comments`;
             } else if (notif.novelId) {
@@ -184,24 +192,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       // -------------------------
-      // Mark notifications as read
+      // ✅ New: Mark single notification as read on click/tap
       // -------------------------
       document.addEventListener('click', async e => {
-        const toggle = e.target.closest('.dropdown-toggle');
-        if (!toggle) return;
+        const li = e.target.closest('li');
+        if (!li || !li.dataset.docId) return;
+        if (e.target.classList.contains('delete-checkbox')) return;
 
-        const toggles = [...document.querySelectorAll('.dropdown-toggle')];
-        const index = toggles.indexOf(toggle);
+        const docRef = doc(db, `users/${uid}/inbox`, li.dataset.docId);
+        const isUnread = li.classList.contains('unread');
 
-        if (index === 0) {
-          await markAsRead(uid, 'system');
-          document.querySelectorAll('#notification-list li').forEach(li => li.classList.add('read'));
-          sysBadge.textContent = 0;
-        }
-        if (index === 1) {
-          await markAsRead(uid, 'comment');
-          document.querySelectorAll('#comment-notification-list li').forEach(li => li.classList.add('read'));
-          commentBadge.textContent = 0;
+        if (isUnread) {
+          await updateDoc(docRef, { read: true });
+          li.classList.add('read');
+          li.classList.remove('unread', 'new');
+          const hint = li.querySelector('.mark-hint');
+          if (hint) hint.remove();
         }
       });
 
@@ -214,7 +220,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         iconBtn.addEventListener('click', async () => {
           const checked = listEl.querySelectorAll('.delete-checkbox:checked');
 
-          // If already in delete mode and boxes are selected → perform deletion
           if (deleteMode && checked.length > 0) {
             for (const cb of checked) {
               const li = cb.closest('li');
@@ -229,7 +234,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
           }
 
-          // Toggle delete mode (first click)
           deleteMode = !deleteMode;
           labelEl.style.display = deleteMode ? 'inline-block' : 'none';
 

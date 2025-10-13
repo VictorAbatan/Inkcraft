@@ -98,12 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log("User signed up and profile created:", user);
 
-        // ✅ Send welcome email using Firebase email verification template
+        // ✅ Send verification email (REAL FIX)
         await sendEmailVerification(user, {
-          url: window.location.origin + '/login.html', // Redirect after verification
-          handleCodeInApp: false
+          handleCodeInApp: true,
+          url: "https://inkcraft-6c0f6.firebaseapp.com/login.html" // Redirect after verification
         });
-        alert("Sign-up successful! A welcome email has been sent to " + email);
+
+        alert("Welcome to Inkcraft! A verification email has been sent to " + email + ". Please check your inbox or spam folder to verify your account.");
 
         // Redirect to login page
         window.location.href = "login.html";

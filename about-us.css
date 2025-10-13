@@ -61,6 +61,80 @@ body {
   margin-bottom: 1.2rem;
 }
 
+/* === Authors Section === */
+.authors-section {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.authors-heading {
+  font-size: 2rem;
+  color: #A259FF;
+  margin-bottom: 2rem;
+}
+
+.authors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.8rem;
+  justify-items: center;
+  padding: 0 1rem;
+}
+
+.author-card {
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0, 172, 237, 0.2);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  animation: pulseFloat 6s ease-in-out infinite;
+}
+
+.author-card:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 12px 25px rgba(162, 89, 255, 0.4);
+  animation: none; /* stops the float animation on hover */
+}
+
+.author-card img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  transition: transform 0.4s ease;
+}
+
+.author-card:hover img {
+  transform: scale(1.1);
+}
+
+.author-card h3 {
+  color: #00aced;
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.author-card p {
+  font-size: 0.95rem;
+  color: #ddd;
+  line-height: 1.5;
+  min-height: 3.5em;
+}
+
+/* Mobile animation support — subtle float/pulse */
+@keyframes pulseFloat {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 6px 16px rgba(0, 172, 237, 0.2);
+  }
+  50% {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(162, 89, 255, 0.3);
+  }
+}
+
 /* === Footer === */
 footer {
   text-align: center;
@@ -160,6 +234,24 @@ footer {
     font-size: 1.1rem;
     padding: 25px 15px;
     margin: 80px 10px;
+  }
+
+  .authors-heading {
+    font-size: 1.6rem;
+  }
+
+  .authors-grid {
+    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .author-card {
+    padding: 1rem;
+  }
+
+  .author-card img {
+    width: 100px;
+    height: 100px;
   }
 
   .floating-menu {

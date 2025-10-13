@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (notif.novelId && notif.chapterId) {
               a.href = `read-novel.html?novelId=${notif.novelId}&chapterId=${notif.chapterId}#comments`;
             } else if (notif.novelId) {
-              a.href = `read-novel.html?novelId=${notif.novelId}`;
+              a.href = `novel-details.html?novelId=${notif.novelId}`;
             } else {
               a.href = '#';
             }

@@ -7,7 +7,7 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Novel+Cover';
 
-// ✅ Custom centered alert
+// ✅ Custom centered alert (styling handled in CSS)
 function showCenteredAlert(message) {
   const alertBox = document.createElement('div');
   alertBox.className = 'centered-alert';
@@ -18,6 +18,36 @@ function showCenteredAlert(message) {
     alertBox.classList.add('fade-out');
     setTimeout(() => alertBox.remove(), 500);
   }, 1500);
+}
+
+// ✅ Custom confirm popup (Inkcraft-styled)
+function showConfirmDialog(message) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'inkcraft-overlay';
+
+    const dialog = document.createElement('div');
+    dialog.className = 'inkcraft-dialog';
+    dialog.innerHTML = `
+      <p>${message}</p>
+      <div class="dialog-buttons">
+        <button class="btn confirm">OK</button>
+        <button class="btn cancel">Cancel</button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    dialog.querySelector('.confirm').onclick = () => {
+      overlay.remove();
+      resolve(true);
+    };
+    dialog.querySelector('.cancel').onclick = () => {
+      overlay.remove();
+      resolve(false);
+    };
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -50,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wait for auth state
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      alert("You must be logged in to view your library.");
+      showCenteredAlert("You must be logged in to view your library.");
       window.location.href = 'login.html';
       return;
     }
@@ -102,10 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="remove-library-btn" data-id="${novelId}">Remove from Library</button>
           `;
 
-          // ✅ Attach remove button event
+          // ✅ Attach remove button event (using custom Inkcraft confirm)
           const removeBtn = card.querySelector('.remove-library-btn');
           removeBtn.addEventListener('click', async () => {
-            if (confirm(`Remove "${novel.title}" from your library?`)) {
+            const confirmed = await showConfirmDialog(`Remove "${novel.title}" from your library?`);
+            if (confirmed) {
               try {
                 await deleteDoc(doc(db, 'users', user.uid, 'library', novelId));
                 card.classList.add('removed');
@@ -118,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 500);
               } catch (err) {
                 console.error('Error removing novel:', err);
-                alert('Failed to remove this novel. Please try again.');
+                showCenteredAlert('Failed to remove this novel. Please try again.');
               }
             }
           });

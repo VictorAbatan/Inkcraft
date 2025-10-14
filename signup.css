@@ -208,3 +208,40 @@ footer {
     padding: 4px 8px;
   }
 }
+
+/* === Inkcraft Alert System === */
+.inkcraft-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: rgba(20, 20, 30, 0.95);
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: 9999;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.inkcraft-alert.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.inkcraft-alert.success {
+  background: linear-gradient(135deg, #00c896, #006b52);
+}
+
+.inkcraft-alert.error {
+  background: linear-gradient(135deg, #ff3b3b, #7a0a0a);
+}
+
+.inkcraft-alert.info {
+  background: linear-gradient(135deg, #3b6aff, #1c2a6a);
+}

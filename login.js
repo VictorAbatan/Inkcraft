@@ -44,6 +44,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadFloatingMenu();
 
+  // === Inkcraft Custom Alert ===
+  function showInkcraftAlert(message, type = 'info') {
+    // Remove existing alert if any
+    const oldAlert = document.querySelector('.inkcraft-alert');
+    if (oldAlert) oldAlert.remove();
+
+    const alertBox = document.createElement('div');
+    alertBox.className = `inkcraft-alert ${type}`;
+    alertBox.textContent = message;
+    document.body.appendChild(alertBox);
+
+    // Show animation
+    requestAnimationFrame(() => alertBox.classList.add('show'));
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      alertBox.classList.remove('show');
+      setTimeout(() => alertBox.remove(), 500);
+    }, 3000);
+  }
+
   // === Login Form Validation + Firebase Sign-in ===
   const form = document.querySelector('form');
   if (form) {
@@ -78,13 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         if (!emailInput) {
-          alert("Email input not found!");
+          showInkcraftAlert("Email input not found!", "error");
           return;
         }
 
         const emailVal = emailInput.value.trim();
         if (!emailVal) {
-          alert("Please enter your email first to reset your password.");
+          showInkcraftAlert("Please enter your email first to reset your password.", "warning");
           return;
         }
 
@@ -92,15 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
           const auth = getAuth(app);
           console.log("Attempting password reset for:", emailVal);
           await sendPasswordResetEmail(auth, emailVal);
-          alert("Password reset email has been sent! Check your inbox or spam folder.");
+          showInkcraftAlert("Password reset email sent! Check your inbox or spam folder.", "success");
         } catch (err) {
           console.error("Password reset error:", err);
           if (err.code === 'auth/user-not-found') {
-            alert("No account found with this email.");
+            showInkcraftAlert("No account found with this email.", "error");
           } else if (err.code === 'auth/invalid-email') {
-            alert("Invalid email address.");
+            showInkcraftAlert("Invalid email address.", "error");
           } else {
-            alert("Failed to send reset email: " + err.message);
+            showInkcraftAlert("Failed to send reset email: " + err.message, "error");
           }
         }
       });
@@ -114,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('password');
 
       if (!email.value.trim() || !password.value.trim()) {
-        alert('Please fill in all fields.');
+        showInkcraftAlert('Please fill in all fields.', 'warning');
         return;
       }
 
@@ -131,18 +152,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const tokenResult = await getIdTokenResult(user);
         const isAdmin = tokenResult.claims.admin === true;
 
-        alert('Login successful!');
+        showInkcraftAlert('Login successful!', 'success');
         console.log('User logged in:', user);
 
         // Redirect based on role
-        if (isAdmin) {
-          window.location.href = 'admin-dashboard.html';
-        } else {
-          window.location.href = 'Inkcraftmain.html';
-        }
+        setTimeout(() => {
+          if (isAdmin) {
+            window.location.href = 'admin-dashboard.html';
+          } else {
+            window.location.href = 'Inkcraftmain.html';
+          }
+        }, 1200);
       } catch (error) {
         console.error('Login error:', error.message);
-        alert('Login failed: ' + error.message);
+        showInkcraftAlert('Login failed: ' + error.message, 'error');
       }
     });
   }

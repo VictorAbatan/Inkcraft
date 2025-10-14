@@ -7,6 +7,26 @@ const storageRef = storage;
 const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
 const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Cover';
 
+// ✅ Stylish Alert (matches login and library)
+function showAlert(message, type = 'success') {
+  const existingAlert = document.querySelector('.alert');
+  if (existingAlert) existingAlert.remove();
+
+  const alertBox = document.createElement('div');
+  alertBox.className = `alert ${type}`;
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  // Show animation
+  setTimeout(() => alertBox.classList.add('show'), 10);
+
+  // Auto-remove after 2.5s
+  setTimeout(() => {
+    alertBox.classList.remove('show');
+    setTimeout(() => alertBox.remove(), 300);
+  }, 2500);
+}
+
 // --- Helper functions ---
 async function getAuthorImage(data) {
   if (data.profilePicPath) {
@@ -199,13 +219,13 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: serverTimestamp()
       });
 
-      alert("✅ Your novel has been submitted for review!");
+      showAlert("✅ Your novel has been submitted for review!", "success");
       form.reset();
       if (coverPreview) coverPreview.src = "";
 
     } catch (err) {
       console.error("❌ Error submitting novel:", err);
-      alert("❌ Failed to submit novel. Please try again.");
+      showAlert("❌ Failed to submit novel. Please try again.", "error");
     }
   });
 

@@ -278,3 +278,48 @@ footer {
     padding: 4px 8px;
   }
 }
+
+
+/* === Inkcraft Custom Alert === */
+.inkcraft-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(0, 0, 0, 0.8);
+  color: #f5d76e;
+  border: 1px solid rgba(245, 215, 110, 0.7);
+  box-shadow: 0 0 20px rgba(245, 215, 110, 0.4);
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  opacity: 0;
+  z-index: 9999;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.inkcraft-alert.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Color variations */
+.inkcraft-alert.success {
+  color: #a3ff9e;
+  border-color: rgba(163, 255, 158, 0.7);
+  box-shadow: 0 0 20px rgba(163, 255, 158, 0.4);
+}
+
+.inkcraft-alert.error {
+  color: #ff9e9e;
+  border-color: rgba(255, 158, 158, 0.7);
+  box-shadow: 0 0 20px rgba(255, 158, 158, 0.4);
+}
+
+.inkcraft-alert.warning {
+  color: #ffe59e;
+  border-color: rgba(255, 229, 158, 0.7);
+  box-shadow: 0 0 20px rgba(255, 229, 158, 0.4);
+}

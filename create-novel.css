@@ -220,6 +220,40 @@ footer {
   cursor: not-allowed;
 }
 
+/* === 🌟 STYLED ALERT SYSTEM (matching create-series) === */
+.alert {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.alert.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.alert.success {
+  background: rgba(0, 200, 83, 0.95);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0, 255, 128, 0.3);
+}
+
+.alert.error {
+  background: rgba(244, 67, 54, 0.95);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 64, 64, 0.3);
+}
+
 @media (max-width: 600px) {
   main {
     padding: 1.5rem 1rem;
@@ -243,5 +277,12 @@ footer {
   .menu-item .label {
     font-size: 0.75rem;
     padding: 4px 8px;
+  }
+
+  .alert {
+    right: 10px;
+    left: 10px;
+    text-align: center;
+    font-size: 0.95rem;
   }
 }

@@ -59,6 +59,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // === Custom Inkcraft alert ===
+  function showAlert(message, type = "info") {
+    const alertBox = document.createElement("div");
+    alertBox.className = `inkcraft-alert ${type}`;
+    alertBox.textContent = message;
+    document.body.appendChild(alertBox);
+
+    setTimeout(() => {
+      alertBox.classList.add("show");
+    }, 100);
+
+    // Auto close after 4 seconds
+    setTimeout(() => {
+      alertBox.classList.remove("show");
+      setTimeout(() => alertBox.remove(), 500);
+    }, 4000);
+  }
+
   // Handle sign-up form submission
   const form = document.getElementById('signup-form');
   if (form) {
@@ -71,12 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
 
       if (!username || !email || !password || !confirmPassword) {
-        alert("Please fill in all fields.");
+        showAlert("Please fill in all fields.", "error");
         return;
       }
 
       if (password !== confirmPassword) {
-        alert("Passwords do not match.");
+        showAlert("Passwords do not match.", "error");
         return;
       }
 
@@ -98,20 +116,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log("User signed up and profile created:", user);
 
-        // ✅ Send verification email (REAL FIX)
+        // ✅ Send verification email
         await sendEmailVerification(user, {
           handleCodeInApp: true,
-          url: "https://inkcraft-6c0f6.firebaseapp.com/login.html" // Redirect after verification
+          url: "https://inkcraft-6c0f6.firebaseapp.com/login.html"
         });
 
-        alert("Welcome to Inkcraft! A verification email has been sent to " + email + ". Please check your inbox or spam folder to verify your account.");
+        showAlert(`Welcome to Inkcraft! A verification email has been sent to ${email}. Please verify your account.`, "success");
 
         // Redirect to login page
-        window.location.href = "login.html";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 2500);
 
       } catch (error) {
         console.error("Signup error:", error.message);
-        alert("Signup failed: " + error.message);
+        showAlert("Signup failed: " + error.message, "error");
       }
     });
   }

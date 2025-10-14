@@ -125,10 +125,11 @@ header {
 
 .dropdown-content li {
   margin: 8px 0;
-  line-height: 1.4;
+  line-height: 1.5;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   padding-bottom: 6px;
   box-sizing: border-box;
+  font-size: 1.05rem; /* Make text bigger */
 }
 
 /* === Base notification styles === */
@@ -144,7 +145,7 @@ header {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   margin: 10px 0;
-  padding: 10px 15px;
+  padding: 12px 16px; /* Slightly bigger padding */
   border-radius: 10px;
   transition: background 0.28s ease, opacity 0.28s ease, transform 0.18s ease, box-shadow 0.2s ease;
   position: relative;
@@ -194,6 +195,19 @@ header {
   cursor: pointer;
 }
 
+/* === Notification links styling === */
+#comment-notification-list li a.notif-link {
+  color: #0dcaf0;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.08rem;
+  display: inline-block;
+}
+
+#comment-notification-list li a.notif-link:hover {
+  text-decoration: underline;
+  color: #00bfff;
+}
 
 /* === Animation for new unread === */
 @keyframes popIn {
@@ -217,7 +231,7 @@ header {
 #notification-list li strong,
 #comment-notification-list li strong {
   display: block;
-  font-size: 1.05rem;
+  font-size: 1.2rem; /* Bigger titles */
   margin-bottom: 0.25rem;
 }
 
@@ -225,7 +239,7 @@ header {
 #comment-notification-list li small,
 #notification-list li small {
   display:block;
-  font-size:0.8rem;
+  font-size:1rem; /* Bigger timestamps */
   color:#ccc;
   margin-top:0.5rem;
 }
@@ -312,8 +326,17 @@ header {
 
   body #notification-list li,
   body #comment-notification-list li {
-    font-size: 0.8rem !important;
-    padding: 0.4rem 0.6rem !important;
+    font-size: 1rem !important;
+    padding: 0.6rem 0.8rem !important;
+  }
+
+  body #notification-list li strong,
+  body #comment-notification-list li strong {
+    font-size: 1.1rem !important;
+  }
+
+  body #comment-notification-list li a.notif-link {
+    font-size: 1rem !important;
   }
 
   body .floating-menu {
@@ -383,40 +406,13 @@ li.delete-mode {
   opacity: 1 !important;
   pointer-events: auto !important;
 }
-/* === FINAL FIX: unread vs read visual priority === */
-#notification-list li.unread,
-#comment-notification-list li.unread {
-  background: linear-gradient(145deg, rgba(255, 215, 0, 0.35), rgba(255, 255, 255, 0.12)) !important;
-  border-left: 4px solid #ffd700 !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-  transform: scale(1.02);
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4), 0 0 25px rgba(255, 215, 0, 0.2) !important;
-}
 
-#comment-notification-list li.unread {
-  background: linear-gradient(145deg, rgba(0, 191, 255, 0.35), rgba(255, 255, 255, 0.12)) !important;
-  border-left: 4px solid #00bfff !important;
-  box-shadow: 0 0 12px rgba(0, 191, 255, 0.4), 0 0 25px rgba(0, 191, 255, 0.2) !important;
-}
-
-#notification-list li.read,
-#comment-notification-list li.read {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-left: 4px solid transparent !important;
-  color: #999 !important;
-  opacity: 0.55 !important;
-  font-weight: 400 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
 /* === Click-to-Mark Hint === */
 #notification-list li.unread::after,
 #comment-notification-list li.unread::after {
   content: "Click/Tap to mark as read";
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-style: italic;
   color: rgba(255, 255, 255, 0.75);
   margin-top: 6px;

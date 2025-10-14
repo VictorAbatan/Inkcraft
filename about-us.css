@@ -73,33 +73,35 @@ body {
   margin-bottom: 2rem;
 }
 
+/* 🔹 Updated grid: now 2 per line for larger display */
 .authors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
   justify-items: center;
-  padding: 0 1rem;
+  padding: 0 2rem;
 }
 
 .author-card {
   background: rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 14px;
+  padding: 2rem;
   text-align: center;
-  box-shadow: 0 6px 16px rgba(0, 172, 237, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 172, 237, 0.25);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
   animation: pulseFloat 6s ease-in-out infinite;
+  max-width: 420px;
 }
 
 .author-card:hover {
   transform: translateY(-8px) scale(1.05);
   box-shadow: 0 12px 25px rgba(162, 89, 255, 0.4);
-  animation: none; /* stops the float animation on hover */
+  animation: none;
 }
 
 .author-card img {
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 1rem;
@@ -112,15 +114,43 @@ body {
 
 .author-card h3 {
   color: #00aced;
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+  margin-bottom: 0.6rem;
 }
 
 .author-card p {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #ddd;
-  line-height: 1.5;
-  min-height: 3.5em;
+  line-height: 1.6;
+  text-align: justify;
+  margin-bottom: 1rem;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+  overflow: hidden;
+}
+
+/* 🔹 Bio truncation behavior */
+.author-card .bio {
+  max-height: 4.5em; /* show about 3 lines initially */
+  opacity: 0.9;
+}
+
+.author-card.expanded .bio {
+  max-height: 200em; /* fully expanded */
+  opacity: 1;
+}
+
+/* 🔹 Read More / Read Less button */
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #A259FF;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.read-more-btn:hover {
+  color: #00aced;
 }
 
 /* Mobile animation support — subtle float/pulse */
@@ -189,7 +219,7 @@ footer {
 
 .menu-item .label {
   position: absolute;
-  right: 65px; /* adjusted to avoid overlap */
+  right: 65px;
   top: 50%;
   transform: translateY(-50%) translateX(10px);
   background: rgba(0, 0, 0, 0.85);
@@ -240,18 +270,21 @@ footer {
     font-size: 1.6rem;
   }
 
+  /* 🔹 stack vertically on mobile */
   .authors-grid {
-    gap: 1.2rem;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 1rem;
   }
 
   .author-card {
-    padding: 1rem;
+    padding: 1.2rem;
+    max-width: 100%;
   }
 
   .author-card img {
-    width: 100px;
-    height: 100px;
+    width: 110px;
+    height: 110px;
   }
 
   .floating-menu {

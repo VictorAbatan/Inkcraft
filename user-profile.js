@@ -13,10 +13,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let tempPhotoURL = null; // Temporary preview URL
 
+  // === Toast Notification Function ===
+  function showAlert(message, type = 'success') {
+    const existingAlert = document.querySelector('.toast-alert');
+    if (existingAlert) existingAlert.remove();
+
+    const alertBox = document.createElement('div');
+    alertBox.className = `toast-alert ${type}`;
+    alertBox.textContent = message;
+    document.body.appendChild(alertBox);
+
+    // Slide in
+    setTimeout(() => alertBox.classList.add('show'), 100);
+
+    // Slide out
+    setTimeout(() => {
+      alertBox.classList.remove('show');
+      setTimeout(() => alertBox.remove(), 600);
+    }, 3500);
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      alert("You must be logged in to view your profile.");
-      window.location.href = "login.html";
+      showAlert("You must be logged in to view your profile.", "error");
+      setTimeout(() => (window.location.href = "login.html"), 1200);
       return;
     }
 
@@ -101,13 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       tempPhotoURL = downloadURL; // final URL
+      showAlert("Profile picture updated successfully!");
     });
 
     // Handle save profile
     saveBtn.addEventListener("click", async () => {
       const name = displayNameInput.value.trim();
       if (!name) {
-        alert("Please enter a display name.");
+        showAlert("Please enter a display name.", "error");
         return;
       }
 
@@ -122,8 +143,8 @@ document.addEventListener("DOMContentLoaded", () => {
         { merge: true }
       );
 
-      alert("Profile updated successfully!");
-      window.location.href = "Inkcraftmain.html";
+      showAlert("Profile updated successfully!");
+      setTimeout(() => (window.location.href = "Inkcraftmain.html"), 1500);
     });
   });
 });

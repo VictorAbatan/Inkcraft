@@ -44,25 +44,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadFloatingMenu();
 
-  // === Inkcraft Custom Alert ===
+  // === Inkcraft Custom Alert with Slide + Loading ===
   function showInkcraftAlert(message, type = 'info') {
-    // Remove existing alert if any
+    // Remove existing alert
     const oldAlert = document.querySelector('.inkcraft-alert');
     if (oldAlert) oldAlert.remove();
 
+    // Create alert
     const alertBox = document.createElement('div');
     alertBox.className = `inkcraft-alert ${type}`;
-    alertBox.textContent = message;
+    alertBox.innerHTML = `
+      <span class="alert-message">${message}</span>
+      ${type === 'loading' ? '<div class="loading-bar"></div>' : ''}
+    `;
     document.body.appendChild(alertBox);
 
-    // Show animation
+    // Slide in
     requestAnimationFrame(() => alertBox.classList.add('show'));
 
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      alertBox.classList.remove('show');
-      setTimeout(() => alertBox.remove(), 500);
-    }, 3000);
+    return alertBox;
   }
 
   // === Login Form Validation + Firebase Sign-in ===
@@ -139,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const auth = getAuth(app);
+      const alert = showInkcraftAlert('Logging in...', 'loading'); // show loading alert
+
       try {
-        const auth = getAuth(app);
         const userCredential = await signInWithEmailAndPassword(
           auth,
           email.value.trim(),
@@ -152,20 +154,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const tokenResult = await getIdTokenResult(user);
         const isAdmin = tokenResult.claims.admin === true;
 
-        showInkcraftAlert('Login successful!', 'success');
+        // Change alert to success (green transition)
+        alert.classList.remove('loading');
+        alert.classList.add('success');
+        alert.innerHTML = `<span class="alert-message">Login successful!</span>`;
+
+        // Smooth fade and slide out after short delay
+        setTimeout(() => {
+          alert.classList.remove('show');
+          setTimeout(() => alert.remove(), 400);
+        }, 1200);
+
         console.log('User logged in:', user);
 
-        // Redirect based on role
+        // Redirect
         setTimeout(() => {
           if (isAdmin) {
             window.location.href = 'admin-dashboard.html';
           } else {
             window.location.href = 'Inkcraftmain.html';
           }
-        }, 1200);
+        }, 1500);
       } catch (error) {
         console.error('Login error:', error.message);
-        showInkcraftAlert('Login failed: ' + error.message, 'error');
+        alert.classList.remove('loading');
+        alert.classList.add('error');
+        alert.innerHTML = `<span class="alert-message">Login failed: ${error.message}</span>`;
+        setTimeout(() => {
+          alert.classList.remove('show');
+          setTimeout(() => alert.remove(), 400);
+        }, 2000);
       }
     });
   }

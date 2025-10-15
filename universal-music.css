@@ -1,0 +1,31 @@
+/* Universal Music Toggle Button */
+.music-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 10000;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+.music-toggle:hover {
+  background: rgba(0,0,0,0.8);
+  transform: scale(1.05);
+}
+.music-toggle.muted {
+  opacity: 0.6;
+}
+.music-toggle.playing {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Pulse glow animation */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(162,89,255,0.4); }
+  50% { box-shadow: 0 0 20px rgba(162,89,255,0.8); }
+}

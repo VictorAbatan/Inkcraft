@@ -18,104 +18,100 @@ document.addEventListener('DOMContentLoaded', () => {
         if (link.getAttribute('href').toLowerCase() === currentPage) link.classList.add('active');
       });
 
-     // ✅ Logout logic
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', e => {
-    e.preventDefault();
-    const auth = getAuth(app);
-    signOut(auth)
-      .then(() => {
-        // ✅ Create custom modal
-        const modal = document.createElement('div');
-        modal.innerHTML = `
-          <div id="logout-modal-overlay" style="
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-          ">
-            <div style="
-              background: #fff;
-              padding: 25px 35px;
-              border-radius: 10px;
-              text-align: center;
-              box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-              font-family: Arial, sans-serif;
-              max-width: 300px;
-            ">
-              <h3 style="margin-bottom: 15px; color: #333;">Signed Out</h3>
-              <p style="margin-bottom: 20px; color: #555;">You've been signed out successfully.</p>
-              <button id="logout-ok-btn" style="
-                background-color: #007bff;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 6px;
-                cursor: pointer;
-              ">OK</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
+      // ✅ Logout logic
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', e => {
+          e.preventDefault();
+          const auth = getAuth(app);
+          signOut(auth)
+            .then(() => {
+              const modal = document.createElement('div');
+              modal.innerHTML = `
+                <div id="logout-modal-overlay" style="
+                  position: fixed;
+                  top: 0; left: 0; right: 0; bottom: 0;
+                  background-color: rgba(0, 0, 0, 0.5);
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  z-index: 9999;
+                ">
+                  <div style="
+                    background: #fff;
+                    padding: 25px 35px;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                    font-family: Arial, sans-serif;
+                    max-width: 300px;
+                  ">
+                    <h3 style="margin-bottom: 15px; color: #333;">Signed Out</h3>
+                    <p style="margin-bottom: 20px; color: #555;">You've been signed out successfully.</p>
+                    <button id="logout-ok-btn" style="
+                      background-color: #007bff;
+                      color: white;
+                      border: none;
+                      padding: 8px 16px;
+                      border-radius: 6px;
+                      cursor: pointer;
+                    ">OK</button>
+                  </div>
+                </div>
+              `;
+              document.body.appendChild(modal);
 
-        // ✅ Handle modal button click
-        document.getElementById('logout-ok-btn').addEventListener('click', () => {
-          const overlay = document.getElementById('logout-modal-overlay');
-          overlay.remove();
-          window.location.href = 'login.html';
+              document.getElementById('logout-ok-btn').addEventListener('click', () => {
+                const overlay = document.getElementById('logout-modal-overlay');
+                overlay.remove();
+                window.location.href = 'login.html';
+              });
+            })
+            .catch(err => {
+              console.error('Logout error:', err);
+              const modal = document.createElement('div');
+              modal.innerHTML = `
+                <div id="logout-modal-overlay" style="
+                  position: fixed;
+                  top: 0; left: 0; right: 0; bottom: 0;
+                  background-color: rgba(0, 0, 0, 0.5);
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  z-index: 9999;
+                ">
+                  <div style="
+                    background: #fff;
+                    padding: 25px 35px;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                    font-family: Arial, sans-serif;
+                    max-width: 300px;
+                  ">
+                    <h3 style="margin-bottom: 15px; color: #c0392b;">Logout Failed</h3>
+                    <p style="margin-bottom: 20px; color: #555;">Something went wrong. Please try again.</p>
+                    <button id="logout-error-ok-btn" style="
+                      background-color: #c0392b;
+                      color: white;
+                      border: none;
+                      padding: 8px 16px;
+                      border-radius: 6px;
+                      cursor: pointer;
+                    ">OK</button>
+                  </div>
+                </div>
+              `;
+              document.body.appendChild(modal);
+
+              document.getElementById('logout-error-ok-btn').addEventListener('click', () => {
+                const overlay = document.getElementById('logout-modal-overlay');
+                overlay.remove();
+              });
+            });
         });
-      })
-      .catch(err => {
-        console.error('Logout error:', err);
-        // ✅ Custom error modal
-        const modal = document.createElement('div');
-        modal.innerHTML = `
-          <div id="logout-modal-overlay" style="
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-          ">
-            <div style="
-              background: #fff;
-              padding: 25px 35px;
-              border-radius: 10px;
-              text-align: center;
-              box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-              font-family: Arial, sans-serif;
-              max-width: 300px;
-            ">
-              <h3 style="margin-bottom: 15px; color: #c0392b;">Logout Failed</h3>
-              <p style="margin-bottom: 20px; color: #555;">Something went wrong. Please try again.</p>
-              <button id="logout-error-ok-btn" style="
-                background-color: #c0392b;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 6px;
-                cursor: pointer;
-              ">OK</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-
-        document.getElementById('logout-error-ok-btn').addEventListener('click', () => {
-          const overlay = document.getElementById('logout-modal-overlay');
-          overlay.remove();
-        });
-      });
-  });
-}
-});
-
+      }
+    });
 
   // === ICON CAROUSEL LOGIC ===
   const carousel = document.querySelector('.icon-carousel');
@@ -252,7 +248,6 @@ if (logoutBtn) {
     for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
 
-      // ✅ Use authorName from the novel document if it exists
       let authorName = data.authorName || 'Unknown Author';
 
       if (!data.authorName && data.authorId) {
@@ -275,7 +270,6 @@ if (logoutBtn) {
       const img = document.createElement('img');
       img.alt = data.title || 'Untitled';
 
-      // ✅ Always fetch from Storage dynamically
       if (data.coverPath) {
         try {
           const url = await getDownloadURL(ref(storage, data.coverPath));
@@ -309,19 +303,16 @@ if (logoutBtn) {
       const profileNameEl = document.getElementById('reader-name');
       const profileImgEl = document.getElementById('reader-img');
 
-      // Set temporary placeholder immediately
       if (profileImgEl) profileImgEl.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
       if (profileNameEl) profileNameEl.textContent = 'Loading...';
 
       try {
-        // Fetch both regular user and author profile concurrently
         const userRef = doc(db, "users", user.uid);
         const authorRef = doc(db, "authorProfiles", user.uid);
 
         const [userSnap, authorSnap] = await Promise.all([getDoc(userRef), getDoc(authorRef)]);
         const data = (authorSnap.exists() ? authorSnap.data() : userSnap.data()) || {};
 
-        // --- ✅ Updated profile name logic ---
         if (profileNameEl) {
           profileNameEl.textContent =
             data.username ||
@@ -332,7 +323,6 @@ if (logoutBtn) {
             "Anonymous Reader";
         }
 
-        // --- ✅ Always fetch profile image dynamically ---
         if (profileImgEl) {
           try {
             if (data.profilePicPath || data.photoPath || data.profileImagePath) {

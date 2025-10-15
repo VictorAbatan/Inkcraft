@@ -102,6 +102,35 @@ body, button, input, a, span, h1, h2, h3, h4, h5, h6, p {
   font-family: 'Cormorant Garamond', serif;
 }
 
+/* Tour Button */
+#tour-link {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  z-index: 1000;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+#tour-icon {
+  width: 24px;
+  height: 24px;
+}
+
+#tour-link:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 6px #ffcc00);
+}
+
+
 /* ====== RESET & BASE STYLES ====== */
 * {
   margin: 0;
@@ -446,12 +475,12 @@ body {
   border-top: 1px solid #444;
   padding-top: 15px;
   font-size: 0.85rem;
-}
-
-/* ====== RESPONSIVE HEADER FIXES ====== */
+}/* ====== RESPONSIVE HEADER FIXES ====== */
 @media (max-width: 768px) {
   .site-header {
     flex-direction: row;
+    align-items: center;
+    justify-content: space-between; /* distribute tour, title, profile */
     padding: 10px 15px;
   }
 
@@ -459,6 +488,9 @@ body {
     position: static;
     transform: none;
     margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* center Inkcraft logo/title */
     gap: 8px;
   }
 
@@ -466,21 +498,31 @@ body {
     font-size: 1.6rem;
   }
 
-  /* ✅ Keep username visible on tablets */
+  /* Keep username visible */
   .reader-profile .profile-name {
     font-size: 0.9rem;
+  }
+
+  /* Position Tour button */
+  #tour-link {
+    position: static;
+    order: -1; /* move to the left */
   }
 }
 
 @media (max-width: 480px) {
   .site-header {
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-between; /* left: tour, center: title, right: profile */
+    align-items: center;
     padding: 8px 12px;
   }
 
   .header-content {
     gap: 6px;
+    display: flex;
+    justify-content: center; /* center logo/title */
+    flex: 1; /* ensure it takes remaining space */
   }
 
   .site-logo {
@@ -490,6 +532,7 @@ body {
   .site-title {
     font-size: 1.2rem;
     letter-spacing: 1px;
+    text-align: center;
   }
 
   .reader-profile .profile-img {
@@ -497,8 +540,14 @@ body {
     height: 32px;
   }
 
-  /* ✅ Username still visible, slightly smaller */
   .reader-profile .profile-name {
     font-size: 0.8rem;
+  }
+
+  /* Position Tour button */
+  #tour-link {
+    position: static;
+    order: -1; /* move it to the left */
+    margin-right: auto; /* push content to center */
   }
 }

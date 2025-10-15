@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inkcraft Site Tour</title>
+  <style>
+    body {
+      margin: 0; font-family: 'Cormorant Garamond', serif;
+      background: url('yellow.jpggi') center center / cover no-repeat;
+      color: #fff; overflow: hidden;
+      height: 100vh;
+    }
+
+    .tour-container {
+      position: relative; width: 100vw; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+    }
+
+    .nav-buttons {
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; justify-content: center; gap: 40px; /* more space between buttons */
+      z-index: 10;
+    }
+
+    .nav-buttons button {
+      background: #ffcc00; color: #111; border: none;
+      padding: 14px 28px; border-radius: 10px; font-weight: bold;
+      cursor: pointer; font-size: 20px;
+      box-shadow: 0 0 12px #000;
+      transition: transform 0.2s;
+    }
+
+    .nav-buttons button:hover { transform: scale(1.1); }
+
+    .slide-wrapper {
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 90%; width: 100%;
+    }
+
+    .slide-image {
+      width: 80vw; max-height: 70vh; border: 4px solid #ffcc00;
+      border-radius: 12px; box-shadow: 0 0 25px #000;
+      object-fit: contain; transition: opacity 1s ease;
+      background: #222;
+    }
+
+    .caption {
+      margin-top: 15px;
+      background: rgba(0,0,0,0.75);
+      padding: 20px 30px;
+      border-radius: 12px;
+      font-size: 22px;
+      text-align: center;
+      color: #ffcc00;
+      max-width: 90%;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+
+    #slide-counter {
+      position: absolute; top: 80px; left: 50%;
+      transform: translateX(-50%);
+      color: #ffcc00; font-weight: bold; font-size: 20px;
+    }
+
+    .arrow {
+      position: absolute; width: 50px; height: 50px;
+      border-left: 5px solid #ffcc00;
+      border-bottom: 5px solid #ffcc00;
+      transform: rotate(-45deg);
+      animation: bounce 1s infinite alternate;
+      opacity: 0.9;
+    }
+
+    @keyframes bounce {
+      0% { transform: rotate(-45deg) translateY(0); }
+      100% { transform: rotate(-45deg) translateY(-20px); }
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .slide-image { width: 90vw; max-height: 60vh; border-width: 5px; object-fit: contain; }
+      .caption { font-size: 28px; padding: 25px 35px; }
+      .nav-buttons { gap: 30px; }
+      .nav-buttons button { padding: 18px 34px; font-size: 24px; }
+      #slide-counter { font-size: 24px; top: 70px; }
+      .arrow { width: 55px; height: 55px; border-left-width: 6px; border-bottom-width: 6px; }
+    }
+
+    @media (max-width: 480px) {
+      .slide-image { width: auto; height: 60vh; border-width: 6px; object-fit: contain; }
+      .caption { font-size: 32px; padding: 28px 38px; }
+      .nav-buttons { gap: 25px; }
+      .nav-buttons button { padding: 20px 38px; font-size: 26px; }
+      #slide-counter { font-size: 26px; top: 60px; }
+      .arrow { width: 60px; height: 60px; border-left-width: 7px; border-bottom-width: 7px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="tour-container">
+
+  <div class="nav-buttons">
+    <button id="prev-btn">Back</button>
+    <button id="next-btn">Next</button>
+    <button id="exit-btn" onclick="window.location.href='Inkcraftmain.html'">Exit</button>
+  </div>
+
+  <div class="slide-wrapper">
+    <img id="slide-image" class="slide-image" src="" alt="Tour Slide">
+    <div class="caption" id="tour-caption"></div>
+  </div>
+
+  <div id="slide-counter"></div>
+  <div class="arrow" id="highlight-arrow" style="bottom: 150px; left: 50%; display:none;"></div>
+
+</div>
+
+<script>
+  const slides = [
+    { title: "Floating Menu", img: "float.png", caption: "This is the floating menu. Each icon has a function: Home, Discover, Library, e.t.c." },
+    { title: "User Profile", img: "user-p.png", caption: "Your profile picture and name appear here. Click to access settings or logout." },
+    { title: "Verse Page", img: "vs.png", caption: "Explore verse content and grouped novels." },
+    { title: "Discover Page", img: "dis.png", caption: "Browse novels, series, and verses." },
+    { title: "Homepage", img: "home.png", caption: "Homepage features new novels and highlighted content." },
+    { title: "Login Page", img: "login.png", caption: "Existing users can login here to access their content." },
+    { title: "Sign Up Page", img: "signup.png", caption: "New users can create an account." },
+    { title: "About Us", img: "abus.png", caption: "Learn about the Inkcraft team." }
+  ];
+
+  const image = document.getElementById('slide-image');
+  const caption = document.getElementById('tour-caption');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const exitBtn = document.getElementById('exit-btn');
+  const slideCounter = document.getElementById('slide-counter');
+  const arrow = document.getElementById('highlight-arrow');
+
+  let currentSlide = 0;
+  let autoPlay = true;
+  let autoPlayInterval;
+
+  function showSlide(index) {
+    if(index < 0 || index >= slides.length) return;
+    currentSlide = index;
+    const slide = slides[index];
+
+    image.style.opacity = 0;
+    caption.style.opacity = 0;
+    arrow.style.display = 'none';
+
+    setTimeout(() => {
+      image.src = slide.img;
+      caption.textContent = slide.caption;
+      image.style.opacity = 1;
+      caption.style.opacity = 1;
+    }, 300);
+
+    slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+    prevBtn.style.display = currentSlide === 0 ? "none" : "inline-block";
+    nextBtn.style.display = currentSlide === slides.length - 1 ? "none" : "inline-block";
+  }
+
+  function nextSlide() { if(currentSlide < slides.length - 1) showSlide(currentSlide + 1); else stopAutoPlay(); }
+  function prevSlide() { if(currentSlide > 0) showSlide(currentSlide - 1); }
+  function stopAutoPlay() { clearInterval(autoPlayInterval); autoPlay = false; }
+
+  nextBtn.addEventListener('click', () => { nextSlide(); stopAutoPlay(); });
+  prevBtn.addEventListener('click', () => { prevSlide(); stopAutoPlay(); });
+
+  showSlide(0);
+  autoPlayInterval = setInterval(() => { if(autoPlay) nextSlide(); }, 7000);
+</script>
+
+</body>
+</html>

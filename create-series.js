@@ -19,6 +19,21 @@ import {
 const fallbackSeriesCover = 'https://via.placeholder.com/150x220?text=No+Cover';
 const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
 
+// --- Custom centered toast alert ---
+function showCenteredAlert(message) {
+  const alertBox = document.createElement('div');
+  alertBox.className = 'centered-alert slide-in';
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  // Slide out after 2 seconds
+  setTimeout(() => {
+    alertBox.classList.remove('slide-in');
+    alertBox.classList.add('slide-out');
+    setTimeout(() => alertBox.remove(), 500);
+  }, 2000);
+}
+
 // --- Helper function for series image ---
 async function getSeriesCover(coverPath, coverImageField) {
   if (coverPath) {
@@ -61,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // === Auth Check ===
   onAuthStateChanged(auth, user => {
     if (!user) {
-      alert('You must be logged in to create a series.');
+      showCenteredAlert('You must be logged in to create a series.');
       window.location.href = 'login.html';
       return;
     }
@@ -79,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const coverFile = coverFileInput?.files?.[0];
 
         if (!title || !description) {
-          alert('Please fill in all required fields.');
+          showCenteredAlert('Please fill in all required fields.');
           return;
         }
 
@@ -113,12 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const seriesRef = doc(db, "series", docId);
           await setDoc(seriesRef, seriesData);
 
-          alert('Series created successfully! You can now add novels to it.');
+          showCenteredAlert('Series created successfully! You can now add novels to it.');
           form.reset();
           if (coverFileInput) coverFileInput.value = '';
         } catch (error) {
           console.error('Error creating series:', error);
-          alert('Something went wrong. Please try again.');
+          showCenteredAlert('Something went wrong. Please try again.');
         }
       });
     }

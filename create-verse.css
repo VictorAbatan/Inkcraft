@@ -230,3 +230,31 @@ footer {
     right: 50px;
   }
 }
+
+/* === ✅ Centered Toast Alert (Slightly Larger) === */
+.centered-alert {
+  position: fixed;
+  top: 50%;
+  right: -450px;
+  transform: translateY(-50%);
+  background: rgba(0, 123, 255, 0.95);
+  color: #fff;
+  padding: 18px 26px;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  z-index: 2000;
+  opacity: 0;
+  transition: right 0.5s ease, opacity 0.5s ease;
+}
+
+.centered-alert.slide-in {
+  right: 40px;
+  opacity: 1;
+}
+
+.centered-alert.slide-out {
+  right: -450px;
+  opacity: 0;
+}

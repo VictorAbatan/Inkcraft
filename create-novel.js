@@ -7,7 +7,7 @@ const storageRef = storage;
 const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
 const fallbackNovelCover = 'https://via.placeholder.com/150x220?text=No+Cover';
 
-// ✅ Stylish Alert (matches login and library)
+/* ✅ Stylish Alert (slide in + slide out) */
 function showAlert(message, type = 'success') {
   const existingAlert = document.querySelector('.alert');
   if (existingAlert) existingAlert.remove();
@@ -17,14 +17,17 @@ function showAlert(message, type = 'success') {
   alertBox.textContent = message;
   document.body.appendChild(alertBox);
 
-  // Show animation
+  // Slide in
   setTimeout(() => alertBox.classList.add('show'), 10);
 
-  // Auto-remove after 2.5s
+  // Slide out after 3 seconds
   setTimeout(() => {
     alertBox.classList.remove('show');
-    setTimeout(() => alertBox.remove(), 300);
-  }, 2500);
+    alertBox.classList.add('hide');
+  }, 3000);
+
+  // Remove from DOM after animation
+  setTimeout(() => alertBox.remove(), 3800);
 }
 
 // --- Helper functions ---

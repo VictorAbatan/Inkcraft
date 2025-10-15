@@ -12,6 +12,26 @@ let currentUser = null;
 let selectedFile = null;
 const fallbackAuthorAvatar = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
 
+// === Toast Notification Function ===
+function showAlert(message, type = 'success') {
+  const existingAlert = document.querySelector('.toast-alert');
+  if (existingAlert) existingAlert.remove();
+
+  const alertBox = document.createElement('div');
+  alertBox.className = `toast-alert ${type}`;
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  // Trigger slide in
+  setTimeout(() => alertBox.classList.add('show'), 100);
+
+  // Slide out and remove
+  setTimeout(() => {
+    alertBox.classList.remove('show');
+    setTimeout(() => alertBox.remove(), 600);
+  }, 3500);
+}
+
 // --- Helper function to safely get image from Storage or fallback ---
 async function getAuthorImage(data) {
   if (data.profilePicPath) {
@@ -57,13 +77,13 @@ onAuthStateChanged(auth, async (user) => {
 saveBtn.addEventListener('click', async () => {
   try {
     if (!currentUser) {
-      alert('Not authenticated');
+      showAlert('Not authenticated', 'error');
       return;
     }
 
     const penName = penNameInput.value.trim();
     if (!penName) {
-      alert('Please enter a pen name.');
+      showAlert('Please enter a pen name.', 'error');
       return;
     }
 
@@ -80,7 +100,7 @@ saveBtn.addEventListener('click', async () => {
         console.log('✅ Image uploaded:', profilePicURL);
       } catch (uploadErr) {
         console.error('❌ Upload failed:', uploadErr);
-        alert('Upload failed. Check your internet, image format, or Firebase Storage settings.');
+        showAlert('Upload failed. Check your internet, image format, or Firebase Storage settings.', 'error');
         return;
       }
     } else {
@@ -104,10 +124,12 @@ saveBtn.addEventListener('click', async () => {
       { merge: true } // <-- Prevents overwriting other fields
     );
 
-    alert('Profile updated successfully!');
-    window.location.href = 'author-centre.html';
+    showAlert('Profile updated successfully!');
+    setTimeout(() => {
+      window.location.href = 'author-centre.html';
+    }, 1500);
   } catch (error) {
     console.error('❌ Error saving profile:', error);
-    alert('Failed to save profile. Try again.');
+    showAlert('Failed to save profile. Try again.', 'error');
   }
 });

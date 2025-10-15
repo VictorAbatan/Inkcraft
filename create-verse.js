@@ -30,6 +30,24 @@ async function getVerseCover(coverPath) {
   return fallbackVerseCover;
 }
 
+// === ✅ Custom Toast Alert Function ===
+function showCenteredAlert(message, duration = 3000) {
+  const alertBox = document.createElement('div');
+  alertBox.className = 'centered-alert';
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  // Slide in
+  setTimeout(() => alertBox.classList.add('slide-in'), 50);
+
+  // Slide out after timeout
+  setTimeout(() => {
+    alertBox.classList.remove('slide-in');
+    alertBox.classList.add('slide-out');
+    setTimeout(() => alertBox.remove(), 600);
+  }, duration);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth(app);
   const storage = getStorage(app);
@@ -59,8 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // === Auth Protection ===
   onAuthStateChanged(auth, user => {
     if (!user) {
-      alert('You must be logged in to access this page.');
-      window.location.href = 'login.html';
+      showCenteredAlert('You must be logged in to access this page.');
+      setTimeout(() => window.location.href = 'login.html', 2500);
       return;
     }
 
@@ -92,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = imageInput.files[0];
 
       if (!title || !description) {
-        alert('Please complete all required fields.');
+        showCenteredAlert('Please complete all required fields.');
         return;
       }
 
@@ -125,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await setDoc(verseRef, verseData);
 
-        alert('Verse created successfully');
+        showCenteredAlert('Verse created successfully!');
         form.reset();
         if (preview) preview.style.display = 'none';
 
@@ -133,11 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error submitting verse:', error);
 
         if (error.code === 'permission-denied') {
-          alert('You do not have permission to submit a verse.');
+          showCenteredAlert('You do not have permission to submit a verse.');
         } else if (error.message.includes('network')) {
-          alert('Network error. Please check your connection and try again.');
+          showCenteredAlert('Network error. Please check your connection.');
         } else {
-          alert('Submission failed. Please try again.');
+          showCenteredAlert('Submission failed. Please try again.');
         }
       }
     });

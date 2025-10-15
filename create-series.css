@@ -196,3 +196,31 @@ footer {
     right: 50px;
   }
 }
+
+/* === ✅ Centered Toast Alert (Square, Middle, Slide-In) === */
+.centered-alert {
+  position: fixed;
+  top: 50%;
+  right: -400px;
+  transform: translateY(-50%);
+  background: rgba(0, 123, 255, 0.95);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 0; /* square */
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  z-index: 2000;
+  opacity: 0;
+  transition: right 0.5s ease, opacity 0.5s ease;
+}
+
+.centered-alert.slide-in {
+  right: 30px;
+  opacity: 1;
+}
+
+.centered-alert.slide-out {
+  right: -400px;
+  opacity: 0;
+}

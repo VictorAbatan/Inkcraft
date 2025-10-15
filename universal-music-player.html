@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inkcraft Music Player</title>
+
+  <link rel="icon" href="data:,">
+
+</head>
+<body>
+  <audio id="bg-music" preload="auto"></audio>
+
+  <script>
+    // === PLAYLIST ===
+    const playlist = [
+      'ambient-background-347405.mp3',
+      'space-ambient-351305.mp3',
+      'space-ambient-cinematic-351304.mp3'
+    ];
+
+    const audio = document.getElementById('bg-music');
+    const audioNext = new Audio();
+    audioNext.preload = 'auto';
+    audioNext.loop = false;
+    audioNext.volume = 0;
+
+    let current = 0;
+    let isPlaying = false;
+
+    // === 🔹 Load saved state from localStorage ===
+    const savedTrack = localStorage.getItem('inkcraft-music-track');
+    const savedTime = parseFloat(localStorage.getItem('inkcraft-music-time') || 0);
+    const wasPlaying = localStorage.getItem('inkcraft-music-playing') === 'true';
+
+    if (savedTrack && playlist.includes(savedTrack)) {
+      audio.src = savedTrack;
+      audio.currentTime = savedTime;
+      current = playlist.indexOf(savedTrack);
+    } else {
+      audio.src = playlist[current];
+    }
+
+    const nextIndex = () => (current + 1) % playlist.length;
+    audioNext.src = playlist[nextIndex()];
+
+    // === CROSSFADE LOGIC ===
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration - audio.currentTime < 5 && !audioNext.isFading) {
+        crossfade();
+      }
+    });
+
+    function crossfade() {
+      audioNext.isFading = true;
+      const next = nextIndex();
+      audioNext.src = playlist[next];
+      audioNext.currentTime = 0;
+      audioNext.play();
+
+      fadeVolume(audioNext, 0, 0.5, 5000);
+      fadeVolume(audio, audio.volume, 0, 5000, () => {
+        audio.pause();
+        const temp = audio.src;
+        audio.src = audioNext.src;
+        audioNext.src = temp;
+        audio.volume = 0.5;
+        current = next;
+        audioNext.isFading = false;
+      });
+    }
+
+    function fadeVolume(a, from, to, duration, callback) {
+      const steps = 30;
+      const stepTime = duration / steps;
+      let count = 0;
+      const delta = (to - from) / steps;
+      a.volume = from;
+      const interval = setInterval(() => {
+        count++;
+        a.volume = Math.min(Math.max(a.volume + delta, 0), 1);
+        if (count >= steps) {
+          clearInterval(interval);
+          if (callback) callback();
+        }
+      }, stepTime);
+    }
+
+    // === 🔹 Handle commands from parent ===
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (!msg || !msg.cmd) return;
+
+      switch (msg.cmd) {
+        case 'toggle':
+          if (!isPlaying) {
+            audio.play().then(() => { 
+              isPlaying = true;
+              notifyParent();
+            }).catch(() => { notifyParent(); });
+          } else {
+            audio.pause();
+            audioNext.pause();
+            isPlaying = false;
+            notifyParent();
+          }
+          break;
+
+        case 'getState':
+          notifyParent();
+          break;
+      }
+    });
+
+    function notifyParent() {
+      window.parent.postMessage({ cmd: 'stateUpdate', isPlaying }, '*');
+    }
+
+    // === 🔹 Resume if was playing and notify parent ===
+    if (wasPlaying) {
+      audio.play().then(() => {
+        isPlaying = true;
+        notifyParent();
+      }).catch(() => { notifyParent(); });
+    } else {
+      notifyParent();
+    }
+
+    // === 🔹 Save state on unload ===
+    function saveState() {
+      localStorage.setItem('inkcraft-music-track', audio.src);
+      localStorage.setItem('inkcraft-music-time', audio.currentTime);
+      localStorage.setItem('inkcraft-music-playing', isPlaying);
+    }
+    window.addEventListener('beforeunload', saveState);
+  </script>
+</body>
+</html>

@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Inkcraft Music Player</title>
-
   <link rel="icon" href="data:,">
-
 </head>
 <body>
   <audio id="bg-music" preload="auto"></audio>
@@ -13,7 +11,7 @@
   <script>
     // === PLAYLIST ===
     const playlist = [
-      'ambient-background-347405.mp3',
+      'WhatsApp Audio 2025-10-16 at 12.46.12_2a7955f9.mp3',
       'space-ambient-351305.mp3',
       'space-ambient-cinematic-351304.mp3'
     ];
@@ -26,6 +24,7 @@
 
     let current = 0;
     let isPlaying = false;
+    let wasPlayingBeforeLeaving = false;
 
     // === 🔹 Load saved state from localStorage ===
     const savedTrack = localStorage.getItem('inkcraft-music-track');
@@ -34,8 +33,8 @@
 
     if (savedTrack && playlist.includes(savedTrack)) {
       audio.src = savedTrack;
-      audio.currentTime = savedTime;
       current = playlist.indexOf(savedTrack);
+      audio.currentTime = savedTime || 0;
     } else {
       audio.src = playlist[current];
     }
@@ -43,9 +42,9 @@
     const nextIndex = () => (current + 1) % playlist.length;
     audioNext.src = playlist[nextIndex()];
 
-    // === CROSSFADE LOGIC ===
+    // === CROSSFADE ===
     audio.addEventListener('timeupdate', () => {
-      if (audio.duration - audio.currentTime < 5 && !audioNext.isFading) {
+      if (audio.duration && audio.duration - audio.currentTime < 5 && !audioNext.isFading) {
         crossfade();
       }
     });
@@ -60,12 +59,11 @@
       fadeVolume(audioNext, 0, 0.5, 5000);
       fadeVolume(audio, audio.volume, 0, 5000, () => {
         audio.pause();
-        const temp = audio.src;
         audio.src = audioNext.src;
-        audioNext.src = temp;
         audio.volume = 0.5;
         current = next;
         audioNext.isFading = false;
+        audio.play();
       });
     }
 
@@ -85,53 +83,75 @@
       }, stepTime);
     }
 
-    // === 🔹 Handle commands from parent ===
+    // === Toggle + state ===
     window.addEventListener('message', (event) => {
       const msg = event.data;
       if (!msg || !msg.cmd) return;
-
       switch (msg.cmd) {
         case 'toggle':
           if (!isPlaying) {
-            audio.play().then(() => { 
-              isPlaying = true;
-              notifyParent();
-            }).catch(() => { notifyParent(); });
+            startPlayback();
           } else {
-            audio.pause();
-            audioNext.pause();
+            audio.pause(); audioNext.pause();
             isPlaying = false;
             notifyParent();
           }
           break;
-
         case 'getState':
           notifyParent();
           break;
       }
     });
 
+    function startPlayback() {
+      audio.play().then(() => {
+        isPlaying = true;
+        notifyParent();
+      }).catch(() => {
+        // Retry autoplay if blocked
+        setTimeout(() => {
+          audio.play().then(() => {
+            isPlaying = true;
+            notifyParent();
+          }).catch(() => {});
+        }, 1000);
+      });
+    }
+
     function notifyParent() {
       window.parent.postMessage({ cmd: 'stateUpdate', isPlaying }, '*');
     }
 
-    // === 🔹 Resume if was playing and notify parent ===
+    // === Resume playback after navigation ===
     if (wasPlaying) {
-      audio.play().then(() => {
-        isPlaying = true;
-        notifyParent();
-      }).catch(() => { notifyParent(); });
+      startPlayback();
     } else {
       notifyParent();
     }
 
-    // === 🔹 Save state on unload ===
+    // === Save playback state before unload ===
     function saveState() {
       localStorage.setItem('inkcraft-music-track', audio.src);
       localStorage.setItem('inkcraft-music-time', audio.currentTime);
       localStorage.setItem('inkcraft-music-playing', isPlaying);
     }
     window.addEventListener('beforeunload', saveState);
+
+    // === Pause + auto-resume on tab switch ===
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (!audio.paused) {
+          wasPlayingBeforeLeaving = true;
+          saveState();
+          audio.pause();
+          audioNext.pause();
+          isPlaying = false;
+        }
+      } else if (wasPlayingBeforeLeaving) {
+        startPlayback();
+        wasPlayingBeforeLeaving = false;
+      }
+    });
   </script>
 </body>
 </html>

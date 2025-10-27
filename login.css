@@ -117,19 +117,37 @@ header .motto {
   color: #ccc;
 }
 
+/* === GLOWING FORM SECTION === */
 .form-section {
   max-width: 400px;
   width: 90%;
-  background-color: rgba(255, 255, 255, 0.05);
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 0 15px rgba(0, 153, 255, 0.4),
+    0 0 25px rgba(0, 153, 255, 0.3),
+    0 0 40px rgba(0, 153, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   margin-top: 3rem;
   text-align: center;
-  overflow: visible;
   position: relative;
   z-index: 1;
+}
+
+.form-section:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 25px rgba(0, 153, 255, 0.6),
+    0 0 45px rgba(0, 153, 255, 0.4),
+    0 0 60px rgba(0, 153, 255, 0.2);
 }
 
 .form-section h2 {
@@ -143,28 +161,45 @@ input[type="password"] {
   padding: 0.8rem;
   margin-bottom: 1rem;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 1rem;
   outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 input:focus {
-  box-shadow: 0 0 5px #A259FF;
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(0, 153, 255, 0.8);
+  transform: scale(1.02);
+  box-shadow: 0 0 8px rgba(0, 153, 255, 0.5);
 }
 
+/* === Button === */
 .btn {
-  background-color: #A259FF;
+  background: rgba(0, 123, 255, 0.85);
   color: white;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 5px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s, transform 0.2s;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .btn:hover {
-  background-color: #883dff;
+  background: rgba(0, 86, 179, 0.9);
+  transform: scale(1.05);
 }
 
 .form-section p {
@@ -172,7 +207,7 @@ input:focus {
 }
 
 .form-section a {
-  color: #A259FF;
+  color: #33c6ce;
   text-decoration: none;
 }
 
@@ -203,6 +238,7 @@ input:focus {
   padding: 0;
   user-select: none;
 }
+
 .toggle-eye:focus {
   outline: none;
 }
@@ -216,7 +252,7 @@ input:focus {
 }
 
 .forgot-password a {
-  color: #A259FF;
+  color: #33c6ce;
   text-decoration: none;
 }
 
@@ -240,6 +276,8 @@ footer {
   .form-section {
     width: 90%;
     padding: 1.5rem 1rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   input[type="text"],

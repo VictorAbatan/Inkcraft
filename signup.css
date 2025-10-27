@@ -19,7 +19,7 @@ header {
   margin-bottom: 2rem;
 }
 
-/* === UPDATED GLASSMORPHIC FORM WITH GLOW === */
+/* === GLASSMORPHIC FORM WITH GLOW === */
 .form-section {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(15px) saturate(180%);
@@ -48,8 +48,8 @@ header {
 
 /* === Input Fields === */
 input, .btn {
-  width: 90%;
-  max-width: 340px;
+  width: 95%; /* slightly wider */
+  max-width: 400px; /* increased max width */
   padding: 12px;
   margin: 0.6rem auto;
   border: none;
@@ -97,8 +97,8 @@ input:focus {
 /* === Password Field with Emoji Toggle === */
 .password-container {
   position: relative;
-  width: 90%;
-  max-width: 340px;
+  width: 95%;
+  max-width: 400px;
   margin: 0.6rem auto;
 }
 
@@ -218,7 +218,7 @@ footer {
 /* === Mobile Adjustments === */
 @media (max-width: 600px) {
   .form-section {
-    width: 90%;
+    width: 95%;
     padding: 1.5rem 1rem;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -229,11 +229,13 @@ footer {
   input[type="password"],
   .btn {
     font-size: 1rem;
-    padding: 0.6rem;
+    padding: 0.65rem;
+    max-width: 360px;
   }
 
   .password-container {
-    width: 90%;
+    width: 95%;
+    max-width: 360px;
   }
 
   .toggle-eye {

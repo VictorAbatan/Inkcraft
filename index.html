@@ -7,25 +7,83 @@
   <link rel="stylesheet" href="Inkcraft1.css" />
 </head>
 <body>
-<div class="landing-container">
-  <div class="background-image"></div> <!-- New zoom-enabled background -->
-  <div class="overlay"></div>
-  <div class="content">
-    <h1>
-      <span><b>INKCRAFT</b></span>
-      <p>Write. Draw. Express.</p>
-    </h1>
-    <a href="Inkcraftmain.html" class="cta-button">Enter</a>
+  <div class="landing-container">
+    <div class="background-image"></div> <!-- New zoom-enabled background -->
+    <div class="overlay"></div>
+    <div class="content">
+      <h1 class="hero-title">
+        <span class="static-text"><b>INKCRAFT</b></span>
+        <br />
+        <span class="dynamic-line">
+          <span id="typewriter" aria-live="polite"></span>
+          <span class="caret" aria-hidden="true"></span>
+        </span>
+      </h1>
+      <a href="Inkcraftmain.html" class="cta-button">Enter</a>
+    </div>
   </div>
-</div>
-
 
   <script src="Inkcraft1.js"></script>
-</body>
+
+  <!-- Typewriter animation -->
+  <script>
+  (function () {
+    const phrases = [
+      "Welcome to Inkcraft.",
+      "Discover new verses.",
+      "Read free forever.",
+      "Support authors you love.",
+      "Write. Draw. Express."
+    ];
+
+    const TYPE_SPEED = 60;
+    const DELETE_SPEED = 40;
+    const PAUSE_AFTER = 1200;
+    const PAUSE_BETWEEN = 400;
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function runTypewriter(el, phrases, caret) {
+      let i = 0;
+      while (true) {
+        const phrase = phrases[i % phrases.length];
+
+        // Show caret while typing
+        caret.style.opacity = '1';
+        for (let j = 1; j <= phrase.length; j++) {
+          el.textContent = phrase.slice(0, j);
+          await wait(TYPE_SPEED + Math.random() * 30);
+        }
+
+        // Hide caret during pause
+        caret.style.opacity = '0';
+        await wait(PAUSE_AFTER);
+
+        // Show caret again while deleting
+        caret.style.opacity = '1';
+        for (let j = phrase.length; j >= 0; j--) {
+          el.textContent = phrase.slice(0, j);
+          await wait(DELETE_SPEED);
+        }
+
+        await wait(PAUSE_BETWEEN);
+        i++;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('typewriter');
+      const caret = document.querySelector('.caret');
+      if (!el || !caret) return;
+      runTypewriter(el, phrases, caret).catch(err => console.error('Typewriter error:', err));
+    });
+  })();
+  </script>
 
   <!-- Universal Inkcraft Music Player -->
-<div id="music-container"></div>
-<script type="module" src="universal-music.js"></script>
-
-
+  <div id="music-container"></div>
+  <script type="module" src="universal-music.js"></script>
+</body>
 </html>

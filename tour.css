@@ -1,0 +1,40 @@
+#bg-video {
+  position: relative;
+  display: block;
+  margin: 60px auto; /* centers it nicely */
+  
+  width: 60%;
+  max-width: 900px;
+  height: auto;
+  
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(155, 0, 255, 0.4);
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+/* For medium screens */
+@media (max-width: 1024px) {
+  #bg-video {
+    width: 75%;
+    border-radius: 16px;
+  }
+}
+
+/* For tablets and large phones */
+@media (max-width: 768px) {
+  #bg-video {
+    width: 90%;
+    border-radius: 12px;
+    margin: 40px auto;
+  }
+}
+
+/* For small phones */
+@media (max-width: 480px) {
+  #bg-video {
+    width: 100%;
+    border-radius: 8px;
+    margin: 20px auto;
+  }
+}

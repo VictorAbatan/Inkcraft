@@ -236,3 +236,63 @@ footer {
     font-size: 0.95rem;
   }
 }
+
+/* ✅ ARCANE BOOK SIGIL LOADER */
+.loading-container {
+  text-align: center;
+  margin-top: 2rem;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.magic-circle {
+  width: 80px;
+  height: 80px;
+  border: 3px solid rgba(162, 89, 255, 0.7);
+  border-radius: 50%;
+  margin: auto;
+  animation: rotateCircle 2s linear infinite;
+  box-shadow: 0 0 15px rgba(162, 89, 255, 0.8);
+}
+
+.book-loader {
+  width: 35px;
+  height: 28px;
+  background: url('book-icon.png') no-repeat center center/contain;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: -55px;
+  animation: floatBook 1.5s ease-in-out infinite;
+}
+
+.loading-container p {
+  margin-top: 0.8rem;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* ✅ NOT FOUND MESSAGE */
+.not-found-message {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #ffb3ff;
+  margin-top: 2rem;
+  font-style: italic;
+}
+
+/* Animations */
+@keyframes rotateCircle {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes floatBook {
+  0% { transform: translate(-50%, -3px); }
+  50% { transform: translate(-50%, -10px); }
+  100% { transform: translate(-50%, -3px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

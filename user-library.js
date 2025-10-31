@@ -77,6 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+  // ✅ Inject loading animation before fetching
+  const grid = document.getElementById('libraryGrid');
+  const emptyMessage = document.getElementById('emptyMessage');
+  grid.innerHTML = `
+    <div class="loader-container">
+      <div class="loader"></div>
+      <p class="loading-text">Extracting Library…</p>
+    </div>
+  `;
+
   // Wait for auth state
   onAuthStateChanged(auth, async user => {
     if (!user) {
@@ -89,8 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const libraryRef = collection(db, 'users', user.uid, 'library');
       const librarySnap = await getDocs(libraryRef);
 
-      const grid = document.getElementById('libraryGrid');
-      const emptyMessage = document.getElementById('emptyMessage');
+      // ✅ Clear loading spinner after fetch
+      grid.innerHTML = "";
 
       if (librarySnap.empty) {
         emptyMessage.style.display = 'block';
@@ -132,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="remove-library-btn" data-id="${novelId}">Remove from Library</button>
           `;
 
-          // ✅ Attach remove button event (using custom Inkcraft confirm)
+          // ✅ Remove button w/ confirm
           const removeBtn = card.querySelector('.remove-library-btn');
           removeBtn.addEventListener('click', async () => {
             const confirmed = await showConfirmDialog(`Remove "${novel.title}" from your library?`);
@@ -160,8 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Error loading library:', err);
-      document.getElementById('emptyMessage').textContent = 'Failed to load your library.';
-      document.getElementById('emptyMessage').style.display = 'block';
+      grid.innerHTML = "";
+      emptyMessage.textContent = 'Failed to load your library.';
+      emptyMessage.style.display = 'block';
     }
   });
 });

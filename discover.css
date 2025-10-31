@@ -271,14 +271,6 @@ footer {
   opacity: 0.8;
 }
 
-/* ✅ NOT FOUND MESSAGE */
-.not-found-message {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #ffb3ff;
-  margin-top: 2rem;
-  font-style: italic;
-}
 
 /* Animations */
 @keyframes rotateCircle {

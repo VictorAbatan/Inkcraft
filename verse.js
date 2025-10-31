@@ -3,6 +3,19 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/
 import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+  // ✨ ADD: Verse loading spinner
+  const loader = document.createElement('div');
+  loader.id = "verseLoader";
+  loader.innerHTML = `
+    <div class="loading-container">
+      <div class="ring"></div>
+      <p class="loading-text">Summoning Verses...</p>
+    </div>
+  `;
+  document.body.appendChild(loader);
+  // ✨ END ADD
+
   // 1️⃣ Load floating menu safely
   try {
     const res = await fetch('floating-menu.html');
@@ -33,6 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (verses.length === 0) {
       catalog.innerHTML = `<p style="color:white; text-align:center;">No verses created yet.</p>`;
+      
+      // ⛔ Remove loader since there's no verses
+      document.getElementById("verseLoader")?.remove();
       return;
     }
 
@@ -59,7 +75,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.warn(`Failed to fetch cover for ${title}:`, err);
         }
       } else if (verse.coverURL && verse.coverURL.trim() !== "") {
-        // in case you already store direct URLs
         coverURL = verse.coverURL;
       }
 
@@ -69,16 +84,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         <p style="color:white; text-align:center; font-size:0.9em; padding:0 10px;">${description}</p>
       `;
 
-      // 🔗 Redirect to verse-details.html with the verse ID
       item.addEventListener('click', () => {
         window.location.href = `verse-details.html?id=${verse.id}`;
       });
 
       catalog.appendChild(item);
     }
+
+    // ✅ REMOVE LOADER once verses finish rendering
+    document.getElementById("verseLoader")?.remove();
+
   } catch (err) {
     console.error("Error fetching verses:", err);
     catalog.innerHTML = `<p style="color:red; text-align:center;">Failed to load verses.</p>`;
+    
+    // ❌ Also remove loader on error
+    document.getElementById("verseLoader")?.remove();
   }
 });
-
